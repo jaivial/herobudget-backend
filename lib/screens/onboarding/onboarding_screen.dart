@@ -22,11 +22,10 @@ import 'steps/signin_step_wrapper.dart';
 import 'steps/password_step_wrapper.dart';
 import '../verification/email_verification_screen.dart';
 import '../reset_password/reset_password_screen.dart';
+import '../auth/signin_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  final bool initialShowSignIn;
-
-  const OnboardingScreen({super.key, this.initialShowSignIn = false});
+  const OnboardingScreen({super.key});
 
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();
@@ -91,25 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
 
-    print(
-      "OnboardingScreen initState - initialShowSignIn: ${widget.initialShowSignIn}",
-    );
-
-    // Check if we need to show sign-in immediately
-    if (widget.initialShowSignIn) {
-      print(
-        "Setting up delayed call to _handleSignInSelected due to initialShowSignIn=true",
-      );
-
-      // We need to wait until the widget is fully built before navigating
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        print("Executing delayed _handleSignInSelected call");
-        setState(() {
-          _isSignupFlow = false; // Make sure we're in sign-in mode
-        });
-        _handleSignInSelected();
-      });
-    }
+    print("OnboardingScreen initState");
 
     // Override the initial page controller to ensure it starts at page 1 (welcome screen)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1136,50 +1117,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _handleSignInSelected() {
-    print("_handleSignInSelected called, navigating to signin step");
+    print("_handleSignInSelected called, navigating to signin screen");
 
-    // Set the flag to indicate we're in sign-in flow
-    setState(() {
-      // Set this explicitly to false to ensure sign-in UI is shown
-      _isSignupFlow = false;
-    });
-
-    // Navigate to signin step directly using the wrapper
+    // Import and navigate to the independent signin screen
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder:
-            (context) => SignInStepWrapper(
-              emailController: _signinEmailController,
-              passwordController: _signinPasswordController,
-              emailError: _signinEmailError,
-              passwordError: _signinPasswordError,
-              isLoading: _isLoading,
-              onForgotPassword: _handleForgotPassword,
-              onEmailChanged: () {
-                if (_signinEmailError != null) {
-                  setState(() {
-                    _signinEmailError = null;
-                  });
-                }
-              },
-              onGoogleSignIn: _handleGoogleSignIn,
-              onSignIn: _handleSignIn,
-              onBack: () {
-                // Reset state to prevent view stacking when going back to welcome screen
-                setState(() {
-                  _currentStep = 1; // Reset to welcome/auth options step
-                  // Clear any sign in form data
-                  _signinEmailError = null;
-                  _signinPasswordError = null;
-                  _signinEmailController.clear();
-                  _signinPasswordController.clear();
-                  _signinObscurePassword = true;
-                });
-                Navigator.pop(context);
-              },
-            ),
-      ),
+      MaterialPageRoute(builder: (context) => SignInScreen()),
     );
   }
 

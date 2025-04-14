@@ -11,6 +11,7 @@ import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/verification/email_verification_screen.dart';
 import 'screens/verification/email_verification_success_screen.dart';
 import 'screens/reset_password/reset_password_screen.dart';
+import 'screens/auth/signin_screen.dart';
 import 'utils/deep_link_handler.dart';
 import 'theme/app_theme.dart';
 import 'services/language_service.dart';
@@ -394,11 +395,11 @@ class _MyAppState extends State<MyApp> {
     }
     // Priority 4: Not logged in, show onboarding
     else {
-      homeScreen = OnboardingScreen(initialShowSignIn: _showSignIn);
-
-      // Reset the flag after using it
+      // If _showSignIn is true, show SignInScreen directly instead of OnboardingScreen
       if (_showSignIn) {
-        print("Resetting _showSignIn flag after creating OnboardingScreen");
+        print("Showing direct SignInScreen due to _showSignIn flag");
+        homeScreen = const SignInScreen();
+
         // Reset the flag after a short delay to avoid rebuilding issues
         Future.delayed(Duration.zero, () {
           if (mounted) {
@@ -407,6 +408,8 @@ class _MyAppState extends State<MyApp> {
             });
           }
         });
+      } else {
+        homeScreen = const OnboardingScreen();
       }
     }
 
@@ -487,16 +490,10 @@ class _MyAppState extends State<MyApp> {
     // Clear any reset password data first
     clearResetPasswordData();
 
-    // Set flag to show sign-in screen on next build
-    setState(() {
-      _showSignIn = true;
-
-      // Force the app to rebuild with OnboardingScreen
-      _isLoggedIn = false;
-      _userData = null;
-      _resetPasswordToken = null;
-      _resetPasswordUserId = null;
-    });
+    // Navigate directly to SignInScreen instead of using flags
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const SignInScreen()),
+    );
   }
 }
 

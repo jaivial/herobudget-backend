@@ -9,6 +9,7 @@ import 'steps/email_step.dart';
 import 'steps/email_sent_step.dart';
 import 'steps/reset_success_step.dart';
 import 'steps/new_password_step.dart';
+import '../auth/signin_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String? token;
@@ -500,14 +501,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
     // Use direct navigation instead of app state for more reliable navigation
     if (mounted && context.mounted) {
-      debugPrint('Using direct navigation to OnboardingScreen');
+      debugPrint('Using direct navigation to SignInScreen');
 
       // Use pushReplacement to replace the current screen entirely
       // This prevents nesting issues by completely removing this screen
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => const OnboardingScreen(initialShowSignIn: true),
-        ),
+        MaterialPageRoute(builder: (context) => const SignInScreen()),
         (route) => false, // Remove all previous routes
       );
     } else {

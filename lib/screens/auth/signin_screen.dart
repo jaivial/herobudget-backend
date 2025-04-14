@@ -1,0 +1,406 @@
+import 'package:flutter/material.dart';
+import '../../theme/app_theme.dart';
+import '../../services/signin_service.dart';
+import '../../utils/toast_util.dart';
+import '../dashboard/dashboard_screen.dart';
+import '../reset_password/reset_password_screen.dart';
+import '../verification/email_verification_screen.dart';
+import '../onboarding/onboarding_screen.dart';
+
+class SignInScreen extends StatefulWidget {
+  const SignInScreen({super.key});
+
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+  String? _emailError;
+  String? _passwordError;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _toggleObscurePassword() {
+    setState(() {
+      _obscurePassword = !_obscurePassword;
+    });
+  }
+
+  void _handleEmailChanged() {
+    if (_emailError != null) {
+      setState(() {
+        _emailError = null;
+      });
+    }
+  }
+
+  void _handleForgotPassword() {
+    // Save the email if available for potential use on the reset password screen
+    String email = '';
+    if (_emailController.text.isNotEmpty &&
+        _emailController.text.contains('@')) {
+      email = _emailController.text;
+    }
+
+    // Navigate to reset password screen
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => ResetPasswordScreen(initialEmail: email),
+      ),
+    );
+  }
+
+  // Method to safely navigate back
+  void _handleBackNavigation() {
+    // Navigate to the OnboardingScreen instead of just popping
+    // This ensures we always have a valid screen to go back to
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      (route) => false, // Remove all existing routes
+    );
+  }
+
+  Future<void> _handleSignIn() async {
+    // Validate form
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Clear previous errors
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+      _isLoading = true;
+    });
+
+    try {
+      // Attempt to sign in
+      final result = await SignInService.signIn(
+        _emailController.text,
+        _passwordController.text,
+      );
+
+      if (mounted) {
+        if (result['success']) {
+          // Successful login
+          final userData = result['user_data'];
+
+          // Check if email is verified
+          final bool isEmailVerified = userData['verified_email'] ?? false;
+
+          // Navigate based on verification status
+          if (!isEmailVerified) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => EmailVerificationScreen(
+                      userId: userData['id'].toString(),
+                      userInfo: userData,
+                    ),
+              ),
+            );
+          } else {
+            // Navigate to Dashboard
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => DashboardScreen(
+                      userId: userData['id'].toString(),
+                      userInfo: userData,
+                    ),
+              ),
+            );
+          }
+        } else {
+          // Handle errors
+          setState(() {
+            _isLoading = false;
+            if (result['error_type'] == 'invalid_credentials') {
+              _passwordError = 'Invalid email or password';
+            } else if (result['error_type'] == 'email_not_found') {
+              _emailError = 'Email not found';
+            } else {
+              // Generic error
+              ToastUtil.showErrorToast(
+                context,
+                result['message'] ?? 'Sign in failed',
+              );
+            }
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ToastUtil.showErrorToast(
+          context,
+          'An error occurred. Please try again.',
+        );
+      }
+    }
+  }
+
+  void _handleGoogleSignIn() {
+    // Implement Google sign-in
+    ToastUtil.showErrorToast(context, 'Google Sign In not implemented yet');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      // Handle back button press
+      onWillPop: () async {
+        _handleBackNavigation();
+        return false; // Prevent default back navigation
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 24.0,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Email input section
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.email_outlined,
+                                  color: AppTheme.primaryColor,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Your Email Address',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            onChanged: (_) => _handleEmailChanged(),
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  !value.contains('@')) {
+                                return 'Please enter a valid email address';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Enter your email address',
+                              prefixIcon: const Icon(Icons.email_outlined),
+                              errorText: _emailError,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Password input section
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.lock_outline,
+                                  color: AppTheme.primaryColor,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Your Password',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your password';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Enter your password',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                                onPressed: _toggleObscurePassword,
+                              ),
+                              errorText: _passwordError,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Forgot password link
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _handleForgotPassword,
+                              child: const Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: AppTheme.secondaryColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Sign in button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _handleSignIn,
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child:
+                                  _isLoading
+                                      ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                        ),
+                                      )
+                                      : const Text('SIGN IN'),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Back button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: OutlinedButton(
+                              onPressed: _handleBackNavigation,
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text('BACK'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Center(
+            child: Image.asset(
+              'assets/images/herobudgeticon.png',
+              height: 60,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Sign In to Your Account',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Enter your credentials to access your account',
+            style: TextStyle(fontSize: 14, color: Colors.grey),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}

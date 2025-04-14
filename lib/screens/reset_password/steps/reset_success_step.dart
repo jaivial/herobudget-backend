@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../main.dart';
 import '../../../theme/app_theme.dart';
-import '../../onboarding/onboarding_screen.dart';
+import '../../auth/signin_screen.dart';
 
 class ResetSuccessStep extends StatelessWidget {
   final VoidCallback onSignIn;
@@ -70,13 +70,11 @@ class ResetSuccessStep extends StatelessWidget {
                     debugPrint('Error clearing reset password data: $e');
                   }
 
-                  // Use direct navigation to OnboardingScreen with sign-in
+                  // Use direct navigation to SignInScreen
                   if (context.mounted) {
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
-                        builder:
-                            (context) =>
-                                const OnboardingScreen(initialShowSignIn: true),
+                        builder: (context) => const SignInScreen(),
                       ),
                       (route) => false, // Remove all previous routes
                     );
