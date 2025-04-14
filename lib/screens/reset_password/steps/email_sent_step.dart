@@ -4,14 +4,9 @@ import '../../../theme/app_theme.dart';
 class EmailSentStep extends StatelessWidget {
   final String email;
   final VoidCallback onBack;
-  final VoidCallback onOpenEmailApp;
 
-  const EmailSentStep({
-    Key? key,
-    required this.email,
-    required this.onBack,
-    required this.onOpenEmailApp,
-  }) : super(key: key);
+  const EmailSentStep({Key? key, required this.email, required this.onBack})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -69,27 +64,6 @@ class EmailSentStep extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-
-            // Open email app button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: onOpenEmailApp,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Open Email App',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
 
             // Try different email button
             SizedBox(

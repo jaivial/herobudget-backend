@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../main.dart';
 import '../../../theme/app_theme.dart';
+import '../../onboarding/onboarding_screen.dart';
 
 class ResetSuccessStep extends StatelessWidget {
   final VoidCallback onSignIn;
@@ -56,23 +57,33 @@ class ResetSuccessStep extends StatelessWidget {
                 onPressed: () {
                   debugPrint('Sign In button pressed');
 
-                  // Don't use any local navigation - only use the app state
-                  // which provides a global context-free navigation
+                  // Clear reset password data first via app state
                   try {
                     final appState = myAppKey.currentState;
                     if (appState != null) {
-                      debugPrint('Calling navigateToSignIn on app state');
-                      // Clear reset password data and navigate in one step
-                      appState.navigateToSignIn();
-                      return; // Return early to avoid calling onSignIn
+                      debugPrint(
+                        'Clearing reset password data through app state',
+                      );
+                      appState.clearResetPasswordData();
                     }
                   } catch (e) {
-                    debugPrint('Error using app state for navigation: $e');
+                    debugPrint('Error clearing reset password data: $e');
                   }
 
-                  // Only if the app state method failed, try the onSignIn callback
-                  debugPrint('Falling back to onSignIn callback');
-                  onSignIn();
+                  // Use direct navigation to OnboardingScreen with sign-in
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder:
+                            (context) =>
+                                const OnboardingScreen(initialShowSignIn: true),
+                      ),
+                      (route) => false, // Remove all previous routes
+                    );
+                  } else {
+                    // Fallback to using the callback
+                    onSignIn();
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,

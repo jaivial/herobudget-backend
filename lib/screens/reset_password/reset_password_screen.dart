@@ -4,6 +4,7 @@ import '../../services/reset_password_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/toast_util.dart';
 import '../../utils/deep_link_handler.dart';
+import '../onboarding/onboarding_screen.dart';
 import 'steps/email_step.dart';
 import 'steps/email_sent_step.dart';
 import 'steps/reset_success_step.dart';
@@ -486,17 +487,42 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
   void _navigateToSignIn() {
     debugPrint('ResetPasswordScreen - navigateToSignIn called');
 
-    // Only use the app state method for navigation
+    // Clear reset password data first
     try {
       final appState = myAppKey.currentState;
       if (appState != null) {
-        debugPrint('Using app state for navigation to sign in');
-        appState.navigateToSignIn();
-      } else {
-        debugPrint('App state not available for navigation');
+        debugPrint('Clearing reset password data through app state');
+        appState.clearResetPasswordData();
       }
     } catch (e) {
-      debugPrint('Error navigating to sign in: $e');
+      debugPrint('Error clearing reset password data: $e');
+    }
+
+    // Use direct navigation instead of app state for more reliable navigation
+    if (mounted && context.mounted) {
+      debugPrint('Using direct navigation to OnboardingScreen');
+
+      // Use pushReplacement to replace the current screen entirely
+      // This prevents nesting issues by completely removing this screen
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const OnboardingScreen(initialShowSignIn: true),
+        ),
+        (route) => false, // Remove all previous routes
+      );
+    } else {
+      debugPrint('Context not available for navigation');
+
+      // Fallback to app state method
+      try {
+        final appState = myAppKey.currentState;
+        if (appState != null) {
+          debugPrint('Using app state for navigation to sign in');
+          appState.navigateToSignIn();
+        }
+      } catch (e) {
+        debugPrint('Error with fallback navigation: $e');
+      }
     }
   }
 
@@ -533,6 +559,24 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
           // Don't allow back navigation from password step when from deep link
           return false;
         }
+
+        // Handle custom back navigation for email sent step
+        if (_currentStep == 1) {
+          // Go back to email input step
+          setState(() {
+            _currentStep = 0;
+            _initControllers();
+            _emailError = null;
+          });
+          return false; // Prevent default back behavior
+        }
+
+        // For email input step, navigate to sign in
+        if (_currentStep == 0) {
+          _navigateToSignIn();
+          return false; // Prevent default back behavior
+        }
+
         return true;
       },
       child: Scaffold(
@@ -543,10 +587,49 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
           elevation: 0,
           // Hide back button if on password step with token from deep link
           automaticallyImplyLeading: !(_forcePasswordStep && _currentStep == 2),
+          // Custom back button handling
+          leading: _buildCustomBackButton(),
         ),
         body: SafeArea(child: _buildCurrentStep()),
       ),
     );
+  }
+
+  // Build custom back button with proper navigation logic
+  Widget? _buildCustomBackButton() {
+    // If on password step with token from deep link, don't show back button
+    if (_forcePasswordStep && _currentStep == 2) {
+      return null;
+    }
+
+    // For email sent step, go back to email input step
+    if (_currentStep == 1) {
+      return IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          // Navigate back to email input step
+          setState(() {
+            _currentStep = 0;
+            _initControllers();
+            _emailError = null;
+          });
+        },
+      );
+    }
+
+    // For email input step, go back to sign in screen
+    if (_currentStep == 0) {
+      return IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          // Navigate to sign in screen
+          _navigateToSignIn();
+        },
+      );
+    }
+
+    // For other steps, use default back button behavior
+    return null;
   }
 
   String _getStepTitle() {
@@ -610,17 +693,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         return EmailSentStep(
           email: _email,
           onBack: () {
+            // Go back to email input step
             setState(() {
               _currentStep = 0;
               _initControllers();
               _emailError = null;
             });
-          },
-          onOpenEmailApp: () {
-            ToastUtil.showInfoToast(
-              context,
-              'Please check your email for the reset link',
-            );
           },
         );
       case 2:
