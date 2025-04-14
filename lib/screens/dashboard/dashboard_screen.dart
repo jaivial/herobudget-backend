@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/dashboard_service.dart';
+import '../../services/language_service.dart';
+import '../../utils/extensions.dart';
+import '../../widgets/localized_text_example.dart';
+import '../../widgets/language_selector_widget.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'dart:convert';
 import 'dart:ui';
@@ -144,7 +148,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: Text(context.tr.translate('dashboard')),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         actions: [
@@ -185,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: _fetchLatestUserInfo,
-                      child: const Text('Retry'),
+                      child: Text(context.tr.translate('retry')),
                     ),
                   ],
                 ),
@@ -199,12 +203,81 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 20),
                     Center(
                       child: Text(
-                        'Welcome, ${_latestUserInfo['name'] ?? 'User'}!',
-                        style: Theme.of(context).textTheme.headlineSmall,
+                        '${_latestUserInfo['given_name'] ?? ''} ${_latestUserInfo['family_name'] ?? ''}',
+                        style: Theme.of(context).textTheme.headlineMedium,
                       ),
                     ),
-                    const SizedBox(height: 30),
-                    _buildInfoCard(context),
+                    if (_latestUserInfo['email'] != null)
+                      Center(
+                        child: Text(
+                          _latestUserInfo['email'],
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    const Divider(),
+
+                    // Add the LocalizedTextExample widget to show translations
+                    const LocalizedTextExample(),
+
+                    const SizedBox(height: 20),
+                    // Language Selection
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.language),
+                        title: Text(context.tr.translate('language')),
+                        subtitle: FutureBuilder<String?>(
+                          future: LanguageService.getLanguagePreference(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Text('Loading...');
+                            }
+                            if (snapshot.hasError) {
+                              return const Text('Error');
+                            }
+                            return Text(snapshot.data ?? 'en-US');
+                          },
+                        ),
+                        onTap: () {
+                          // Show language selector
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                contentPadding: EdgeInsets.zero,
+                                content: LanguageSelectorWidget(
+                                  showCloseButton: true,
+                                  onLocaleSelected: (locale) async {
+                                    // Save selected locale
+                                    await LanguageService.saveLanguagePreference(
+                                      locale,
+                                    );
+
+                                    // Update user info on server
+                                    try {
+                                      await DashboardService.updateUserInfo(
+                                        widget.userId,
+                                        {'locale': locale},
+                                      );
+                                      // Refresh to get updated user info
+                                      _fetchLatestUserInfo();
+                                    } catch (e) {
+                                      print('Error updating user locale: $e');
+                                    }
+
+                                    // Refresh UI to apply new locale
+                                    if (mounted) {
+                                      setState(() {});
+                                    }
+                                  },
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
                   ],
                 ),
               ),

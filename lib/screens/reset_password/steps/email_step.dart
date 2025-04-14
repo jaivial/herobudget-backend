@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 
 class EmailStep extends StatelessWidget {
   final TextEditingController emailController;
@@ -27,18 +28,18 @@ class EmailStep extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Email input section
-            const Text(
-              'Enter your email address',
-              style: TextStyle(
+            Text(
+              context.tr.translate('enter_your_email_address'),
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'We\'ll send you a link to reset your password.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+            Text(
+              context.tr.translate('email_reset_description'),
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
 
@@ -58,9 +59,9 @@ class EmailStep extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Your Email Address',
-                  style: TextStyle(
+                Text(
+                  context.tr.translate('your_email_address'),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
@@ -74,7 +75,7 @@ class EmailStep extends StatelessWidget {
               keyboardType: TextInputType.emailAddress,
               enabled: !isLoading,
               decoration: InputDecoration(
-                hintText: 'Enter your email address',
+                hintText: context.tr.translate('enter_your_email_address'),
                 prefixIcon: const Icon(Icons.email_outlined),
                 errorText: emailError,
                 border: OutlineInputBorder(
@@ -108,9 +109,9 @@ class EmailStep extends StatelessWidget {
                             Colors.white,
                           ),
                         )
-                        : const Text(
-                          'Reset Password',
-                          style: TextStyle(
+                        : Text(
+                          context.tr.translate('reset_password'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -130,9 +131,9 @@ class EmailStep extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Back to Sign In',
-                  style: TextStyle(
+                child: Text(
+                  context.tr.translate('back_to_sign_in'),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.secondaryColor,

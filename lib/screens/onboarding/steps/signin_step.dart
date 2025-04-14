@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 
 class SignInStep extends StatelessWidget {
   final TextEditingController emailController;
@@ -52,8 +53,8 @@ class SignInStep extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Your Email Address',
+                Text(
+                  context.tr.translate('email'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -68,7 +69,7 @@ class SignInStep extends StatelessWidget {
               keyboardType: TextInputType.emailAddress,
               onChanged: (_) => onEmailChanged(),
               decoration: InputDecoration(
-                hintText: 'Enter your email address',
+                hintText: context.tr.translate('enter_email'),
                 prefixIcon: const Icon(Icons.email_outlined),
                 errorText: emailError,
                 border: OutlineInputBorder(
@@ -98,8 +99,8 @@ class SignInStep extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Your Password',
+                Text(
+                  context.tr.translate('password'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -113,7 +114,7 @@ class SignInStep extends StatelessWidget {
               controller: passwordController,
               obscureText: obscurePassword,
               decoration: InputDecoration(
-                hintText: 'Enter your password',
+                hintText: context.tr.translate('password'),
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -140,8 +141,8 @@ class SignInStep extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: onForgotPassword,
-                child: const Text(
-                  'Forgot Password?',
+                child: Text(
+                  context.tr.translate('forgot_password'),
                   style: TextStyle(
                     color: AppTheme.secondaryColor,
                     fontWeight: FontWeight.w500,

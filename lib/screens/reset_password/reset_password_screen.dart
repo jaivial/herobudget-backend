@@ -4,6 +4,7 @@ import '../../services/reset_password_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/toast_util.dart';
 import '../../utils/deep_link_handler.dart';
+import '../../utils/extensions.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'steps/email_step.dart';
 import 'steps/email_sent_step.dart';
@@ -349,14 +350,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
   Future<void> _requestPasswordReset() async {
     if (_emailController == null || _emailController!.text.isEmpty) {
       setState(() {
-        _emailError = 'Please enter your email address';
+        _emailError = context.tr.translate('email_required');
       });
       return;
     }
 
     if (!_emailController!.text.contains('@')) {
       setState(() {
-        _emailError = 'Please enter a valid email address';
+        _emailError = context.tr.translate('valid_email_required');
       });
       return;
     }
@@ -382,7 +383,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     if (!checkResponse['exists']) {
       setState(() {
         _isLoading = false;
-        _emailError = 'No account found with this email address';
+        _emailError = context.tr.translate('no_account_found');
       });
       return;
     }
@@ -409,7 +410,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     } else {
       ToastUtil.showErrorToast(
         context,
-        resetResponse['message'] ?? 'Failed to send reset email',
+        resetResponse['message'] ??
+            context.tr.translate('failed_to_send_reset_email'),
       );
     }
   }
@@ -419,14 +421,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     // Validate password fields
     if (_passwordController == null || _passwordController!.text.isEmpty) {
       setState(() {
-        _passwordError = 'Please enter a new password';
+        _passwordError = context.tr.translate('enter_new_password');
       });
       return;
     }
 
     if (_passwordController!.text.length < 6) {
       setState(() {
-        _passwordError = 'Password must be at least 6 characters';
+        _passwordError = context.tr.translate('password_must_be_6_chars');
       });
       return;
     }
@@ -434,7 +436,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     if (_confirmPasswordController == null ||
         _confirmPasswordController!.text != _passwordController!.text) {
       setState(() {
-        _confirmPasswordError = 'Passwords do not match';
+        _confirmPasswordError = context.tr.translate('passwords_dont_match');
       });
       return;
     }
@@ -465,7 +467,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     } else {
       ToastUtil.showErrorToast(
         context,
-        response['message'] ?? 'Failed to update password',
+        response['message'] ??
+            context.tr.translate('failed_to_update_password'),
       );
     }
   }
@@ -634,15 +637,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
   String _getStepTitle() {
     switch (_currentStep) {
       case 0:
-        return 'Reset Password';
+        return context.tr.translate('reset_password');
       case 1:
-        return 'Check Your Email';
+        return context.tr.translate('check_your_email');
       case 2:
-        return 'Create New Password';
+        return context.tr.translate('create_new_password');
       case 3:
-        return 'Password Reset Complete';
+        return context.tr.translate('password_reset_complete');
       default:
-        return 'Reset Password';
+        return context.tr.translate('reset_password');
     }
   }
 

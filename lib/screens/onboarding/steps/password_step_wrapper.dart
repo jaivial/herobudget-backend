@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 import 'password_step.dart';
 
 class PasswordStepWrapper extends StatefulWidget {
@@ -74,7 +75,7 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text('BACK'),
+                        child: Text(context.tr.translate('back').toUpperCase()),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -125,7 +126,9 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
                                     ),
                                   ),
                                 )
-                                : const Text('NEXT'),
+                                : Text(
+                                  context.tr.translate('next').toUpperCase(),
+                                ),
                       ),
                     ),
                   ],
@@ -152,18 +155,18 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            'Create a Password',
-            style: TextStyle(
+          Text(
+            context.tr.translate('create_password'),
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppTheme.primaryColor,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Create a secure password for your account.',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+          Text(
+            context.tr.translate('create_password_desc'),
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
         ],

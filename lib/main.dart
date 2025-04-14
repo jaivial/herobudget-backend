@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uni_links/uni_links.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -12,12 +14,15 @@ import 'screens/verification/email_verification_screen.dart';
 import 'screens/verification/email_verification_success_screen.dart';
 import 'screens/reset_password/reset_password_screen.dart';
 import 'screens/auth/signin_screen.dart';
+import 'screens/language_selector_screen.dart';
 import 'utils/deep_link_handler.dart';
 import 'theme/app_theme.dart';
 import 'services/language_service.dart';
 import 'services/signin_service.dart';
 import 'services/dashboard_service.dart';
 import 'services/auth_service.dart';
+import 'utils/app_localizations.dart';
+import 'utils/locale_util.dart';
 
 void main() {
   // Ensure Flutter binding is initialized
@@ -46,6 +51,8 @@ class _MyAppState extends State<MyApp> {
   bool _isLoggedIn = false;
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
+  Locale? _appLocale;
+  bool _isLocaleSupported = true;
 
   // Flag to prevent concurrent navigation
   bool _isHandlingDeepLink = false;
@@ -110,7 +117,28 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _checkUserAndLanguage() async {
     try {
-      // First check if user is already signed in using the enhanced SignInService
+      // First detect device locale and check if it's supported
+      final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+      final deviceLocaleStr =
+          '${deviceLocale.languageCode}-${deviceLocale.countryCode ?? 'US'}';
+      print('Detected device locale: $deviceLocaleStr');
+
+      // Try to get saved locale from local storage
+      final savedLocale = await LanguageService.getLanguagePreference();
+
+      // Determine which locale to use
+      String localeToUse = savedLocale ?? deviceLocaleStr;
+      bool isSupported = await LanguageService.isUserLocaleSupported();
+
+      // Convert the string locale to Locale object
+      Locale appLocale = LocaleUtil.stringToLocale(localeToUse);
+
+      setState(() {
+        _appLocale = appLocale;
+        _isLocaleSupported = isSupported;
+      });
+
+      // Check if user is already signed in
       final bool isSignedIn = await SignInService.isSignedIn();
 
       if (isSignedIn) {
@@ -123,6 +151,21 @@ class _MyAppState extends State<MyApp> {
           try {
             // Get the latest user info from the server using this ID
             final userInfo = await DashboardService.fetchUserInfo(userId);
+
+            // If locale exists in user info, save it and use it
+            if (userInfo['locale'] != null && userInfo['locale'].isNotEmpty) {
+              await LanguageService.saveLanguagePreference(userInfo['locale']);
+
+              // Update locale
+              final updatedLocale = LocaleUtil.stringToLocale(
+                userInfo['locale'],
+              );
+              setState(() {
+                _appLocale = updatedLocale;
+                _isLocaleSupported =
+                    true; // If we got it from user info, assume it's supported
+              });
+            }
 
             setState(() {
               _isLoggedIn = true;
@@ -193,6 +236,12 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _initializeDeepLinking() async {
+    // Skip deep linking initialization on web platform
+    if (kIsWeb) {
+      print("Skipping deep link initialization on web platform");
+      return;
+    }
+
     // Handle app cold start from deep link
     if (!_initialURILinkHandled) {
       _initialURILinkHandled = true;
@@ -305,121 +354,88 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Check for verification and reset password data in global handlers on every build
-    final codeFromHandler = verificationCodeHandler.currentVerificationCode;
-    final resetTokenFromHandler = resetPasswordHandler.currentResetToken;
-    final resetUserIdFromHandler = resetPasswordHandler.currentUserId;
-
-    // Process verification code if available
-    if (codeFromHandler != null &&
-        codeFromHandler.isNotEmpty &&
-        (_verificationCode == null || _verificationCode!.isEmpty)) {
-      if (verificationCodeHandler.isFromDeepLink) {
-        print("Found verification code from deep link: $codeFromHandler");
-        _verificationCode = codeFromHandler;
-      } else {
-        print(
-          "Found verification code but not from deep link, ignoring for navigation",
-        );
-      }
-    }
-
-    // Process reset password data if available
-    if (resetTokenFromHandler != null &&
-        resetUserIdFromHandler != null &&
-        resetPasswordHandler.isFromDeepLink) {
-      print(
-        "Found reset password data from handler - updating state variables",
-      );
-
-      // Always update state variables with the handler values
-      // This ensures the most recent data is used
-      _resetPasswordToken = resetTokenFromHandler;
-      _resetPasswordUserId = resetUserIdFromHandler;
-    }
-
+    // If loading, show a splash screen
     if (_isLoading) {
       return MaterialApp(
         title: 'Hero Budget',
         theme: AppTheme.lightTheme,
-        home: Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          ),
-        ),
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 
-    // Create appropriate home screen based on state
+    // If locale is not supported, show language selector first
+    if (!_isLocaleSupported) {
+      return MaterialApp(
+        title: 'Hero Budget',
+        theme: AppTheme.lightTheme,
+        home: LanguageSelectorScreen(),
+        localizationsDelegates: [
+          const AppLocalizationsDelegate(),
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: _appLocale,
+      );
+    }
+
+    // Determine which screen to show based on app state
     Widget homeScreen;
 
-    // Priority 1: If reset password handler has data from deep link, show the reset password screen
-    if (resetPasswordHandler.hasResetPasswordData() &&
-        resetPasswordHandler.isFromDeepLink) {
-      print(
-        "Building reset password screen with token from handler: ${resetPasswordHandler.currentResetToken} and user ID: ${resetPasswordHandler.currentUserId}",
-      );
-      // ALWAYS use the values directly from the handler to prevent state sync issues
-      homeScreen = ResetPasswordScreen(
-        token: resetPasswordHandler.currentResetToken,
-        userIdString: resetPasswordHandler.currentUserId,
-      );
-    }
-    // Priority 2: If verification code exists FROM DEEP LINK, show verification success screen
-    else if (_verificationCode != null &&
-        _verificationCode!.isNotEmpty &&
-        verificationCodeHandler.isFromDeepLink) {
-      print(
-        "Showing verification success screen with code: $_verificationCode",
-      );
+    if (_verificationCode != null) {
+      // Show verification success screen if verification code is set
       homeScreen = EmailVerificationSuccessScreen(
         verificationCode: _verificationCode!,
       );
-    }
-    // Priority 3: If user is logged in but not verified, show verification screen
-    else if (_isLoggedIn && _userData != null) {
-      final bool isEmailVerified = _userData!['verified_email'] ?? false;
-
-      if (!isEmailVerified) {
-        homeScreen = EmailVerificationScreen(
-          userId: _userData!['id'].toString(),
-          userInfo: _userData!,
-        );
-      } else {
-        // User is logged in and verified, show dashboard
-        homeScreen = DashboardScreen(
-          userId: _userData!['id'].toString(),
-          userInfo: _userData!,
-        );
-      }
-    }
-    // Priority 4: Not logged in, show onboarding
-    else {
-      // If _showSignIn is true, show SignInScreen directly instead of OnboardingScreen
-      if (_showSignIn) {
-        print("Showing direct SignInScreen due to _showSignIn flag");
-        homeScreen = const SignInScreen();
-
-        // Reset the flag after a short delay to avoid rebuilding issues
-        Future.delayed(Duration.zero, () {
-          if (mounted) {
-            setState(() {
-              _showSignIn = false;
-            });
-          }
-        });
-      } else {
-        homeScreen = const OnboardingScreen();
-      }
+    } else if (_resetPasswordToken != null && _resetPasswordUserId != null) {
+      // Show reset password screen if token and user ID are set
+      homeScreen = ResetPasswordScreen(
+        token: _resetPasswordToken!,
+        userIdString: _resetPasswordUserId!,
+      );
+    } else if (_showSignIn) {
+      // Show sign-in screen if explicitly requested
+      homeScreen = const SignInScreen();
+    } else if (_isLoggedIn && _userData != null) {
+      // Show dashboard if user is logged in
+      homeScreen = DashboardScreen(
+        userId: _userData!['id'].toString(),
+        userInfo: _userData!,
+      );
+    } else {
+      // Show onboarding for new users
+      homeScreen = OnboardingScreen();
     }
 
+    // Final MaterialApp configuration with localization support
     return MaterialApp(
       title: 'Hero Budget',
       theme: AppTheme.lightTheme,
-      debugShowCheckedModeBanner: false,
-      scaffoldMessengerKey: GlobalKey<ScaffoldMessengerState>(),
       home: homeScreen,
+      localizationsDelegates: [
+        const AppLocalizationsDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: _appLocale,
+      builder: (context, child) {
+        // Return the child directly without waiting for preloading
+        return child ?? const SizedBox();
+      },
     );
+  }
+
+  // Preload localizations to ensure they're available before building content
+  Future<void> _preloadLocalizations(BuildContext context) async {
+    try {
+      return; // Skip preloading since this is causing performance issues
+    } catch (e) {
+      print('Error preloading localizations: $e');
+      return;
+    }
   }
 
   // Method to navigate to reset password screen

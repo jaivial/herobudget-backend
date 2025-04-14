@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/signin_service.dart';
 import '../../utils/toast_util.dart';
+import '../../utils/extensions.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../reset_password/reset_password_screen.dart';
 import '../verification/email_verification_screen.dart';
@@ -129,14 +130,14 @@ class _SignInScreenState extends State<SignInScreen> {
           setState(() {
             _isLoading = false;
             if (result['error_type'] == 'invalid_credentials') {
-              _passwordError = 'Invalid email or password';
+              _passwordError = context.tr.translate('invalid_credentials');
             } else if (result['error_type'] == 'email_not_found') {
-              _emailError = 'Email not found';
+              _emailError = context.tr.translate('email_not_found');
             } else {
               // Generic error
               ToastUtil.showErrorToast(
                 context,
-                result['message'] ?? 'Sign in failed',
+                result['message'] ?? context.tr.translate('signin_failed'),
               );
             }
           });
@@ -157,7 +158,10 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _handleGoogleSignIn() {
     // Implement Google sign-in
-    ToastUtil.showErrorToast(context, 'Google Sign In not implemented yet');
+    ToastUtil.showErrorToast(
+      context,
+      context.tr.translate('google_signin_not_implemented'),
+    );
   }
 
   @override
@@ -174,7 +178,7 @@ class _SignInScreenState extends State<SignInScreen> {
             key: _formKey,
             child: Column(
               children: [
-                _buildHeader(),
+                _buildHeader(context),
                 Expanded(
                   child: Center(
                     child: SingleChildScrollView(
@@ -202,9 +206,9 @@ class _SignInScreenState extends State<SignInScreen> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'Your Email Address',
-                                style: TextStyle(
+                              Text(
+                                context.tr.translate('email'),
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.primaryColor,
@@ -221,12 +225,12 @@ class _SignInScreenState extends State<SignInScreen> {
                               if (value == null ||
                                   value.isEmpty ||
                                   !value.contains('@')) {
-                                return 'Please enter a valid email address';
+                                return context.tr.translate('enter_email');
                               }
                               return null;
                             },
                             decoration: InputDecoration(
-                              hintText: 'Enter your email address',
+                              hintText: context.tr.translate('enter_email'),
                               prefixIcon: const Icon(Icons.email_outlined),
                               errorText: _emailError,
                               border: OutlineInputBorder(
@@ -256,9 +260,9 @@ class _SignInScreenState extends State<SignInScreen> {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              const Text(
-                                'Your Password',
-                                style: TextStyle(
+                              Text(
+                                context.tr.translate('password'),
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.primaryColor,
@@ -272,12 +276,12 @@ class _SignInScreenState extends State<SignInScreen> {
                             obscureText: _obscurePassword,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
+                                return context.tr.translate('enter_password');
                               }
                               return null;
                             },
                             decoration: InputDecoration(
-                              hintText: 'Enter your password',
+                              hintText: context.tr.translate('enter_password'),
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -304,9 +308,9 @@ class _SignInScreenState extends State<SignInScreen> {
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: _handleForgotPassword,
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(
+                              child: Text(
+                                context.tr.translate('forgot_password'),
+                                style: const TextStyle(
                                   color: AppTheme.secondaryColor,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -339,7 +343,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                               ),
                                         ),
                                       )
-                                      : const Text('SIGN IN'),
+                                      : Text(context.tr.translate('sign_in')),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -355,7 +359,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text('BACK'),
+                              child: Text(context.tr.translate('back')),
                             ),
                           ),
                         ],
@@ -371,7 +375,7 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
       child: Column(
@@ -385,18 +389,18 @@ class _SignInScreenState extends State<SignInScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            'Sign In to Your Account',
-            style: TextStyle(
+          Text(
+            context.tr.translate('login'),
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppTheme.primaryColor,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Enter your credentials to access your account',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+          Text(
+            context.tr.translate('enter_credentials'),
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
         ],

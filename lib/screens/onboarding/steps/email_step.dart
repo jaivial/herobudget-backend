@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 
 class EmailStep extends StatelessWidget {
   final TextEditingController emailController;
@@ -42,8 +43,8 @@ class EmailStep extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Email Address',
+                Text(
+                  context.tr.translate('email'),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -53,10 +54,10 @@ class EmailStep extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 46),
               child: Text(
-                'Enter an email to create your account',
+                context.tr.translate('enter_email'),
                 style: TextStyle(color: Colors.grey, fontSize: 14),
               ),
             ),
@@ -64,9 +65,9 @@ class EmailStep extends StatelessWidget {
             TextFormField(
               controller: emailController,
               decoration: InputDecoration(
-                labelText: 'Email',
+                labelText: context.tr.translate('email'),
                 prefixIcon: const Icon(Icons.email_outlined),
-                hintText: 'Enter your email',
+                hintText: context.tr.translate('enter_email'),
                 errorText: emailError,
                 suffixIcon:
                     isLoading

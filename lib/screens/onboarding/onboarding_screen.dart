@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/locale_util.dart';
 import '../../utils/toast_util.dart';
+import '../../utils/extensions.dart';
 import '../../services/auth_service.dart';
 import '../../services/language_service.dart';
 import '../../services/signin_service.dart';
@@ -171,6 +172,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _detectDeviceLocale() {
     _selectedLocale = LocaleUtil.detectDeviceLocale(null);
+    print('Detected device locale: $_selectedLocale');
+
+    // Try to find the best match for this locale in our supported locales
+    final deviceLocale = LocaleUtil.stringToLocale(_selectedLocale);
+
+    // Check if the exact locale is supported
+    bool exactMatch = false;
+    for (var supportedLocale in LocaleUtil.localeMapping.keys) {
+      final parts = supportedLocale.split('-');
+      if (parts[0].toLowerCase() == deviceLocale.languageCode.toLowerCase() &&
+          parts[1].toLowerCase() ==
+              (deviceLocale.countryCode ?? '').toLowerCase()) {
+        _selectedLocale = supportedLocale;
+        exactMatch = true;
+        print('Found exact locale match: $_selectedLocale');
+        break;
+      }
+    }
+
+    // If no exact match, try to find a match for the language
+    if (!exactMatch) {
+      for (var supportedLocale in LocaleUtil.localeMapping.keys) {
+        final parts = supportedLocale.split('-');
+        if (parts[0].toLowerCase() == deviceLocale.languageCode.toLowerCase()) {
+          _selectedLocale = supportedLocale;
+          print('Found language match: $_selectedLocale');
+          break;
+        }
+      }
+    }
+
     // Set language as selected even when using device locale
     _languageSelected = true;
   }
@@ -446,8 +478,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                  : const Text(
-                    'SIGN IN',
+                  : Text(
+                    context.tr.translate('sign_in').toUpperCase(),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
         ),
@@ -492,7 +524,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('BACK'),
+                child: Text(context.tr.translate('back').toUpperCase()),
               ),
             ),
           if (_currentStep > 1) const SizedBox(width: 16),
@@ -527,19 +559,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child:
-                  _isLoading
-                      ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                      )
-                      : Text(_currentStep < 6 ? 'NEXT' : 'GET STARTED'),
+              child: Builder(
+                builder:
+                    (context) => Text(
+                      context.tr.translate('next').toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+              ),
             ),
           ),
         ],
@@ -600,7 +630,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                child: const Text('BACK'),
+                                child: Text(
+                                  context.tr.translate('back').toUpperCase(),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -779,7 +811,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                                 ),
                                           ),
                                         )
-                                        : const Text('NEXT'),
+                                        : Text(
+                                          context.tr
+                                              .translate('next')
+                                              .toUpperCase(),
+                                        ),
                               ),
                             ),
                           ],
@@ -853,7 +889,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    child: const Text('BACK'),
+                                    child: Text(
+                                      context.tr
+                                          .translate('back')
+                                          .toUpperCase(),
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -896,7 +936,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    child: const Text('NEXT'),
+                                    child: Text(
+                                      context.tr
+                                          .translate('next')
+                                          .toUpperCase(),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -994,7 +1038,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: const Text('BACK'),
+                                  child: Text(
+                                    context.tr.translate('back').toUpperCase(),
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 16),
@@ -1035,7 +1081,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
-                                  child: const Text('GET STARTED'),
+                                  child: Text(
+                                    context.tr
+                                        .translate('get_started')
+                                        .toUpperCase(),
+                                  ),
                                 ),
                               ),
                             ],
@@ -1156,24 +1206,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   String _getStepTitle() {
     if (!_isSignupFlow && _currentStep == 2) {
-      return 'Sign In to Your Account';
+      return context.tr.translate('sign_in');
     }
 
     switch (_currentStep) {
       case 0:
-        return 'Choose Your Language';
+        return context.tr.translate('select_language');
       case 1:
-        return 'Welcome to Hero Budget';
+        return context.tr.translate('welcome');
       case 2:
-        return 'Sign In to Your Account';
+        return context.tr.translate('sign_in');
       case 3:
-        return 'Create an Account';
+        return context.tr.translate('sign_up');
       case 4:
-        return 'Create a Password';
+        return context.tr.translate('create_password');
       case 5:
-        return 'Personal Information';
+        return context.tr.translate('personal_info');
       case 6:
-        return 'Profile Picture';
+        return context.tr.translate('profile_picture');
       default:
         return '';
     }
@@ -1181,24 +1231,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   String _getStepDescription() {
     if (!_isSignupFlow && _currentStep == 2) {
-      return 'Enter your credentials to access your account';
+      return context.tr.translate('enter_credentials');
     }
 
     switch (_currentStep) {
       case 0:
-        return 'Select your preferred language and region for the app.';
+        return context.tr.translate('select_language_desc');
       case 1:
-        return 'The smart way to manage your finances';
+        return context.tr.translate('welcome_desc');
       case 2:
-        return 'Enter your credentials to access your account';
+        return context.tr.translate('enter_credentials');
       case 3:
-        return 'Enter your email to create an account or continue with Google.';
+        return context.tr.translate('enter_email');
       case 4:
-        return 'Create a secure password for your account.';
+        return context.tr.translate('create_password_desc');
       case 5:
-        return 'Tell us more about yourself.';
+        return context.tr.translate('personal_info_desc');
       case 6:
-        return 'Add a profile picture to personalize your account.';
+        return context.tr.translate('profile_picture_desc');
       default:
         return '';
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 
 class EmailSentStep extends StatelessWidget {
   final String email;
@@ -32,9 +33,9 @@ class EmailSentStep extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Email sent text
-            const Text(
-              'Check Your Email',
-              style: TextStyle(
+            Text(
+              context.tr.translate('email_sent_title'),
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryColor,
@@ -42,7 +43,7 @@ class EmailSentStep extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'We\'ve sent a password reset link to:',
+              context.tr.translate('email_sent_description'),
               style: const TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
@@ -58,8 +59,7 @@ class EmailSentStep extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Click the link in the email to reset your password. '
-              'If you don\'t see the email, check your spam folder.',
+              context.tr.translate('email_instructions'),
               style: const TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
@@ -76,9 +76,9 @@ class EmailSentStep extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Try Different Email',
-                  style: TextStyle(
+                child: Text(
+                  context.tr.translate('try_different_email'),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.secondaryColor,

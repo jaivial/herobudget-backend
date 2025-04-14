@@ -103,4 +103,59 @@ class DashboardService {
       return null;
     }
   }
+
+  // Update user information on the backend
+  static Future<Map<String, dynamic>> updateUserInfo(
+    String userId,
+    Map<String, dynamic> updateData,
+  ) async {
+    try {
+      print('Updating user info for ID: $userId with data: $updateData');
+
+      // Check for invalid ID values
+      if (userId == "null" || userId.isEmpty) {
+        throw Exception('Invalid user ID');
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/update'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'id': userId, ...updateData}),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+
+        // Update the local stored user data if we have it
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final storedUserData = prefs.getString(userDataKey);
+
+          if (storedUserData != null && storedUserData.isNotEmpty) {
+            final userData = jsonDecode(storedUserData);
+
+            // Update with new values
+            final updatedUserData = {...userData, ...updateData};
+
+            // Save back to storage
+            await prefs.setString(userDataKey, jsonEncode(updatedUserData));
+            print('Updated local user data with new values');
+          }
+        } catch (e) {
+          print('Error updating local user data: $e');
+          // Continue even if local update fails
+        }
+
+        return responseData;
+      } else {
+        print(
+          'Failed to update user info: ${response.statusCode} - ${response.body}',
+        );
+        throw Exception('Failed to update user information');
+      }
+    } catch (e) {
+      print('Error updating user info: $e');
+      throw Exception('Error connecting to server: $e');
+    }
+  }
 }

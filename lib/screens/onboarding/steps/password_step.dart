@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 
 class PasswordStep extends StatefulWidget {
   final TextEditingController passwordController;
@@ -144,8 +145,8 @@ class _PasswordStepState extends State<PasswordStep>
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
-                'Create Password',
+              Text(
+                context.tr.translate('create_password'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -155,10 +156,10 @@ class _PasswordStepState extends State<PasswordStep>
             ],
           ),
           const SizedBox(height: 8),
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(left: 46),
             child: Text(
-              'Set a secure password for your account',
+              context.tr.translate('create_password_desc'),
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ),
@@ -168,9 +169,9 @@ class _PasswordStepState extends State<PasswordStep>
           TextFormField(
             controller: widget.passwordController,
             decoration: InputDecoration(
-              labelText: 'Password',
+              labelText: context.tr.translate('password'),
               prefixIcon: const Icon(Icons.lock_outline),
-              hintText: 'Create a password',
+              hintText: context.tr.translate('create_password'),
               suffixIcon: IconButton(
                 icon: Icon(
                   widget.obscurePassword
@@ -234,9 +235,9 @@ class _PasswordStepState extends State<PasswordStep>
           TextFormField(
             controller: widget.confirmPasswordController,
             decoration: InputDecoration(
-              labelText: 'Confirm Password',
+              labelText: context.tr.translate('confirm_password'),
               prefixIcon: const Icon(Icons.lock_outline),
-              hintText: 'Confirm your password',
+              hintText: context.tr.translate('confirm_password'),
               suffixIcon: IconButton(
                 icon: Icon(
                   widget.obscureConfirmPassword

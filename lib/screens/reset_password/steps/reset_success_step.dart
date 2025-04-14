@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../main.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 import '../../auth/signin_screen.dart';
 
 class ResetSuccessStep extends StatelessWidget {
@@ -32,9 +33,9 @@ class ResetSuccessStep extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Success text
-            const Text(
-              'Password Reset Successful',
-              style: TextStyle(
+            Text(
+              context.tr.translate('password_reset_successful'),
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryColor,
@@ -42,9 +43,9 @@ class ResetSuccessStep extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Your password has been successfully updated. You can now sign in with your new password.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+            Text(
+              context.tr.translate('password_reset_message'),
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
@@ -90,9 +91,12 @@ class ResetSuccessStep extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Sign In',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                child: Text(
+                  context.tr.translate('sign_in'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

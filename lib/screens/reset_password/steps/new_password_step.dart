@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 
 class NewPasswordStep extends StatelessWidget {
   final TextEditingController passwordController;
@@ -37,18 +38,18 @@ class NewPasswordStep extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Heading
-            const Text(
-              'Create New Password',
-              style: TextStyle(
+            Text(
+              context.tr.translate('new_password_title'),
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryColor,
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Your new password must be different from your previous password.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+            Text(
+              context.tr.translate('password_requirements'),
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 32),
 
@@ -68,9 +69,9 @@ class NewPasswordStep extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'New Password',
-                  style: TextStyle(
+                Text(
+                  context.tr.translate('new_password'),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
@@ -84,7 +85,7 @@ class NewPasswordStep extends StatelessWidget {
               obscureText: obscurePassword,
               enabled: !isLoading,
               decoration: InputDecoration(
-                hintText: 'Enter new password',
+                hintText: context.tr.translate('enter_new_password'),
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -122,9 +123,9 @@ class NewPasswordStep extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Confirm Password',
-                  style: TextStyle(
+                Text(
+                  context.tr.translate('confirm_password'),
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
@@ -138,7 +139,7 @@ class NewPasswordStep extends StatelessWidget {
               obscureText: obscureConfirmPassword,
               enabled: !isLoading,
               decoration: InputDecoration(
-                hintText: 'Confirm new password',
+                hintText: context.tr.translate('confirm_new_password'),
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(
@@ -180,9 +181,9 @@ class NewPasswordStep extends StatelessWidget {
                             Colors.white,
                           ),
                         )
-                        : const Text(
-                          'Reset Password',
-                          style: TextStyle(
+                        : Text(
+                          context.tr.translate('reset_password'),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
