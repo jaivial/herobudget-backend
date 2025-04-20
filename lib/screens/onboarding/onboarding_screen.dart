@@ -202,6 +202,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     print("Building OnboardingScreen with _currentStep: $_currentStep");
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 800;
 
     // Ensure we properly cleanup any leftover state when on the welcome screen
     if (_currentStep == 1) {
@@ -236,10 +238,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       automaticallyImplyLeading: false,
       toolbarHeight: 30, // Reduced height for the AppBar
       actions:
-          _currentStep == 1
+          _currentStep == 1 && !isDesktop
               ? []
               : [
-                // Don't show language selector in app bar for auth options screen (step 1)
+                // Don't show language selector in app bar for auth options screen (step 1) on mobile
                 Container(
                   margin: const EdgeInsets.only(top: 8.0, right: 16.0),
                   decoration: BoxDecoration(
@@ -251,6 +253,257 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ],
     );
 
+    // Desktop layout with split screen design
+    if (isDesktop) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Row(
+            children: [
+              // Left side - Brand/Illustration panel - takes 40% of screen width
+              Expanded(
+                flex: 4,
+                child: Container(
+                  color: AppTheme.primaryColor.withOpacity(0.05),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Logo at the top
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 30.0),
+                        child: Image.asset(
+                          'assets/images/herobudgeticon.png',
+                          height: 120,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      // Hero image or illustration
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.account_balance_wallet,
+                                size: 120,
+                                color: AppTheme.primaryColor,
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                "HeroBudget",
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 30.0,
+                                ),
+                                child: Text(
+                                  "Your personal finance superhero",
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 40),
+                              // Feature points
+                              _buildFeatureItem(
+                                Icons.bar_chart,
+                                "Track Your Expenses",
+                              ),
+                              const SizedBox(height: 16),
+                              _buildFeatureItem(
+                                Icons.savings,
+                                "Save More Money",
+                              ),
+                              const SizedBox(height: 16),
+                              _buildFeatureItem(
+                                Icons.trending_up,
+                                "Reach Financial Goals",
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Language selector at the bottom
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 30.0),
+                        child: LanguageSelectorButton(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Right side - Onboarding form - takes 60% of screen width
+              Expanded(
+                flex: 6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 60.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Step header for steps 2 and higher, except auth options
+                        if (_currentStep >= 2 ||
+                            (_currentStep == 1 && !_isSignupFlow))
+                          _buildHeader(),
+
+                        // Main content with fixed width for better readability
+                        Expanded(
+                          child: Center(
+                            child: SingleChildScrollView(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 20.0,
+                                ),
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 450,
+                                  ),
+                                  child: PageView(
+                                    controller: _pageController,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    onPageChanged: (int page) {
+                                      print("PageView onPageChanged: $page");
+                                      if (_currentStep != page) {
+                                        setState(() {
+                                          _currentStep = page;
+                                        });
+                                      }
+                                    },
+                                    children: [
+                                      // Step 1: Language selection
+                                      LanguageStep(
+                                        selectedLocale: _selectedLocale,
+                                        onLocaleChanged: (locale) {
+                                          setState(() {
+                                            _selectedLocale = locale;
+                                          });
+                                        },
+                                      ),
+
+                                      // Step 2: Auth Options (Sign Up, Sign In, Google)
+                                      AuthOptionsStep(
+                                        onSignUp: _handleSignUpSelected,
+                                        onSignIn: _handleSignInSelected,
+                                        onGoogleSignIn: _handleGoogleSignIn,
+                                      ),
+
+                                      // Step 3 (sign in): Sign In Form
+                                      SignInStep(
+                                        emailController: _signinEmailController,
+                                        passwordController:
+                                            _signinPasswordController,
+                                        obscurePassword: _signinObscurePassword,
+                                        emailError: _signinEmailError,
+                                        passwordError: _signinPasswordError,
+                                        isLoading: _isLoading,
+                                        onToggleObscurePassword: () {
+                                          setState(() {
+                                            _signinObscurePassword =
+                                                !_signinObscurePassword;
+                                          });
+                                        },
+                                        onForgotPassword: _handleForgotPassword,
+                                        onEmailChanged: () {
+                                          if (_signinEmailError != null) {
+                                            setState(() {
+                                              _signinEmailError = null;
+                                            });
+                                          }
+                                        },
+                                        onGoogleSignIn: _handleGoogleSignIn,
+                                      ),
+
+                                      // Step 3 (sign up): Email input & Google sign-in
+                                      EmailStep(
+                                        emailController: _emailController,
+                                        emailError: _emailError,
+                                        isLoading: _isLoading,
+                                        onEmailChanged: () {
+                                          if (_emailError != null) {
+                                            setState(() {
+                                              _emailError = null;
+                                            });
+                                          }
+                                        },
+                                        onGoogleSignIn: _handleGoogleSignIn,
+                                      ),
+
+                                      // Step 4 (sign up): Password creation
+                                      PasswordStep(
+                                        passwordController: _passwordController,
+                                        confirmPasswordController:
+                                            _confirmPasswordController,
+                                        obscurePassword: _obscurePassword,
+                                        obscureConfirmPassword:
+                                            _obscureConfirmPassword,
+                                        verifiedEmail: _verifiedEmail,
+                                        onToggleObscurePassword: () {
+                                          setState(() {
+                                            _obscurePassword =
+                                                !_obscurePassword;
+                                          });
+                                        },
+                                        onToggleObscureConfirmPassword: () {
+                                          setState(() {
+                                            _obscureConfirmPassword =
+                                                !_obscureConfirmPassword;
+                                          });
+                                        },
+                                        onVerifiedEmailChanged: (value) {
+                                          setState(() {
+                                            _verifiedEmail = value;
+                                          });
+                                        },
+                                      ),
+
+                                      // Step 5 (sign up): Personal info
+                                      PersonalInfoStep(
+                                        givenNameController:
+                                            _givenNameController,
+                                        familyNameController:
+                                            _familyNameController,
+                                        firstNameFocusNode: _firstNameFocusNode,
+                                        lastNameFocusNode: _lastNameFocusNode,
+                                      ),
+
+                                      // Step 6 (sign up): Profile image
+                                      _buildProfileImageScreen(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Navigation buttons with fixed width
+                        Container(
+                          width: 450,
+                          padding: const EdgeInsets.symmetric(vertical: 30.0),
+                          child: _buildNavButtons(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Mobile layout (original design)
     return Scaffold(
       appBar: appBar,
       body: SafeArea(
@@ -1214,6 +1467,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
             ],
           ),
+    );
+  }
+
+  // Helper method to build feature items in the left panel
+  Widget _buildFeatureItem(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 24, color: AppTheme.primaryColor),
+        const SizedBox(width: 16),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey[800],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 

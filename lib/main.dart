@@ -6,6 +6,7 @@ import 'package:uni_links/uni_links.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'screens/onboarding/onboarding_screen.dart';
@@ -16,6 +17,7 @@ import 'screens/reset_password/reset_password_screen.dart';
 import 'screens/auth/signin_screen.dart';
 import 'screens/language_selector_screen.dart';
 import 'utils/deep_link_handler.dart';
+import 'utils/platform_channel_fixes.dart';
 import 'theme/app_theme.dart';
 import 'services/language_service.dart';
 import 'services/signin_service.dart';
@@ -53,6 +55,11 @@ final languageChangeNotifier = LanguageChangeNotifier();
 void main() {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize platform channel fixes for macOS
+  if (Platform.isMacOS) {
+    PlatformChannelFixes.init();
+  }
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
@@ -288,21 +295,29 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _initializeDeepLinking() async {
-    // Skip deep linking initialization on web platform
-    if (kIsWeb) {
-      print("Skipping deep link initialization on web platform");
+    // Skip deep linking on macOS since it's not fully supported
+    if (Platform.isMacOS) {
+      print("Skipping deep link initialization on macOS");
       return;
     }
 
-    // Handle app cold start from deep link
+    print("Checking for initial URI from deep link...");
+    // For other platforms, use the standard uni_links implementation
     if (!_initialURILinkHandled) {
       _initialURILinkHandled = true;
       try {
-        print("Checking for initial URI from deep link...");
         final initialURI = await getInitialUri();
         if (initialURI != null) {
           print("Found initial URI: $initialURI");
-          _processDeepLink(initialURI.toString());
+          // Handle the URI here
+          if (mounted) {
+            final linkData = DeepLinkHandler.processDeepLink(
+              initialURI.toString(),
+            );
+            if (linkData != null) {
+              _processDeepLinkData(linkData);
+            }
+          }
         } else {
           print("No initial URI found");
         }
@@ -311,91 +326,56 @@ class _MyAppState extends State<MyApp> {
       }
     }
 
-    // Handle deep links when app is already running
-    print("Setting up stream listener for deep links");
-    _deepLinkSubscription = uriLinkStream.listen(
-      (Uri? uri) {
-        if (uri != null) {
-          print("Received deep link from stream: $uri");
-          _processDeepLink(uri.toString());
-        }
-      },
-      onError: (err) {
-        print('Error handling deep link: $err');
-      },
-    );
+    // Listen for deep links while the app is running (non-macOS platforms)
+    try {
+      _deepLinkSubscription = uriLinkStream.listen(
+        (Uri? uri) {
+          if (uri != null && mounted) {
+            print("Received deep link from stream: $uri");
+            // Handle the URI here
+            final linkData = DeepLinkHandler.processDeepLink(uri.toString());
+            if (linkData != null) {
+              _processDeepLinkData(linkData);
+            }
+          }
+        },
+        onError: (err) {
+          print('Error handling deep link: $err');
+        },
+      );
+    } catch (e) {
+      print('Failed to setup deep link stream: $e');
+    }
   }
 
-  void _processDeepLink(String link) {
-    if (_isHandlingDeepLink) {
-      return; // Prevent concurrent processing
-    }
+  // Helper method to process deep link data
+  void _processDeepLinkData(Map<String, dynamic> linkData) {
+    final linkType = linkData['type'];
 
-    _isHandlingDeepLink = true;
-    print("Processing deep link: $link");
-
-    // Use the enhanced process method from DeepLinkHandler
-    final linkData = DeepLinkHandler.processDeepLink(link);
-
-    if (linkData != null) {
-      final linkType = linkData['type'];
-
-      if (linkType == 'verification') {
-        // Handle verification deep link
-        final verificationCode = linkData['code'];
-        print("Extracted verification code: $verificationCode");
-
-        // IMPORTANT: Directly store this verification code in the global handler
-        verificationCodeHandler.currentVerificationCode = verificationCode;
-
-        // Simply set the verification code and rebuild
+    if (linkType == 'verification') {
+      // Handle verification deep link
+      final code = linkData['code'];
+      if (code != null) {
+        print("Processing verification code: $code");
+        // Show verification success screen
         setState(() {
-          _verificationCode = verificationCode;
+          _verificationCode = code;
         });
-      } else if (linkType == 'password_reset') {
-        // Handle password reset deep link - process it directly here
-        final token = linkData['token'];
-        final userId = linkData['user_id'];
-        print("Extracted password reset token: $token and user_id: $userId");
+      }
+    } else if (linkType == 'password_reset') {
+      // Handle password reset deep link
+      final token = linkData['token'];
+      final userId = linkData['user_id'];
 
-        // Immediately clear the app state to avoid conflicts
-        // This is important to ensure we start with a clean slate
+      if (token != null && userId != null) {
+        print("Processing password reset token: $token, userId: $userId");
+        // Show reset password screen
         setState(() {
-          // Clear any existing data first
-          clearResetPasswordData();
-
-          // Now set the new data
-          resetPasswordHandler.setFromDeepLink(token, userId);
           _resetPasswordToken = token;
           _resetPasswordUserId = userId;
         });
-
-        // Force a complete rebuild of the app with a brand new ResetPasswordScreen
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          print("Post-frame callback for password reset");
-          if (mounted) {
-            setState(() {});
-          }
-        });
-
-        // Additional rebuilds to ensure UI updates
-        for (var delay in [50, 150, 300, 500]) {
-          Future.delayed(Duration(milliseconds: delay), () {
-            print("Delayed rebuild after $delay ms");
-            if (mounted) {
-              setState(() {});
-            }
-          });
-        }
       }
-    } else {
-      print("No recognized deep link content in: $link");
     }
-
-    // Release flag after a delay to prevent rapid processing
-    Future.delayed(const Duration(milliseconds: 800), () {
-      _isHandlingDeepLink = false;
-    });
   }
 
   @override
