@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
+import '../../../widgets/language_selector_button.dart';
 import 'signin_step.dart';
 
 class SignInStepWrapper extends StatefulWidget {
@@ -117,16 +119,27 @@ class _SignInStepWrapperState extends State<SignInStepWrapper> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+      padding: const EdgeInsets.fromLTRB(24, 5, 24, 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Center(
-            child: Image.asset(
-              'assets/images/herobudgeticon.png',
-              height: 60,
-              fit: BoxFit.contain,
-            ),
+          Stack(
+            children: [
+              // Centered logo
+              Center(
+                child: Image.asset(
+                  'assets/images/herobudgeticon.png',
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              // Absolute positioned language selector at the right
+              Positioned(
+                right: 0,
+                top: 0,
+                child: const LanguageSelectorButton(),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           const Text(

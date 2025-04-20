@@ -37,17 +37,7 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 60,
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: LanguageSelectorButton(),
-        ),
-      ],
+      toolbarHeight: 30,
     );
 
     return Scaffold(
@@ -163,16 +153,27 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+      padding: const EdgeInsets.fromLTRB(24, 5, 24, 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Center(
-            child: Image.asset(
-              'assets/images/herobudgeticon.png',
-              height: 60,
-              fit: BoxFit.contain,
-            ),
+          Stack(
+            children: [
+              // Centered logo
+              Center(
+                child: Image.asset(
+                  'assets/images/herobudgeticon.png',
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              // Absolute positioned language selector at the right
+              Positioned(
+                right: 0,
+                top: 0,
+                child: const LanguageSelectorButton(),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Text(

@@ -234,17 +234,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 60, // Altura mayor para el AppBar
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: LanguageSelectorButton(),
-        ),
-      ],
+      toolbarHeight: 30, // Reduced height for the AppBar
+      actions:
+          _currentStep == 1
+              ? []
+              : [
+                // Don't show language selector in app bar for auth options screen (step 1)
+                Container(
+                  margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: LanguageSelectorButton(),
+                ),
+              ],
     );
 
     return Scaffold(
@@ -379,16 +383,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
+      padding: const EdgeInsets.fromLTRB(24, 5, 24, 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Center(
-            child: Image.asset(
-              'assets/images/herobudgeticon.png',
-              height: 60,
-              fit: BoxFit.contain,
-            ),
+          Stack(
+            children: [
+              // Centered logo
+              Center(
+                child: Image.asset(
+                  'assets/images/herobudgeticon.png',
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              // Absolute positioned language selector at the right
+              Positioned(
+                right: 0,
+                top: 0,
+                child: const LanguageSelectorButton(),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Text(
@@ -586,17 +601,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 60,
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: LanguageSelectorButton(),
-        ),
-      ],
+      toolbarHeight: 30, // Reduced height for the AppBar
     );
 
     // Navigate to email step directly using a new route instead of PageView
@@ -857,17 +862,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 60,
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: LanguageSelectorButton(),
-        ),
-      ],
+      toolbarHeight: 30, // Reduced height for the AppBar
     );
 
     return PasswordStepWrapper(
@@ -891,17 +886,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-          toolbarHeight: 60,
-          actions: [
-            Container(
-              margin: const EdgeInsets.only(top: 8.0, right: 16.0),
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: LanguageSelectorButton(),
-            ),
-          ],
+          toolbarHeight: 30, // Reduced height for the AppBar
         );
 
         // Navigate to the personal info step
@@ -1033,17 +1018,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 60,
-      actions: [
-        Container(
-          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
-          decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: LanguageSelectorButton(),
-        ),
-      ],
+      toolbarHeight: 30, // Reduced height for the AppBar
     );
 
     return StatefulBuilder(
