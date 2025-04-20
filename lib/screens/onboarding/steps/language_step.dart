@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import '../../../utils/locale_util.dart';
+import '../../../services/language_service.dart';
 
 class LanguageStep extends StatelessWidget {
   final String selectedLocale;
@@ -14,7 +14,7 @@ class LanguageStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final languages = LocaleUtil.getSupportedLanguagesList();
+    final languages = LanguageService.getSupportedLanguagesList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
@@ -82,31 +82,19 @@ class LanguageStep extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                language['name']!,
-                                style: TextStyle(
-                                  fontWeight:
-                                      isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                  fontSize: 16,
-                                  color:
-                                      isSelected
-                                          ? AppTheme.primaryColor
-                                          : Colors.black87,
-                                ),
-                              ),
-                              Text(
-                                language['region']!,
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            language['name']!,
+                            style: TextStyle(
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                              fontSize: 16,
+                              color:
+                                  isSelected
+                                      ? AppTheme.primaryColor
+                                      : Colors.black87,
+                            ),
                           ),
                         ),
                         if (isSelected)

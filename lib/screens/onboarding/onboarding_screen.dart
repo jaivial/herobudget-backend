@@ -5,12 +5,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../theme/app_theme.dart';
-import '../../utils/locale_util.dart';
 import '../../utils/toast_util.dart';
 import '../../utils/extensions.dart';
 import '../../services/auth_service.dart';
 import '../../services/language_service.dart';
 import '../../services/signin_service.dart';
+import '../../services/app_service.dart';
+import '../../widgets/language_selector_button.dart';
 import '../dashboard/dashboard_screen.dart';
 import 'steps/language_step.dart';
 import 'steps/auth_options_step.dart';
@@ -171,40 +172,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _detectDeviceLocale() {
-    _selectedLocale = LocaleUtil.detectDeviceLocale(null);
+    // Get device locale using the platform
+    final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+    _selectedLocale = deviceLocale.languageCode;
+
+    // Check if the language is supported, otherwise default to English
+    if (!LanguageService.supportedLanguages.containsKey(_selectedLocale)) {
+      _selectedLocale = 'en';
+    }
+
     print('Detected device locale: $_selectedLocale');
-
-    // Try to find the best match for this locale in our supported locales
-    final deviceLocale = LocaleUtil.stringToLocale(_selectedLocale);
-
-    // Check if the exact locale is supported
-    bool exactMatch = false;
-    for (var supportedLocale in LocaleUtil.localeMapping.keys) {
-      final parts = supportedLocale.split('-');
-      if (parts[0].toLowerCase() == deviceLocale.languageCode.toLowerCase() &&
-          parts[1].toLowerCase() ==
-              (deviceLocale.countryCode ?? '').toLowerCase()) {
-        _selectedLocale = supportedLocale;
-        exactMatch = true;
-        print('Found exact locale match: $_selectedLocale');
-        break;
-      }
-    }
-
-    // If no exact match, try to find a match for the language
-    if (!exactMatch) {
-      for (var supportedLocale in LocaleUtil.localeMapping.keys) {
-        final parts = supportedLocale.split('-');
-        if (parts[0].toLowerCase() == deviceLocale.languageCode.toLowerCase()) {
-          _selectedLocale = supportedLocale;
-          print('Found language match: $_selectedLocale');
-          break;
-        }
-      }
-    }
-
-    // Set language as selected even when using device locale
-    _languageSelected = true;
   }
 
   @override
@@ -252,7 +229,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       });
     }
 
+    // Crear un AppBar personalizado con el botón selector de idioma
+    final appBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: Center(child: LanguageSelectorButton()),
+        ),
+      ],
+    );
+
     return Scaffold(
+      appBar: appBar,
       body: SafeArea(
         child: Form(
           key: _formKey,

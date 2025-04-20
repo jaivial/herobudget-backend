@@ -89,5 +89,6 @@
     "valid_email_required": "Please enter a valid email address",
     "no_account_found": "No account found with this email address",
     "failed_to_send_reset_email": "Failed to send reset email",
-    "failed_to_update_password": "Failed to update password"
+    "failed_to_update_password": "Failed to update password",
+    "change_language": "Change Language"
 }

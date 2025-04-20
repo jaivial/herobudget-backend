@@ -22,7 +22,33 @@ import 'services/signin_service.dart';
 import 'services/dashboard_service.dart';
 import 'services/auth_service.dart';
 import 'utils/app_localizations.dart';
-import 'utils/locale_util.dart';
+
+// Language change notifier singleton
+class LanguageChangeNotifier {
+  static final LanguageChangeNotifier _instance =
+      LanguageChangeNotifier._internal();
+
+  factory LanguageChangeNotifier() {
+    return _instance;
+  }
+
+  LanguageChangeNotifier._internal();
+
+  final _languageChangeController = StreamController<String>.broadcast();
+
+  Stream<String> get languageChangeStream => _languageChangeController.stream;
+
+  void notifyLanguageChange(String locale) {
+    _languageChangeController.add(locale);
+  }
+
+  void dispose() {
+    _languageChangeController.close();
+  }
+}
+
+// Create a single instance to be used throughout the app
+final languageChangeNotifier = LanguageChangeNotifier();
 
 void main() {
   // Ensure Flutter binding is initialized
@@ -42,12 +68,18 @@ class MyApp extends StatefulWidget {
 
   @override
   State<MyApp> createState() => _MyAppState();
+
+  // Add this method to expose the refreshLocale functionality
+  static void refreshLocale(BuildContext context, String locale) {
+    myAppKey.currentState?.refreshLocale(locale);
+  }
 }
 
 class _MyAppState extends State<MyApp> {
   bool _initialURILinkHandled = false;
   String? _verificationCode;
   StreamSubscription? _deepLinkSubscription;
+  StreamSubscription? _languageChangeSubscription;
   bool _isLoggedIn = false;
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
@@ -71,11 +103,39 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  // Method to refresh locale without restarting the app
+  void refreshLocale(String localeString) async {
+    print('Refreshing locale to: $localeString');
+
+    // Create a new Locale object
+    final locale = Locale(localeString);
+
+    // Save the preference immediately, but don't wait for it to complete
+    // since we've already saved it in the service
+    LanguageService.saveLanguagePreference(localeString)
+        .then((_) => print('Language preference saved in refreshLocale'))
+        .catchError((e) => print('Error saving language preference: $e'));
+
+    // Update the state once
+    if (mounted) {
+      setState(() {
+        _appLocale = locale;
+        _isLocaleSupported = true;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
     print("MyApp initState - starting app initialization");
+
+    // Subscribe to language change events
+    _languageChangeSubscription = languageChangeNotifier.languageChangeStream
+        .listen((locale) {
+          refreshLocale(locale);
+        });
 
     // First handle deep links, then check user status
     _initializeDeepLinking().then((_) {
@@ -117,25 +177,15 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _checkUserAndLanguage() async {
     try {
-      // First detect device locale and check if it's supported
-      final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
-      final deviceLocaleStr =
-          '${deviceLocale.languageCode}-${deviceLocale.countryCode ?? 'US'}';
-      print('Detected device locale: $deviceLocaleStr');
-
-      // Try to get saved locale from local storage
+      // Get saved locale from local storage
       final savedLocale = await LanguageService.getLanguagePreference();
 
-      // Determine which locale to use
-      String localeToUse = savedLocale ?? deviceLocaleStr;
-      bool isSupported = await LanguageService.isUserLocaleSupported();
-
       // Convert the string locale to Locale object
-      Locale appLocale = LocaleUtil.stringToLocale(localeToUse);
+      Locale appLocale = Locale(savedLocale ?? 'en');
 
       setState(() {
         _appLocale = appLocale;
-        _isLocaleSupported = isSupported;
+        _isLocaleSupported = true;
       });
 
       // Check if user is already signed in
@@ -154,16 +204,18 @@ class _MyAppState extends State<MyApp> {
 
             // If locale exists in user info, save it and use it
             if (userInfo['locale'] != null && userInfo['locale'].isNotEmpty) {
-              await LanguageService.saveLanguagePreference(userInfo['locale']);
+              // Extract language code if using old format (with country code)
+              String languageCode = userInfo['locale'];
+              if (languageCode.contains('-')) {
+                languageCode = languageCode.split('-')[0];
+              }
+
+              await LanguageService.saveLanguagePreference(languageCode);
 
               // Update locale
-              final updatedLocale = LocaleUtil.stringToLocale(
-                userInfo['locale'],
-              );
               setState(() {
-                _appLocale = updatedLocale;
-                _isLocaleSupported =
-                    true; // If we got it from user info, assume it's supported
+                _appLocale = Locale(languageCode);
+                _isLocaleSupported = true;
               });
             }
 
@@ -349,6 +401,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _deepLinkSubscription?.cancel();
+    _languageChangeSubscription?.cancel();
     super.dispose();
   }
 
@@ -413,8 +466,8 @@ class _MyAppState extends State<MyApp> {
       title: 'Hero Budget',
       theme: AppTheme.lightTheme,
       home: homeScreen,
-      localizationsDelegates: [
-        const AppLocalizationsDelegate(),
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

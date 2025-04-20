@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../main.dart';
 import '../../services/reset_password_service.dart';
+import '../../services/app_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/toast_util.dart';
 import '../../utils/deep_link_handler.dart';
 import '../../utils/extensions.dart';
+import '../../widgets/language_selector_button.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'steps/email_step.dart';
 import 'steps/email_sent_step.dart';
@@ -554,6 +556,24 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       }
     }
 
+    // Create AppBar with custom title and language selector button
+    final appBar = AppBar(
+      title: Text(_getStepTitle()),
+      backgroundColor: AppTheme.primaryColor,
+      foregroundColor: Colors.white,
+      elevation: 0,
+      // Hide back button if on password step with token from deep link
+      automaticallyImplyLeading: !(_forcePasswordStep && _currentStep == 2),
+      // Custom back button handling
+      leading: _buildCustomBackButton(),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: Center(child: LanguageSelectorButton()),
+        ),
+      ],
+    );
+
     return WillPopScope(
       // Prevent going back if we're on password step with token
       onWillPop: () async {
@@ -582,16 +602,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         return true;
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_getStepTitle()),
-          backgroundColor: AppTheme.primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          // Hide back button if on password step with token from deep link
-          automaticallyImplyLeading: !(_forcePasswordStep && _currentStep == 2),
-          // Custom back button handling
-          leading: _buildCustomBackButton(),
-        ),
+        appBar: appBar,
         body: SafeArea(child: _buildCurrentStep()),
       ),
     );

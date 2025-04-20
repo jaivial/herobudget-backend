@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../theme/app_theme.dart';
-import '../../../utils/locale_util.dart';
+import '../../../services/language_service.dart';
 
 class ProfileImageStep extends StatelessWidget {
   final File? profileImageFile;
@@ -172,7 +172,7 @@ class ProfileImageStep extends StatelessWidget {
                     child: Row(
                       children: [
                         Text(
-                          LocaleUtil.getRegionFlag(selectedLocale),
+                          LanguageService.getLanguageFlag(selectedLocale),
                           style: const TextStyle(fontSize: 24),
                         ),
                         const SizedBox(width: 12),
@@ -180,7 +180,9 @@ class ProfileImageStep extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              LocaleUtil.getRegionName(selectedLocale),
+                              LanguageService
+                                      .supportedLanguages[selectedLocale] ??
+                                  'Unknown Language',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,

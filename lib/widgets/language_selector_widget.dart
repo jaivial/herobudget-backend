@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../utils/locale_util.dart';
-import '../utils/extensions.dart';
 import '../services/language_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_localizations.dart';
 
 class LanguageSelectorWidget extends StatefulWidget {
   final Function(String)? onLocaleSelected;
@@ -21,7 +20,7 @@ class LanguageSelectorWidget extends StatefulWidget {
 }
 
 class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
-  String _selectedLocale = '';
+  String _selectedLocale = 'en';
 
   @override
   void initState() {
@@ -35,27 +34,16 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
       setState(() {
         _selectedLocale = locale;
       });
-    } else {
-      final deviceLocale = LocaleUtil.detectDeviceLocale(null);
-      setState(() {
-        _selectedLocale = deviceLocale;
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final languages = LocaleUtil.getSupportedLanguagesList();
+    final languages = LanguageService.getSupportedLanguagesList();
+    final translate = AppLocalizations.of(context).translate;
 
     if (widget.isFullScreen) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(context.tr.translate('select_language')),
-          backgroundColor: AppTheme.primaryColor,
-          foregroundColor: Colors.white,
-        ),
-        body: _buildLanguageList(languages),
-      );
+      return Scaffold(body: _buildLanguageList(languages, translate));
     }
 
     return Container(
@@ -78,7 +66,7 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
             children: [
               Expanded(
                 child: Text(
-                  context.tr.translate('select_language'),
+                  translate('select_language'),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -93,13 +81,19 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(height: 300, child: _buildLanguageList(languages)),
+          SizedBox(
+            height: 300,
+            child: _buildLanguageList(languages, translate),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildLanguageList(List<Map<String, String>> languages) {
+  Widget _buildLanguageList(
+    List<Map<String, String>> languages,
+    String Function(String) translate,
+  ) {
     return ListView.builder(
       itemCount: languages.length,
       itemBuilder: (context, index) {
@@ -145,29 +139,15 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
                 Text(language['flag']!, style: const TextStyle(fontSize: 24)),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        language['name']!,
-                        style: TextStyle(
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 16,
-                          color:
-                              isSelected
-                                  ? AppTheme.primaryColor
-                                  : Colors.black87,
-                        ),
-                      ),
-                      Text(
-                        language['region']!,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    language['name']!,
+                    style: TextStyle(
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 16,
+                      color:
+                          isSelected ? AppTheme.primaryColor : Colors.black87,
+                    ),
                   ),
                 ),
                 if (isSelected)

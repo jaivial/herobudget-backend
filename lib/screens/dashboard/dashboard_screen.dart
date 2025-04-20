@@ -3,6 +3,7 @@ import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/dashboard_service.dart';
 import '../../services/language_service.dart';
+import '../../services/app_service.dart';
 import '../../utils/extensions.dart';
 import '../../widgets/localized_text_example.dart';
 import '../../widgets/language_selector_widget.dart';
@@ -146,142 +147,143 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(context.tr.translate('dashboard')),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchLatestUserInfo,
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await AuthService.signOut(context);
+    final appBar = AppService.addLanguageSelectorToAppBar(
+      context,
+      title: context.tr.translate('dashboard'),
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: _fetchLatestUserInfo,
+          color: Colors.white,
+        ),
+        IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: () async {
+            await AuthService.signOut(context);
 
-              if (context.mounted) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OnboardingScreen(),
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _errorMessage.isNotEmpty
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _errorMessage,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _fetchLatestUserInfo,
-                      child: Text(context.tr.translate('retry')),
-                    ),
-                  ],
+            if (context.mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OnboardingScreen(),
                 ),
-              )
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(child: _buildProfileImage(_latestUserInfo)),
-                    const SizedBox(height: 20),
+              );
+            }
+          },
+          color: Colors.white,
+        ),
+      ],
+    );
+
+    Widget body =
+        _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _errorMessage.isNotEmpty
+            ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    _errorMessage,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _fetchLatestUserInfo,
+                    child: Text(context.tr.translate('retry')),
+                  ),
+                ],
+              ),
+            )
+            : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(child: _buildProfileImage(_latestUserInfo)),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text(
+                      '${_latestUserInfo['given_name'] ?? ''} ${_latestUserInfo['family_name'] ?? ''}',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ),
+                  if (_latestUserInfo['email'] != null)
                     Center(
                       child: Text(
-                        '${_latestUserInfo['given_name'] ?? ''} ${_latestUserInfo['family_name'] ?? ''}',
-                        style: Theme.of(context).textTheme.headlineMedium,
+                        _latestUserInfo['email'],
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ),
-                    if (_latestUserInfo['email'] != null)
-                      Center(
-                        child: Text(
-                          _latestUserInfo['email'],
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                      ),
-                    const SizedBox(height: 20),
-                    const Divider(),
+                  const SizedBox(height: 20),
+                  const Divider(),
 
-                    // Add the LocalizedTextExample widget to show translations
-                    const LocalizedTextExample(),
+                  // Add the LocalizedTextExample widget to show translations
+                  const LocalizedTextExample(),
 
-                    const SizedBox(height: 20),
-                    // Language Selection
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.language),
-                        title: Text(context.tr.translate('language')),
-                        subtitle: FutureBuilder<String?>(
-                          future: LanguageService.getLanguagePreference(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Text('Loading...');
-                            }
-                            if (snapshot.hasError) {
-                              return const Text('Error');
-                            }
-                            return Text(snapshot.data ?? 'en-US');
-                          },
-                        ),
-                        onTap: () {
-                          // Show language selector
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                contentPadding: EdgeInsets.zero,
-                                content: LanguageSelectorWidget(
-                                  showCloseButton: true,
-                                  onLocaleSelected: (locale) async {
-                                    // Save selected locale
-                                    await LanguageService.saveLanguagePreference(
-                                      locale,
-                                    );
-
-                                    // Update user info on server
-                                    try {
-                                      await DashboardService.updateUserInfo(
-                                        widget.userId,
-                                        {'locale': locale},
-                                      );
-                                      // Refresh to get updated user info
-                                      _fetchLatestUserInfo();
-                                    } catch (e) {
-                                      print('Error updating user locale: $e');
-                                    }
-
-                                    // Refresh UI to apply new locale
-                                    if (mounted) {
-                                      setState(() {});
-                                    }
-                                  },
-                                ),
-                              );
-                            },
-                          );
+                  const SizedBox(height: 20),
+                  // Language Selection
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.language),
+                      title: Text(context.tr.translate('language')),
+                      subtitle: FutureBuilder<String?>(
+                        future: LanguageService.getLanguagePreference(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Text('Loading...');
+                          }
+                          if (snapshot.hasError) {
+                            return const Text('Error');
+                          }
+                          return Text(snapshot.data ?? 'en-US');
                         },
                       ),
+                      onTap: () {
+                        // Show language selector
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              contentPadding: EdgeInsets.zero,
+                              content: LanguageSelectorWidget(
+                                showCloseButton: true,
+                                onLocaleSelected: (locale) async {
+                                  // Save selected locale
+                                  await LanguageService.saveLanguagePreference(
+                                    locale,
+                                  );
+
+                                  // Update user info on server
+                                  try {
+                                    await DashboardService.updateUserInfo(
+                                      widget.userId,
+                                      {'locale': locale},
+                                    );
+                                    // Refresh to get updated user info
+                                    _fetchLatestUserInfo();
+                                  } catch (e) {
+                                    print('Error updating user locale: $e');
+                                  }
+
+                                  // Use the AppService to update the app locale
+                                  AppService.changeAppLocale(context, locale);
+                                },
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-    );
+            );
+
+    return Scaffold(appBar: appBar, body: body);
   }
 
   Widget _buildProfileImage(Map<String, dynamic> userInfo) {

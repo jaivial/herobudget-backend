@@ -7,7 +7,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
 import '../config/api_config.dart';
-import '../utils/locale_util.dart';
 
 class AuthService {
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -191,13 +190,12 @@ class AuthService {
       print('Got auth tokens');
 
       // Detect device locale
-      final String deviceLocale = LocaleUtil.detectDeviceLocale(null);
-      print('Detected device locale: $deviceLocale');
+      final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+      final String languageCode = deviceLocale.languageCode;
+      final String countryCode = deviceLocale.countryCode ?? 'US';
+      final String normalizedLocale = languageCode;
 
-      // Ensure the locale is properly formatted (not empty and in correct format)
-      final String normalizedLocale =
-          deviceLocale.isEmpty ? 'en-US' : deviceLocale;
-      print('Normalized locale to send: $normalizedLocale');
+      print('Detected device locale: $normalizedLocale');
 
       final response = await http.post(
         Uri.parse('${ApiConfig.googleAuthServiceUrl}/auth/google'),

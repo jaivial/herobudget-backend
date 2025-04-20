@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../services/signin_service.dart';
+import '../../services/app_service.dart';
 import '../../utils/toast_util.dart';
 import '../../utils/extensions.dart';
+import '../../widgets/language_selector_button.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../reset_password/reset_password_screen.dart';
 import '../verification/email_verification_screen.dart';
@@ -166,6 +168,18 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Crear un AppBar personalizado con el botón selector de idioma
+    final appBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: Center(child: LanguageSelectorButton()),
+        ),
+      ],
+    );
+
     return WillPopScope(
       // Handle back button press
       onWillPop: () async {
@@ -173,6 +187,7 @@ class _SignInScreenState extends State<SignInScreen> {
         return false; // Prevent default back navigation
       },
       child: Scaffold(
+        appBar: appBar,
         body: SafeArea(
           child: Form(
             key: _formKey,

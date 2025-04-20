@@ -12,7 +12,8 @@ class ApiConfig {
       if (isRunningOnSimulator()) {
         return 'http://localhost'; // Use localhost for iOS simulators
       }
-      return 'http://192.168.0.22'; // Mac's actual IP address from ifconfig for physical devices
+      // Default to localhost for development - replace with actual IP if needed
+      return 'http://localhost'; // Changed from specific IP to localhost
     }
     // For emulators and web testing
     return 'http://localhost';
