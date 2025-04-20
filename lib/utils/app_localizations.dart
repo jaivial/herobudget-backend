@@ -33,6 +33,7 @@ class AppLocalizations {
     Locale('fr'), // French
     Locale('it'), // Italian
     Locale('de'), // German
+    Locale('gsw'), // Swiss German
     Locale('el'), // Greek
     Locale('nl'), // Dutch
     Locale('da'), // Danish

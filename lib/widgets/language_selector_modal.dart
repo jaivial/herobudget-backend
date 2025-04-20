@@ -27,7 +27,9 @@ class _LanguageSelectorModalState extends State<LanguageSelectorModal> {
     try {
       final locale = await LanguageService.getLanguagePreference();
       final localeString = locale ?? 'en';
-      final languages = LanguageService.getSupportedLanguagesList();
+
+      // Only get languages that have translation files
+      final languages = await _getAvailableLanguages();
 
       if (mounted) {
         setState(() {
@@ -51,6 +53,41 @@ class _LanguageSelectorModalState extends State<LanguageSelectorModal> {
         });
       }
     }
+  }
+
+  // Get the languages that have translation files in the i10n folder
+  Future<List<Map<String, String>>> _getAvailableLanguages() async {
+    final List<Map<String, String>> availableLanguages = [];
+    final allLanguages = LanguageService.getSupportedLanguagesList();
+
+    // Check all languages defined in the service
+    for (final language in allLanguages) {
+      final code = language['code'];
+      if (code != null) {
+        try {
+          // Try to load the translation file for this language
+          await rootBundle.load('assets/l10n/$code.json');
+
+          // If we get here, the file exists, so add the language
+          availableLanguages.add(language);
+        } catch (e) {
+          // File doesn't exist, skip this language
+          print('Translation file for $code not found. Skipping.');
+        }
+      }
+    }
+
+    // If no languages were found (unlikely), at least include English
+    if (availableLanguages.isEmpty) {
+      for (final language in allLanguages) {
+        if (language['code'] == 'en') {
+          availableLanguages.add(language);
+          break;
+        }
+      }
+    }
+
+    return availableLanguages;
   }
 
   // Helper method to preload a language file

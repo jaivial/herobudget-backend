@@ -15,6 +15,7 @@ class LanguageService {
     'fr': 'French (Français)',
     'it': 'Italian (Italiano)',
     'de': 'German (Deutsch)',
+    'gsw': 'Swiss German (Schwiizerdütsch)',
     'el': 'Greek (Ελληνικά)',
     'nl': 'Dutch (Nederlands)',
     'da': 'Danish (Dansk)',
@@ -34,6 +35,7 @@ class LanguageService {
       'fr': '🇫🇷', // French - France flag
       'it': '🇮🇹', // Italian - Italy flag
       'de': '🇩🇪', // German - Germany flag
+      'gsw': '🇨🇭', // Swiss German - Switzerland flag
       'el': '🇬🇷', // Greek - Greece flag
       'nl': '🇳🇱', // Dutch - Netherlands flag
       'da': '🇩🇰', // Danish - Denmark flag

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/extensions.dart';
+import '../../../widgets/language_selector_button.dart';
 import 'password_step.dart';
 
 class PasswordStepWrapper extends StatefulWidget {
@@ -31,7 +32,26 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    // Crear un AppBar para la pantalla de contraseña
+    final passwordScreenAppBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      toolbarHeight: 60,
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
+        ),
+      ],
+    );
+
     return Scaffold(
+      appBar: passwordScreenAppBar,
       body: SafeArea(
         child: Form(
           key: _passwordWrapperFormKey,

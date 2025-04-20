@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../services/language_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_localizations.dart';
@@ -21,11 +22,24 @@ class LanguageSelectorWidget extends StatefulWidget {
 
 class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
   String _selectedLocale = 'en';
+  List<Map<String, String>> _availableLanguages = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _detectCurrentLocale();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await _detectCurrentLocale();
+    await _loadAvailableLanguages();
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _detectCurrentLocale() async {
@@ -37,13 +51,64 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
     }
   }
 
+  Future<void> _loadAvailableLanguages() async {
+    try {
+      final allLanguages = LanguageService.getSupportedLanguagesList();
+      final List<Map<String, String>> availableLanguages = [];
+
+      // Check each language to see if its translation file exists
+      for (final language in allLanguages) {
+        final code = language['code'];
+        if (code != null) {
+          try {
+            // Try to load the file to check if it exists
+            await rootBundle.load('assets/l10n/$code.json');
+
+            // If we get here, the file exists
+            availableLanguages.add(language);
+          } catch (e) {
+            // File doesn't exist, skip this language
+            print('Translation file for $code not found. Skipping.');
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _availableLanguages = availableLanguages;
+
+          // If no languages were found (unlikely), at least include English
+          if (_availableLanguages.isEmpty) {
+            for (final language in allLanguages) {
+              if (language['code'] == 'en') {
+                _availableLanguages.add(language);
+                break;
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {
+      print('Error loading available languages: $e');
+      // Fallback to the full list from the service
+      if (mounted) {
+        setState(() {
+          _availableLanguages = LanguageService.getSupportedLanguagesList();
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final languages = LanguageService.getSupportedLanguagesList();
     final translate = AppLocalizations.of(context).translate;
 
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
     if (widget.isFullScreen) {
-      return Scaffold(body: _buildLanguageList(languages, translate));
+      return Scaffold(body: _buildLanguageList(translate));
     }
 
     return Container(
@@ -81,29 +146,26 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
             ],
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 300,
-            child: _buildLanguageList(languages, translate),
-          ),
+          SizedBox(height: 300, child: _buildLanguageList(translate)),
         ],
       ),
     );
   }
 
-  Widget _buildLanguageList(
-    List<Map<String, String>> languages,
-    String Function(String) translate,
-  ) {
+  Widget _buildLanguageList(Function(String) translate) {
     return ListView.builder(
-      itemCount: languages.length,
+      itemCount: _availableLanguages.length,
       itemBuilder: (context, index) {
-        final language = languages[index];
+        final language = _availableLanguages[index];
         final isSelected = language['code'] == _selectedLocale;
 
         return InkWell(
           onTap: () async {
+            final selectedCode = language['code'];
+            if (selectedCode == null) return;
+
             setState(() {
-              _selectedLocale = language['code']!;
+              _selectedLocale = selectedCode;
             });
 
             // Save the selected locale

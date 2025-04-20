@@ -233,10 +233,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final appBar = AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
+      automaticallyImplyLeading: false,
+      toolbarHeight: 60, // Altura mayor para el AppBar
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: Center(child: LanguageSelectorButton()),
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
         ),
       ],
     );
@@ -244,122 +250,127 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       appBar: appBar,
       body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Always show header for step 2 and higher, except auth options
-              if (_currentStep >= 2 || (_currentStep == 1 && !_isSignupFlow))
-                _buildHeader(),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (int page) {
-                    print("PageView onPageChanged: $page");
-                    // Only update state if the page has actually changed and we're not in the middle of a navigation
-                    if (_currentStep != page) {
-                      setState(() {
-                        _currentStep = page;
-                      });
-                    }
-                  },
-                  children: [
-                    // Step 1: Language selection
-                    LanguageStep(
-                      selectedLocale: _selectedLocale,
-                      onLocaleChanged: (locale) {
-                        setState(() {
-                          _selectedLocale = locale;
-                        });
-                      },
-                    ),
+        child: Center(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Always show header for step 2 and higher, except auth options
+                if (_currentStep >= 2 || (_currentStep == 1 && !_isSignupFlow))
+                  _buildHeader(),
 
-                    // Step 2: Auth Options (Sign Up, Sign In, Google)
-                    AuthOptionsStep(
-                      onSignUp: _handleSignUpSelected,
-                      onSignIn: _handleSignInSelected,
-                      onGoogleSignIn: _handleGoogleSignIn,
-                    ),
-
-                    // Step 3 (sign in): Sign In Form
-                    SignInStep(
-                      emailController: _signinEmailController,
-                      passwordController: _signinPasswordController,
-                      obscurePassword: _signinObscurePassword,
-                      emailError: _signinEmailError,
-                      passwordError: _signinPasswordError,
-                      isLoading: _isLoading,
-                      onToggleObscurePassword: () {
+                // Use flexible instead of expanded for better centering
+                Flexible(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (int page) {
+                      print("PageView onPageChanged: $page");
+                      // Only update state if the page has actually changed and we're not in the middle of a navigation
+                      if (_currentStep != page) {
                         setState(() {
-                          _signinObscurePassword = !_signinObscurePassword;
+                          _currentStep = page;
                         });
-                      },
-                      onForgotPassword: _handleForgotPassword,
-                      onEmailChanged: () {
-                        if (_signinEmailError != null) {
+                      }
+                    },
+                    children: [
+                      // Step 1: Language selection
+                      LanguageStep(
+                        selectedLocale: _selectedLocale,
+                        onLocaleChanged: (locale) {
                           setState(() {
-                            _signinEmailError = null;
+                            _selectedLocale = locale;
                           });
-                        }
-                      },
-                      onGoogleSignIn: _handleGoogleSignIn,
-                    ),
+                        },
+                      ),
 
-                    // Step 3 (sign up): Email input & Google sign-in
-                    EmailStep(
-                      emailController: _emailController,
-                      emailError: _emailError,
-                      isLoading: _isLoading,
-                      onEmailChanged: () {
-                        if (_emailError != null) {
+                      // Step 2: Auth Options (Sign Up, Sign In, Google)
+                      AuthOptionsStep(
+                        onSignUp: _handleSignUpSelected,
+                        onSignIn: _handleSignInSelected,
+                        onGoogleSignIn: _handleGoogleSignIn,
+                      ),
+
+                      // Step 3 (sign in): Sign In Form
+                      SignInStep(
+                        emailController: _signinEmailController,
+                        passwordController: _signinPasswordController,
+                        obscurePassword: _signinObscurePassword,
+                        emailError: _signinEmailError,
+                        passwordError: _signinPasswordError,
+                        isLoading: _isLoading,
+                        onToggleObscurePassword: () {
                           setState(() {
-                            _emailError = null;
+                            _signinObscurePassword = !_signinObscurePassword;
                           });
-                        }
-                      },
-                      onGoogleSignIn: _handleGoogleSignIn,
-                    ),
+                        },
+                        onForgotPassword: _handleForgotPassword,
+                        onEmailChanged: () {
+                          if (_signinEmailError != null) {
+                            setState(() {
+                              _signinEmailError = null;
+                            });
+                          }
+                        },
+                        onGoogleSignIn: _handleGoogleSignIn,
+                      ),
 
-                    // Step 4 (sign up): Password creation
-                    PasswordStep(
-                      passwordController: _passwordController,
-                      confirmPasswordController: _confirmPasswordController,
-                      obscurePassword: _obscurePassword,
-                      obscureConfirmPassword: _obscureConfirmPassword,
-                      verifiedEmail: _verifiedEmail,
-                      onToggleObscurePassword: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                      onToggleObscureConfirmPassword: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                      onVerifiedEmailChanged: (value) {
-                        setState(() {
-                          _verifiedEmail = value;
-                        });
-                      },
-                    ),
+                      // Step 3 (sign up): Email input & Google sign-in
+                      EmailStep(
+                        emailController: _emailController,
+                        emailError: _emailError,
+                        isLoading: _isLoading,
+                        onEmailChanged: () {
+                          if (_emailError != null) {
+                            setState(() {
+                              _emailError = null;
+                            });
+                          }
+                        },
+                        onGoogleSignIn: _handleGoogleSignIn,
+                      ),
 
-                    // Step 5 (sign up): Personal info
-                    PersonalInfoStep(
-                      givenNameController: _givenNameController,
-                      familyNameController: _familyNameController,
-                      firstNameFocusNode: _firstNameFocusNode,
-                      lastNameFocusNode: _lastNameFocusNode,
-                    ),
+                      // Step 4 (sign up): Password creation
+                      PasswordStep(
+                        passwordController: _passwordController,
+                        confirmPasswordController: _confirmPasswordController,
+                        obscurePassword: _obscurePassword,
+                        obscureConfirmPassword: _obscureConfirmPassword,
+                        verifiedEmail: _verifiedEmail,
+                        onToggleObscurePassword: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                        onToggleObscureConfirmPassword: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                        onVerifiedEmailChanged: (value) {
+                          setState(() {
+                            _verifiedEmail = value;
+                          });
+                        },
+                      ),
 
-                    // Step 6 (sign up): Profile image
-                    _buildProfileImageScreen(),
-                  ],
+                      // Step 5 (sign up): Personal info
+                      PersonalInfoStep(
+                        givenNameController: _givenNameController,
+                        familyNameController: _familyNameController,
+                        firstNameFocusNode: _firstNameFocusNode,
+                        lastNameFocusNode: _lastNameFocusNode,
+                      ),
+
+                      // Step 6 (sign up): Profile image
+                      _buildProfileImageScreen(),
+                    ],
+                  ),
                 ),
-              ),
-              _buildNavButtons(),
-            ],
+                _buildNavButtons(),
+              ],
+            ),
           ),
         ),
       ),
@@ -570,12 +581,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _handleSignUpSelected() {
     print("_handleSignUpSelected called, navigating to email step");
 
+    // Crear un AppBar para la pantalla de email
+    final emailScreenAppBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      toolbarHeight: 60,
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
+        ),
+      ],
+    );
+
     // Navigate to email step directly using a new route instead of PageView
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) => Scaffold(
+              appBar: emailScreenAppBar,
               body: SafeArea(
                 child: Form(
                   key: _signUpFormKey,
@@ -822,6 +852,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Helper method to build the password screen
   Widget _buildPasswordScreen() {
+    // Crear un AppBar para la pantalla de contraseña
+    final passwordScreenAppBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      toolbarHeight: 60,
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
+        ),
+      ],
+    );
+
     return PasswordStepWrapper(
       passwordController: _passwordController,
       confirmPasswordController: _confirmPasswordController,
@@ -838,12 +886,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           _currentStep = 5;
         });
 
+        // Crear un AppBar para la pantalla de información personal
+        final personalInfoScreenAppBar = AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          toolbarHeight: 60,
+          actions: [
+            Container(
+              margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: LanguageSelectorButton(),
+            ),
+          ],
+        );
+
         // Navigate to the personal info step
         Navigator.push(
           context,
           MaterialPageRoute(
             builder:
                 (context) => Scaffold(
+                  appBar: personalInfoScreenAppBar,
                   body: SafeArea(
                     child: Form(
                       key: _personalInfoFormKey,
@@ -961,11 +1028,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       print("Confirmed email value before profile screen: '$_signupEmail'");
     }
 
+    // Crear un AppBar para la pantalla de imagen de perfil
+    final profileImageScreenAppBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      toolbarHeight: 60,
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
+        ),
+      ],
+    );
+
     return StatefulBuilder(
       builder:
           (context, setState) => Stack(
             children: [
               Scaffold(
+                appBar: profileImageScreenAppBar,
                 body: SafeArea(
                   child: Form(
                     key: _profileImageFormKey,

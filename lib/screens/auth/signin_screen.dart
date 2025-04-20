@@ -172,10 +172,16 @@ class _SignInScreenState extends State<SignInScreen> {
     final appBar = AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
+      automaticallyImplyLeading: false,
+      toolbarHeight: 60, // Altura mayor para el AppBar
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: Center(child: LanguageSelectorButton()),
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
         ),
       ],
     );

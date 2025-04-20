@@ -24,27 +24,23 @@ class AuthOptionsStep extends StatelessWidget {
           // Check if localizations are available
           final _ = context.tr;
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight:
-                    MediaQuery.of(context).size.height -
-                    120, // Account for safe areas and padding
+          return Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 36.0,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 16),
-
+                  const SizedBox(height: 30), // Espacio adicional al principio
                   // Hero Budget Logo
                   Image.asset(
                     'assets/images/herobudgeticon.png',
                     height: 100,
                     fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 24),
-
+                  const SizedBox(height: 36), // Aumentamos el espacio
                   // Welcome Text
                   Text(
                     context.tr.translate('welcome'),

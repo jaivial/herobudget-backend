@@ -16,6 +16,7 @@ class LanguageSelectorButton extends StatefulWidget {
 class _LanguageSelectorButtonState extends State<LanguageSelectorButton> {
   String _currentLocale = 'en';
   String _flagEmoji = '🇺🇸';
+  String _languageName = 'English';
   StreamSubscription? _languageChangeSubscription;
 
   @override
@@ -27,10 +28,7 @@ class _LanguageSelectorButtonState extends State<LanguageSelectorButton> {
     _languageChangeSubscription = languageChangeNotifier.languageChangeStream
         .listen((locale) {
           if (mounted) {
-            setState(() {
-              _currentLocale = locale;
-              _flagEmoji = LanguageService.getLanguageFlag(locale);
-            });
+            _updateLanguageInfo(locale);
           }
         });
   }
@@ -47,16 +45,28 @@ class _LanguageSelectorButtonState extends State<LanguageSelectorButton> {
     super.dispose();
   }
 
+  void _updateLanguageInfo(String locale) {
+    setState(() {
+      _currentLocale = locale;
+      _flagEmoji = LanguageService.getLanguageFlag(locale);
+
+      // Get the full language name
+      final languages = LanguageService.getSupportedLanguagesList();
+      for (final lang in languages) {
+        if (lang['code'] == locale) {
+          _languageName = lang['name'] ?? locale.toUpperCase();
+          break;
+        }
+      }
+    });
+  }
+
   Future<void> _loadCurrentLocale() async {
     final locale = await LanguageService.getLanguagePreference();
     final localeString = locale ?? 'en';
-    final flag = LanguageService.getLanguageFlag(localeString);
 
     if (mounted) {
-      setState(() {
-        _currentLocale = localeString;
-        _flagEmoji = flag;
-      });
+      _updateLanguageInfo(localeString);
     }
   }
 
@@ -71,10 +81,7 @@ class _LanguageSelectorButtonState extends State<LanguageSelectorButton> {
     if (selectedLocale != null && selectedLocale != _currentLocale) {
       // No need to call notifyLanguageChange here, the modal already does it
       if (mounted) {
-        setState(() {
-          _currentLocale = selectedLocale;
-          _flagEmoji = LanguageService.getLanguageFlag(selectedLocale);
-        });
+        _updateLanguageInfo(selectedLocale);
       }
     }
   }
@@ -83,31 +90,34 @@ class _LanguageSelectorButtonState extends State<LanguageSelectorButton> {
   Widget build(BuildContext context) {
     final languageCode = _currentLocale.toUpperCase();
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8.0),
-        onTap: () => _showLanguageSelector(context),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8.0),
-            border: Border.all(color: Theme.of(context).dividerColor),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_flagEmoji, style: const TextStyle(fontSize: 16)),
-              const SizedBox(width: 4),
-              Text(
-                languageCode,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
+    return Tooltip(
+      message: _languageName,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8.0),
+          onTap: () => _showLanguageSelector(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8.0),
+              border: Border.all(color: Theme.of(context).dividerColor),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_flagEmoji, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 4),
+                Text(
+                  languageCode,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
