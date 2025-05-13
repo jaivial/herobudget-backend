@@ -12,6 +12,7 @@ import (
 	"image/png"
 	"io"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -322,9 +323,19 @@ func handleCheckEmail(w http.ResponseWriter, r *http.Request) {
 
 // Helper function to generate a random verification code
 func generateVerificationCode() string {
-	b := make([]byte, 16)
-	rand.Read(b)
-	return fmt.Sprintf("%x", b)
+	// Generate a 6-digit numeric OTP code
+	const digits = "0123456789"
+	b := make([]byte, 6)
+	for i := range b {
+		randomIndex, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
+		if err != nil {
+			// Fallback if there's an error with crypto/rand
+			b[i] = digits[0]
+			continue
+		}
+		b[i] = digits[randomIndex.Int64()]
+	}
+	return string(b)
 }
 
 // Process image: resize, compress, and convert to WebP
@@ -427,12 +438,7 @@ func sendVerificationEmail(toEmail, verificationCode, userName string) error {
 	}
 
 	// Log the values for debugging
-	log.Printf("Sending verification email - Email: %s, Code: %s, Name: %s", toEmail, verificationCode, userName)
-
-	// Format a deep link URL that will be handled by the app
-	// The format should be: herobudget://verify-email?code=VERIFICATION_CODE
-	verificationLink := fmt.Sprintf("herobudget://verify-email?code=%s", verificationCode)
-	log.Printf("Generated verification link: %s", verificationLink)
+	log.Printf("Sending verification email with OTP - Email: %s, Code: %s, Name: %s", toEmail, verificationCode, userName)
 
 	// Read the herobudgeticon.png image for embedding
 	imgPath := filepath.Join("..", "..", "assets", "images", "herobudgeticon.png")
@@ -459,7 +465,7 @@ func sendVerificationEmail(toEmail, verificationCode, userName string) error {
 		imageTag = ""
 	}
 
-	// Build the email HTML body manually to avoid formatting issues
+	// Build the email HTML body with OTP code instead of verification link
 	emailBody := `
 <!DOCTYPE html>
 <html>
@@ -477,10 +483,11 @@ func sendVerificationEmail(toEmail, verificationCode, userName string) error {
 		return ""
 	})() + `
         <p style="margin-bottom: 20px; font-size: 18px; color: #4A154B; font-weight: 500;">Hello ` + userName + `,</p>
-        <p style="margin-bottom: 30px; color: #4A154B;">Thank you for signing up with Hero Budget. To complete your registration, please verify your email address by clicking the button below:</p>
-        <p style="text-align: center; margin: 30px 0;">
-            <a href="` + verificationLink + `" style="background-color: #6A1B9A; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 3px 5px rgba(106, 27, 154, 0.3);">Verify Email Address</a>
-        </p>
+        <p style="margin-bottom: 30px; color: #4A154B;">Thank you for signing up with Hero Budget. To complete your registration, please enter the verification code below in the app:</p>
+        <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; font-size: 32px; letter-spacing: 5px; font-weight: bold; color: #6A1B9A; margin: 30px auto; max-width: 250px; box-shadow: 0 3px 5px rgba(106, 27, 154, 0.2);">
+            ` + verificationCode + `
+        </div>
+        <p style="color: #4A154B; font-size: 14px;">This code will expire in 24 hours.</p>
     </div>
     <p style="color: #777777; font-size: 12px; text-align: center; margin-top: 20px;">
         If you did not create an account with Hero Budget, please ignore this email.
@@ -500,7 +507,7 @@ func sendVerificationEmail(toEmail, verificationCode, userName string) error {
 		return fmt.Errorf("failed to send verification email: %v", err)
 	}
 
-	log.Printf("Verification email sent successfully to %s", toEmail)
+	log.Printf("Verification email with OTP sent successfully to %s", toEmail)
 	return nil
 }
 

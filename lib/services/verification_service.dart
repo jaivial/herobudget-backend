@@ -56,13 +56,13 @@ class VerificationService {
       );
 
       print(
-        'Resend verification response: ${response.statusCode} - ${response.body}',
+        'Resend verification code response: ${response.statusCode} - ${response.body}',
       );
 
       if (response.statusCode == 200) {
         return {'success': true};
       } else {
-        String errorMessage = 'Failed to resend verification email';
+        String errorMessage = 'Failed to resend verification code';
         try {
           final errorData = jsonDecode(response.body);
           if (errorData is Map<String, dynamic> &&
@@ -75,7 +75,7 @@ class VerificationService {
         return {'success': false, 'error': errorMessage};
       }
     } catch (e) {
-      print('Error resending verification email: $e');
+      print('Error resending verification code: $e');
       return {'success': false, 'error': 'Connection error: $e'};
     }
   }
@@ -83,7 +83,7 @@ class VerificationService {
   // Verify email with code
   static Future<Map<String, dynamic>> verifyEmail(String code) async {
     try {
-      print('Starting verification attempt with code: $code');
+      print('Starting verification attempt with OTP code: $code');
 
       // First, check if we have a locally stored userId and email
       final prefs = await SharedPreferences.getInstance();
@@ -95,7 +95,7 @@ class VerificationService {
         try {
           final userData = jsonDecode(userDataStr);
           email = userData['email'] as String?;
-          print('Found locally stored email: $email for verification');
+          print('Found locally stored email: $email for OTP verification');
         } catch (e) {
           print('Error parsing user data: $e');
         }
@@ -111,73 +111,49 @@ class VerificationService {
         }),
       );
 
-      print('Verify email response: ${response.statusCode} - ${response.body}');
+      print(
+        'Verify email with OTP response: ${response.statusCode} - ${response.body}',
+      );
 
       if (response.statusCode == 200) {
-        // Parse the response data
-        try {
-          final responseData = jsonDecode(response.body);
-          print('Verification successful! User ID: ${responseData['user_id']}');
-
-          // Format the data to match what the SuccessScreen expects
-          Map<String, dynamic> userData = {
-            'user_id':
-                responseData['user_id'] ?? responseData['id'] ?? userId ?? '0',
-            'email': responseData['email'] ?? email ?? '',
-            'verified_email': true,
-          };
-
-          // Merge any additional user data from the response
-          if (responseData is Map<String, dynamic>) {
-            userData.addAll(responseData);
-          }
-
-          return {'success': true, 'user': userData};
-        } catch (e) {
-          print('Error parsing success response: $e');
-
-          // Even if we can't parse the response, consider it a success
-          // if we got a 200 OK response
-          return {
-            'success': true,
-            'user': {
-              'user_id': userId ?? '0',
-              'email': email ?? 'user@example.com',
-              'verified_email': true,
-            },
-          };
-        }
+        // Successful verification
+        final responseData = jsonDecode(response.body);
+        return {
+          'success': true,
+          'user': responseData,
+          'user_id': responseData['user_id'] ?? responseData['id'],
+        };
       } else if (response.statusCode == 404) {
         // Special case for 404 - code not found
-        print('Verification code not found in database: $code');
+        print('Verification OTP code not found in database: $code');
 
         // If we have a user ID and email, try to resend
         if (userId != null && email != null) {
-          print('Attempting to resend verification email to $email');
+          print('Attempting to resend verification code to $email');
 
           try {
             final resendResult = await resendVerificationEmail(userId, email);
             if (resendResult['success'] == true) {
-              print('Successfully resent verification email');
+              print('Successfully resent verification code');
               return {
                 'success': false,
                 'error':
-                    'Verification code expired. A new verification email has been sent to your email address.',
+                    'Verification code expired. A new verification code has been sent to your email address.',
               };
             } else {
               print(
-                'Failed to resend verification email: ${resendResult['error']}',
+                'Failed to resend verification code: ${resendResult['error']}',
               );
             }
           } catch (e) {
-            print('Error resending verification email: $e');
+            print('Error resending verification code: $e');
           }
         }
 
         return {
           'success': false,
           'error':
-              'Invalid verification code. Please request a new verification email.',
+              'Invalid verification code. Please request a new verification code.',
         };
       } else {
         // Handle other error responses
@@ -198,16 +174,14 @@ class VerificationService {
             errorMessage = response.body.trim();
           }
         } catch (e) {
-          // If we can't parse the response, use the raw response body
           print('Error parsing error response: $e');
-          errorMessage = response.body.trim();
         }
 
         return {'success': false, 'error': errorMessage};
       }
     } catch (e) {
-      print('Error verifying email: $e');
-      return {'success': false, 'error': 'Connection error: $e'};
+      print('Error in verifyEmail: $e');
+      return {'success': false, 'error': 'Network or server error: $e'};
     }
   }
 }

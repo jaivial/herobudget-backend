@@ -49,50 +49,54 @@ class AppLocalizations {
     try {
       final String languageCode = locale.languageCode;
 
+      // Pre-load the English translations as fallback
+      String englishJsonString = '';
       try {
-        // Try to load the file for the specific language
-        String jsonString = await rootBundle.loadString(
-          'assets/l10n/$languageCode.json',
+        englishJsonString = await rootBundle.loadString('assets/l10n/en.json');
+        final Map<String, dynamic> englishJsonMap = jsonDecode(
+          englishJsonString,
         );
 
-        // If we reach here, the file was found and loaded
-        final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
-
-        // Convert to a map with String keys and String values
-        _localizedStrings = jsonMap.map((key, value) {
+        // Convert to a map with String keys and String values for fallback
+        _localizedStrings = englishJsonMap.map((key, value) {
           return MapEntry(key, value.toString());
         });
-
-        return true;
       } catch (e) {
-        print(
-          'Failed to load language file for ${locale.languageCode}. Error: $e',
-        );
-
-        // Create default strings with common values to prevent app crash
+        print('Failed to load English fallback file. Error: $e');
+        // Create minimum default strings
         _localizedStrings = {
           'app_name': 'Hero Budget',
           'welcome': 'Welcome to Hero Budget',
           'select_language': 'Select Language',
           'cancel': 'Cancel',
         };
+      }
 
-        // Try to load the English file as fallback
+      // If we're not loading English, try to load the requested language
+      if (languageCode != 'en') {
         try {
+          // Try to load the file for the specific language
           String jsonString = await rootBundle.loadString(
-            'assets/l10n/en.json',
+            'assets/l10n/$languageCode.json',
           );
+
+          // If we reach here, the file was found and loaded
           final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
-          _localizedStrings = jsonMap.map((key, value) {
-            return MapEntry(key, value.toString());
+
+          // Convert to a map with String keys and String values
+          // and merge with the English fallbacks
+          jsonMap.forEach((key, value) {
+            _localizedStrings[key] = value.toString();
           });
-          return true;
-        } catch (fallbackError) {
-          print('Failed to load fallback language file. Error: $fallbackError');
-          // We already set basic defaults above, so we can continue
-          return true;
+        } catch (e) {
+          print(
+            'Failed to load language file for ${locale.languageCode}. Using English fallback. Error: $e',
+          );
+          // We already loaded English fallbacks above, so we can continue
         }
       }
+
+      return true;
     } catch (e) {
       print('Unexpected error in load(): $e');
       // Create minimum set of defaults to keep app functioning
