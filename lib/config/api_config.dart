@@ -39,6 +39,11 @@ class ApiConfig {
   static const int googleAuthServicePort = 8081;
   static const int fetchDashboardServicePort = 8085;
   static const int resetPasswordServicePort = 8086;
+  static const int dashboardDataServicePort = 8087;
+  static const int budgetManagementServicePort = 8088;
+  static const int savingsManagementServicePort = 8089;
+  static const int cashBankManagementServicePort = 8090;
+  static const int billsManagementServicePort = 8091;
 
   // Service endpoints
   static String get signupServiceUrl => '$baseApiUrl:$signupServicePort';
@@ -50,6 +55,16 @@ class ApiConfig {
       '$baseApiUrl:$fetchDashboardServicePort';
   static String get resetPasswordServiceUrl =>
       '$baseApiUrl:$resetPasswordServicePort';
+  static String get dashboardDataServiceUrl =>
+      '$baseApiUrl:$dashboardDataServicePort';
+  static String get budgetManagementUrl =>
+      '$baseApiUrl:$budgetManagementServicePort';
+  static String get savingsManagementUrl =>
+      '$baseApiUrl:$savingsManagementServicePort';
+  static String get cashBankManagementUrl =>
+      '$baseApiUrl:$cashBankManagementServicePort';
+  static String get billsManagementUrl =>
+      '$baseApiUrl:$billsManagementServicePort';
 
   // This method is simplified as we'll just always use the IP address on iOS devices
   // For more precise detection, you could add device_info_plus package

@@ -3,9 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/user_model.dart';
+import '../models/dashboard_model.dart';
 
 class DashboardService {
   static String get baseUrl => ApiConfig.fetchDashboardServiceUrl;
+  static String get dashboardDataUrl => ApiConfig.dashboardDataServiceUrl;
 
   // Constants for localStorage keys - consistent across the app
   static const String userIdKey = 'user_id';
@@ -156,6 +158,241 @@ class DashboardService {
     } catch (e) {
       print('Error updating user info: $e');
       throw Exception('Error connecting to server: $e');
+    }
+  }
+
+  // Obtener los datos del dashboard
+  Future<DashboardModel> fetchDashboardData({String period = 'monthly'}) async {
+    try {
+      // Obtener el ID de usuario de SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      // Realizar la petición HTTP usando la URL del servicio de datos del dashboard
+      final response = await http.get(
+        Uri.parse(
+          '${dashboardDataUrl}/dashboard/data?user_id=$userId&period=$period',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      // Verificar si la respuesta es exitosa
+      if (response.statusCode == 200) {
+        // Parsear la respuesta JSON
+        final Map<String, dynamic> data = json.decode(response.body);
+        return DashboardModel.fromJson(data);
+      } else {
+        throw Exception(
+          'Error al obtener datos del dashboard: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      // En caso de error, devolver un modelo con valores por defecto
+      print('Error en fetchDashboardData: $e');
+      throw Exception('Error al obtener datos del dashboard: $e');
+    }
+  }
+
+  // Cambiar el periodo de tiempo
+  Future<DashboardModel> changePeriod(String period) async {
+    return await fetchDashboardData(period: period);
+  }
+
+  // Actualizar el objetivo de ahorro
+  Future<bool> updateSavingsGoal(double goal) async {
+    try {
+      // Obtener el ID de usuario de SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      // Realizar la petición HTTP
+      final response = await http.post(
+        Uri.parse('$baseUrl/savings/update'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'user_id': userId, 'goal': goal}),
+      );
+
+      // Verificar si la respuesta es exitosa
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception(
+          'Error al actualizar objetivo de ahorro: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('Error en updateSavingsGoal: $e');
+      return false;
+    }
+  }
+
+  // Registrar un nuevo gasto
+  Future<bool> addExpense({
+    required String name,
+    required double amount,
+    required String category,
+    String? notes,
+  }) async {
+    try {
+      // Obtener el ID de usuario de SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      // Realizar la petición HTTP
+      final response = await http.post(
+        Uri.parse('$baseUrl/expenses/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'name': name,
+          'amount': amount,
+          'category': category,
+          'notes': notes,
+          'date': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      // Verificar si la respuesta es exitosa
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Error al registrar gasto: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error en addExpense: $e');
+      return false;
+    }
+  }
+
+  // Registrar un nuevo ingreso
+  Future<bool> addIncome({
+    required String name,
+    required double amount,
+    required String category,
+    String? notes,
+  }) async {
+    try {
+      // Obtener el ID de usuario de SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      // Realizar la petición HTTP
+      final response = await http.post(
+        Uri.parse('$baseUrl/income/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'name': name,
+          'amount': amount,
+          'category': category,
+          'notes': notes,
+          'date': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      // Verificar si la respuesta es exitosa
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Error al registrar ingreso: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error en addIncome: $e');
+      return false;
+    }
+  }
+
+  // Agregar una nueva factura
+  Future<bool> addBill({
+    required String name,
+    required double amount,
+    required String dueDate,
+    required String category,
+    required String icon,
+    required bool recurring,
+  }) async {
+    try {
+      // Obtener el ID de usuario de SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      // Realizar la petición HTTP
+      final response = await http.post(
+        Uri.parse('$baseUrl/bills/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'name': name,
+          'amount': amount,
+          'due_date': dueDate,
+          'category': category,
+          'icon': icon,
+          'recurring': recurring,
+          'paid': false,
+          'overdue': false,
+          'overdue_days': 0,
+        }),
+      );
+
+      // Verificar si la respuesta es exitosa
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Error al agregar factura: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error en addBill: $e');
+      return false;
+    }
+  }
+
+  // Marcar una factura como pagada
+  Future<bool> payBill(int billId) async {
+    try {
+      // Obtener el ID de usuario de SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('Usuario no autenticado');
+      }
+
+      // Realizar la petición HTTP
+      final response = await http.post(
+        Uri.parse('$baseUrl/bills/pay'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'user_id': userId, 'bill_id': billId}),
+      );
+
+      // Verificar si la respuesta es exitosa
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Error al pagar factura: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error en payBill: $e');
+      return false;
     }
   }
 }

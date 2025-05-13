@@ -11,6 +11,11 @@ FETCH_DASHBOARD_PORT=8085
 RESET_PASSWORD_PORT=8086
 SIGNUP_PORT=8082
 GOOGLE_AUTH_PORT=8081
+DASHBOARD_DATA_PORT=8087
+BUDGET_MANAGEMENT_PORT=8088
+SAVINGS_MANAGEMENT_PORT=8089
+CASH_BANK_MANAGEMENT_PORT=8090
+BILLS_MANAGEMENT_PORT=8091
 
 # Function to check if a port is in use
 is_port_in_use() {
@@ -27,6 +32,11 @@ get_port_for_service() {
     "reset_password") echo $RESET_PASSWORD_PORT ;;
     "signup") echo $SIGNUP_PORT ;;
     "google_auth") echo $GOOGLE_AUTH_PORT ;;
+    "dashboard_data") echo $DASHBOARD_DATA_PORT ;;
+    "budget_management") echo $BUDGET_MANAGEMENT_PORT ;;
+    "savings_management") echo $SAVINGS_MANAGEMENT_PORT ;;
+    "cash_bank_management") echo $CASH_BANK_MANAGEMENT_PORT ;;
+    "bills_management") echo $BILLS_MANAGEMENT_PORT ;;
     *) echo "" ;;
   esac
 }

@@ -10,7 +10,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'screens/onboarding/onboarding_screen.dart';
-import 'screens/dashboard/dashboard_screen.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/verification/email_verification_screen.dart';
 import 'screens/verification/email_verification_success_screen.dart';
 import 'screens/reset_password/reset_password_screen.dart';
@@ -432,10 +432,7 @@ class _MyAppState extends State<MyApp> {
       homeScreen = const SignInScreen();
     } else if (_isLoggedIn && _userData != null) {
       // Show dashboard if user is logged in
-      homeScreen = DashboardScreen(
-        userId: _userData!['id'].toString(),
-        userInfo: _userData!,
-      );
+      homeScreen = const DashboardScreen();
     } else {
       // Show onboarding for new users
       homeScreen = OnboardingScreen();
