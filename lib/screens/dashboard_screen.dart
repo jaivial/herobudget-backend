@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
 import '../models/user_model.dart';
@@ -21,7 +22,8 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with SingleTickerProviderStateMixin {
   final DashboardService _dashboardService = DashboardService();
   final SavingsService _savingsService = SavingsService();
   final CashBankService _cashBankService = CashBankService();
@@ -31,11 +33,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
   UserModel? _user;
   int _currentNavigationIndex = 0;
 
+  // Control del menú de acciones rápidas
+  bool _isQuickMenuExpanded = false;
+  late AnimationController _animationController;
+
+  // Definición de acciones rápidas
+  final List<Map<String, dynamic>> _quickActions = [
+    {'icon': Icons.add_card, 'label': 'Ingreso', 'color': Colors.green},
+    {'icon': Icons.shopping_bag, 'label': 'Gasto', 'color': Colors.red},
+    {'icon': Icons.receipt, 'label': 'Factura', 'color': Colors.blue},
+    {'icon': Icons.category, 'label': 'Categoría', 'color': Colors.orange},
+  ];
+
   @override
   void initState() {
     super.initState();
     _loadUser();
     _refreshDashboard();
+
+    // Inicializar el controlador de animación para el overlay y las acciones rápidas
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  // Alternar el estado del menú de acciones rápidas
+  void _toggleQuickMenu() {
+    setState(() {
+      _isQuickMenuExpanded = !_isQuickMenuExpanded;
+
+      if (_isQuickMenuExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
   }
 
   Future<void> _loadUser() async {
@@ -88,6 +127,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -246,7 +287,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          // Barra de navegación superpuesta al contenido
+          // Overlay oscuro cuando el menú de acciones rápidas está abierto
+          if (_isQuickMenuExpanded)
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _toggleQuickMenu, // Cerrar el menú al tocar fuera
+                child: AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return Container(
+                      color: Colors.black.withOpacity(
+                        0.5 * _animationController.value,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+          // Acciones rápidas - Aparecer en semicírculo cuando el menú está expandido
+          if (_isQuickMenuExpanded) ..._buildQuickActions(screenWidth),
+
+          // Barra de navegación en la parte inferior
           Positioned(
             bottom: 0,
             left: 0,
@@ -287,6 +349,144 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+
+      // Botón flotante de acciones rápidas
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          print("FloatingActionButton pressed");
+          _toggleQuickMenu();
+        },
+        backgroundColor:
+            _isQuickMenuExpanded
+                ? Theme.of(context).colorScheme.error
+                : Theme.of(context).colorScheme.primary,
+        elevation: 8,
+        child: AnimatedRotation(
+          turns:
+              _isQuickMenuExpanded
+                  ? 0.125
+                  : 0, // Rotación de 45 grados cuando está expandido
+          duration: const Duration(milliseconds: 250),
+          child: const Icon(
+            Icons.add, // Siempre usar el icono +, al rotarlo se verá como una x
+            size: 35,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  // Construir las acciones rápidas en semicírculo
+  List<Widget> _buildQuickActions(double screenWidth) {
+    // Radio del semicírculo donde se distribuirán las acciones
+    final double radius = math.min(120, screenWidth * 0.35);
+
+    // Posición base para las acciones (ajustar según sea necesario)
+    const double baseBottomPosition = 90;
+
+    // Lista para almacenar los widgets de acciones
+    List<Widget> actionWidgets = [];
+
+    // Número de acciones
+    final int numActions = _quickActions.length;
+
+    for (int i = 0; i < numActions; i++) {
+      // Distribuir las acciones en un semicírculo - parte inferior del círculo
+      final double angle = math.pi + (math.pi * i / (numActions - 1));
+
+      // Calcular la posición en el semicírculo
+      final double x = radius * math.cos(angle);
+      final double y = radius * math.sin(angle);
+
+      final Map<String, dynamic> action = _quickActions[i];
+
+      actionWidgets.add(
+        AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            // Calcular posición con la animación
+            double adjustedX = x * _animationController.value;
+            double adjustedY = y * _animationController.value;
+
+            // Centrar respecto al botón flotante
+            double leftPosition = screenWidth / 2 - 28 + adjustedX;
+
+            return Positioned(
+              bottom: baseBottomPosition - adjustedY,
+              left: leftPosition,
+              child: Opacity(opacity: _animationController.value, child: child),
+            );
+          },
+          child: _buildQuickActionItem(
+            icon: action['icon'],
+            label: action['label'],
+            color: action['color'],
+          ),
+        ),
+      );
+    }
+
+    return actionWidgets;
+  }
+
+  // Widget para cada elemento de acción rápida
+  Widget _buildQuickActionItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              _toggleQuickMenu(); // Cerrar el menú
+
+              // Mostrar feedback de la acción seleccionada
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Acción: $label')));
+            },
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Icon(icon, color: Colors.white, size: 28),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
