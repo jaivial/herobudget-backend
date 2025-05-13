@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_localizations.dart';
 
 class QuickActionsWidget extends StatelessWidget {
   final VoidCallback? onIncomePressed;
@@ -32,9 +33,9 @@ class QuickActionsWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Quick Actions',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            context.tr.translate('quick_actions'),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
@@ -50,28 +51,28 @@ class QuickActionsWidget extends StatelessWidget {
             children: [
               ActionButton(
                 icon: Icons.attach_money,
-                label: 'Income',
+                label: context.tr.translate('add_income'),
                 iconColor: Colors.green,
                 backgroundColor: Colors.green.withOpacity(0.1),
                 onPressed: onIncomePressed,
               ),
               ActionButton(
                 icon: Icons.shopping_cart,
-                label: 'Expense',
+                label: context.tr.translate('add_expense'),
                 iconColor: Colors.red,
                 backgroundColor: Colors.red.withOpacity(0.1),
                 onPressed: onExpensePressed,
               ),
               ActionButton(
                 icon: Icons.payment,
-                label: 'Pay Bill',
+                label: context.tr.translate('pay_bill'),
                 iconColor: Colors.blue,
                 backgroundColor: Colors.blue.withOpacity(0.1),
                 onPressed: onPayBillPressed,
               ),
               ActionButton(
                 icon: Icons.add_circle_outline,
-                label: 'Add Category',
+                label: context.tr.translate('add_category'),
                 iconColor: Colors.purple,
                 backgroundColor: Colors.purple.withOpacity(0.1),
                 onPressed: onAddCategoryPressed,

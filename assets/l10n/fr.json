@@ -90,5 +90,6 @@
     "no_account_found": "Aucun compte trouvé avec cette adresse e-mail",
     "failed_to_send_reset_email": "Échec de l'envoi de l'e-mail de réinitialisation",
     "failed_to_update_password": "Échec de la mise à jour du mot de passe",
-    "change_language": "Changer de langue"
+    "change_language": "Changer de langue",
+    "money_flow": "Flux d'Argent"
 }

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class AppLocalizations {
   final Locale locale;
-  Map<String, String> _localizedStrings = {};
+  Map<String, dynamic> _localizedStrings = {};
   final Set<String> _reportedMissingKeys = {};
   static final Map<String, String> _englishFallbacks = {
     'app_name': 'Hero Budget',
@@ -57,10 +58,8 @@ class AppLocalizations {
           englishJsonString,
         );
 
-        // Convert to a map with String keys and String values for fallback
-        _localizedStrings = englishJsonMap.map((key, value) {
-          return MapEntry(key, value.toString());
-        });
+        // Store the English fallbacks - don't convert values to strings yet
+        _localizedStrings = Map<String, dynamic>.from(englishJsonMap);
       } catch (e) {
         print('Failed to load English fallback file. Error: $e');
         // Create minimum default strings
@@ -83,10 +82,9 @@ class AppLocalizations {
           // If we reach here, the file was found and loaded
           final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
 
-          // Convert to a map with String keys and String values
-          // and merge with the English fallbacks
+          // Merge with the English fallbacks - preserving types for plurals and params
           jsonMap.forEach((key, value) {
-            _localizedStrings[key] = value.toString();
+            _localizedStrings[key] = value;
           });
         } catch (e) {
           print(
@@ -110,9 +108,9 @@ class AppLocalizations {
     }
   }
 
-  // This method will be called from every widget which needs a localized text
+  // Basic translation method for simple strings
   String translate(String key) {
-    final text = _localizedStrings[key];
+    final dynamic text = _localizedStrings[key];
     if (text == null) {
       // Only print in debug mode or once per key
       if (!_reportedMissingKeys.contains(key)) {
@@ -130,7 +128,154 @@ class AppLocalizations {
       // Return the key itself as last resort
       return key;
     }
+
+    // If the text is not a string (might be a map for plurals), return a string version
+    if (text is! String) {
+      return text.toString();
+    }
+
     return text;
+  }
+
+  // Extended translation with parameter replacement
+  String translateWithParams(String key, Map<String, dynamic> params) {
+    String text = translate(key);
+
+    // Replace each parameter in the text
+    params.forEach((paramKey, paramValue) {
+      text = text.replaceAll('{$paramKey}', paramValue.toString());
+    });
+
+    return text;
+  }
+
+  // Pluralization support
+  String translatePlural(String key, int count) {
+    final dynamic plural = _localizedStrings[key];
+
+    if (plural == null) {
+      if (!_reportedMissingKeys.contains(key)) {
+        _reportedMissingKeys.add(key);
+        print(
+          'Warning: Missing plural translation for key "$key" in locale ${locale.toString()}',
+        );
+      }
+      return key;
+    }
+
+    // If it's a simple string, just return it
+    if (plural is String) {
+      return plural;
+    }
+
+    // If it's a map with plural forms
+    if (plural is Map) {
+      // Try to find the right plural form
+      String? form;
+
+      // Simple English-style pluralization as fallback
+      if (count == 1) {
+        form = plural['one']?.toString();
+      } else {
+        form = plural['other']?.toString();
+      }
+
+      // If we found a form, replace the {count} parameter
+      if (form != null) {
+        return form.replaceAll('{count}', count.toString());
+      }
+    }
+
+    // Fallback to key
+    return key;
+  }
+
+  // Currency formatting based on the current locale
+  String formatCurrency(double amount, {String? symbol}) {
+    try {
+      final String localeCode = locale.toString();
+      final NumberFormat formatter = NumberFormat.currency(
+        locale: localeCode,
+        symbol: symbol ?? '\$',
+      );
+      return formatter.format(amount);
+    } catch (e) {
+      // Fallback for unsupported locales
+      final NumberFormat formatter = NumberFormat.currency(
+        locale: 'en_US',
+        symbol: symbol ?? '\$',
+      );
+      return formatter.format(amount);
+    }
+  }
+
+  // Date formatting based on the current locale
+  String formatDate(DateTime date, {String? pattern}) {
+    try {
+      final String localeCode = locale.toString();
+      if (pattern != null) {
+        final DateFormat formatter = DateFormat(pattern, localeCode);
+        return formatter.format(date);
+      } else {
+        // Default to short date format
+        final DateFormat formatter = DateFormat.yMd(localeCode);
+        return formatter.format(date);
+      }
+    } catch (e) {
+      // Fallback for unsupported locales
+      if (pattern != null) {
+        final DateFormat formatter = DateFormat(pattern, 'en_US');
+        return formatter.format(date);
+      } else {
+        final DateFormat formatter = DateFormat.yMd('en_US');
+        return formatter.format(date);
+      }
+    }
+  }
+
+  // Relative time formatting (e.g. "2 days ago", "in 3 hours")
+  String formatRelativeTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    // Future date
+    if (dateTime.isAfter(now)) {
+      if (difference.inSeconds.abs() < 60) {
+        return translateWithParams('in_seconds', {
+          'count': difference.inSeconds.abs(),
+        });
+      } else if (difference.inMinutes.abs() < 60) {
+        return translateWithParams('in_minutes', {
+          'count': difference.inMinutes.abs(),
+        });
+      } else if (difference.inHours.abs() < 24) {
+        return translateWithParams('in_hours', {
+          'count': difference.inHours.abs(),
+        });
+      } else if (difference.inDays.abs() < 30) {
+        return translateWithParams('in_days', {
+          'count': difference.inDays.abs(),
+        });
+      } else {
+        return formatDate(dateTime);
+      }
+    }
+    // Past date
+    else {
+      if (difference.inSeconds < 60) {
+        return translate('just_now');
+      } else if (difference.inMinutes < 60) {
+        return translateWithParams('minutes_ago', {
+          'count': difference.inMinutes,
+        });
+      } else if (difference.inHours < 24) {
+        return translateWithParams('hours_ago', {'count': difference.inHours});
+      } else if (difference.inDays < 30) {
+        return translateWithParams('days_ago', {'count': difference.inDays});
+      } else {
+        return formatDate(dateTime);
+      }
+    }
   }
 }
 

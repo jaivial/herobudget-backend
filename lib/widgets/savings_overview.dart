@@ -1,25 +1,35 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
 import 'package:intl/intl.dart';
+import '../utils/app_localizations.dart';
 
 class SavingsOverviewWidget extends StatelessWidget {
   final SavingsOverview savingsOverview;
-  final Function()? onEditGoal;
+  final VoidCallback onEditGoal;
 
   const SavingsOverviewWidget({
     super.key,
     required this.savingsOverview,
-    this.onEditGoal,
+    required this.onEditGoal,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Formateo de moneda
+    // Money formatter
     final currencyFormatter = NumberFormat.currency(
       locale: 'es_MX',
       symbol: '\$',
       decimalDigits: 2,
     );
+
+    // Calculate percentage of goal achieved
+    final double percentage =
+        savingsOverview.goal > 0
+            ? (savingsOverview.available / savingsOverview.goal * 100).clamp(
+              0,
+              100,
+            )
+            : 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -37,35 +47,48 @@ class SavingsOverviewWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cabecera con título y porcentaje
+          // Title and Edit Goal button
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Savings',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                context.tr.translate('savings_overview'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              _PercentageBadge(percentage: savingsOverview.percent),
+              // Edit goal button
+              TextButton.icon(
+                onPressed: onEditGoal,
+                icon: const Icon(Icons.edit, size: 16),
+                label: Text(context.tr.translate('edit_goal')),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  textStyle: const TextStyle(fontSize: 12),
+                ),
+              ),
             ],
           ),
 
           const SizedBox(height: 20),
 
-          // Cantidad disponible
+          // Current savings amount
           Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
                 currencyFormatter.format(savingsOverview.available),
                 style: const TextStyle(
-                  fontSize: 32,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.green,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
-                'available',
+                '/ ${currencyFormatter.format(savingsOverview.goal)}',
                 style: TextStyle(
                   fontSize: 16,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -74,90 +97,56 @@ class SavingsOverviewWidget extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Barra de progreso hacia la meta
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Progress bar
+          Stack(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Goal: ${currencyFormatter.format(savingsOverview.goal)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  // Botón para editar la meta
-                  if (onEditGoal != null)
-                    TextButton(
-                      onPressed: onEditGoal,
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        backgroundColor: Colors.green.withOpacity(0.1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Text('Edit Goal'),
-                    ),
-                ],
+              // Background
+              Container(
+                height: 10,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(5),
+                ),
               ),
-
-              const SizedBox(height: 8),
-
-              // Barra de progreso
-              _SavingsProgressBar(
-                available: savingsOverview.available,
-                goal: savingsOverview.goal,
+              // Foreground (progress)
+              FractionallySizedBox(
+                widthFactor: percentage / 100,
+                child: Container(
+                  height: 10,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.blue.shade300, Colors.blue.shade600],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
 
-          // Información sobre la meta
-          Column(
+          // Percentage and goal text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Cantidad que falta por ahorrar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Need to save:',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  Text(
-                    currencyFormatter.format(savingsOverview.needToSave),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
+              Text(
+                '${percentage.toStringAsFixed(1)}%',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
-
-              const SizedBox(height: 8),
-
-              // Objetivo diario
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Daily target:',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  Text(
-                    currencyFormatter.format(savingsOverview.dailyTarget),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
+              Text(
+                '${context.tr.translate('goal')}: ${currencyFormatter.format(savingsOverview.goal)}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

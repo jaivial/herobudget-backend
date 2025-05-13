@@ -30,15 +30,20 @@ class SignInService {
         await prefs.setString(userIdKey, userData['id'].toString());
         await prefs.setString(userDataKey, jsonEncode(userData));
 
-        return {'success': true, 'user': userData};
+        return {'success': true, 'user_data': userData};
       } else {
         return {
           'success': false,
-          'error': data['message'] ?? 'An error occurred during sign in',
+          'error_type': 'invalid_credentials',
+          'message': data['message'] ?? 'An error occurred during sign in',
         };
       }
     } catch (e) {
-      return {'success': false, 'error': 'Connection error: $e'};
+      return {
+        'success': false,
+        'error_type': 'connection_error',
+        'message': 'Connection error: $e',
+      };
     }
   }
 

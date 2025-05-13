@@ -10,7 +10,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 import 'screens/onboarding/onboarding_screen.dart';
-import 'screens/dashboard_screen.dart';
+import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/verification/email_verification_screen.dart';
 import 'screens/verification/email_verification_success_screen.dart';
 import 'screens/reset_password/reset_password_screen.dart';
@@ -78,7 +78,18 @@ class MyApp extends StatefulWidget {
 
   // Add this method to expose the refreshLocale functionality
   static void refreshLocale(BuildContext context, String locale) {
-    myAppKey.currentState?.refreshLocale(locale);
+    try {
+      print('MyApp.refreshLocale called with: $locale');
+
+      // Cambiar todas las notificaciones por un único flujo centralizado
+      // para evitar bucles infinitos utilizando LanguageService
+      LanguageService.saveLanguagePreference(locale);
+
+      // No llamamos directamente a myAppKey.currentState?.refreshLocale
+      // para evitar ciclos de notificación
+    } catch (e) {
+      print('Error in static refreshLocale: $e');
+    }
   }
 
   // Add method to expose refreshTheme functionality
@@ -118,24 +129,58 @@ class _MyAppState extends State<MyApp> {
   }
 
   // Method to refresh locale without restarting the app
+  // Este método ahora solo es llamado directamente desde el AppHeader
   void refreshLocale(String localeString) async {
-    print('Refreshing locale to: $localeString');
+    print('refreshLocale called with: $localeString');
 
-    // Create a new Locale object
-    final locale = Locale(localeString);
+    try {
+      // Obtener el idioma actual para comparar
+      final String? currentLocale =
+          await LanguageService.getLanguagePreference();
 
-    // Save the preference immediately, but don't wait for it to complete
-    // since we've already saved it in the service
-    LanguageService.saveLanguagePreference(localeString)
-        .then((_) => print('Language preference saved in refreshLocale'))
-        .catchError((e) => print('Error saving language preference: $e'));
+      // Evitar actualizaciones innecesarias
+      if (currentLocale == localeString) {
+        print('Locale is already set to $localeString, no update needed');
+        return;
+      }
 
-    // Update the state once
-    if (mounted) {
-      setState(() {
-        _appLocale = locale;
-        _isLocaleSupported = true;
-      });
+      // Create a new Locale object
+      final locale = Locale(localeString);
+
+      // Guardar directamente en SharedPreferences para evitar ciclos
+      // Hacemos esto de manera segura dentro de un try
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          LanguageService.languagePreferenceKey,
+          localeString,
+        );
+        print('Language preference directly saved: $localeString');
+      } catch (e) {
+        print('Error saving language preference: $e');
+      }
+
+      // Actualizar el estado inmediatamente dentro de un try separado
+      // para que si hay un error en la actualización, no afecte al resto
+      try {
+        if (mounted) {
+          setState(() {
+            _appLocale = locale;
+            _isLocaleSupported = true;
+          });
+        }
+      } catch (e) {
+        print('Error updating app locale state: $e');
+      }
+
+      // Finalmente notificar el cambio de forma segura
+      try {
+        languageNotifier.notifyLanguageChanged(localeString);
+      } catch (e) {
+        print('Error notifying language change: $e');
+      }
+    } catch (e) {
+      print('Error in refreshLocale: $e');
     }
   }
 
@@ -145,11 +190,27 @@ class _MyAppState extends State<MyApp> {
 
     print("MyApp initState - starting app initialization");
 
-    // Subscribe to language change events
-    _languageChangeSubscription = languageChangeNotifier.languageChangeStream
-        .listen((locale) {
-          refreshLocale(locale);
+    // Subscribe to language change events from languageNotifier in LanguageService
+    // en lugar de languageChangeNotifier para evitar ciclos
+    _languageChangeSubscription =
+        null; // Desactivamos temporalmente esta suscripción
+
+    // Suscribirse al notificador adecuado
+    languageNotifier.addListener(() {
+      // Este callback se ejecuta cuando cambia el idioma
+      final newLocale = languageNotifier.lastLanguage;
+      print(
+        'MyApp reacting to language change via languageNotifier: $newLocale',
+      );
+
+      // Actualizar directamente el estado
+      if (mounted) {
+        setState(() {
+          _appLocale = Locale(newLocale);
+          _isLocaleSupported = true;
         });
+      }
+    });
 
     // Subscribe to theme change events
     _themeChangeSubscription = themeChangeNotifier.themeChangeStream.listen((
@@ -423,7 +484,11 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _deepLinkSubscription?.cancel();
-    _languageChangeSubscription?.cancel();
+
+    // No es necesario cancelar _languageChangeSubscription ya que es null
+    // pero necesitamos remover el listener de languageNotifier
+    languageNotifier.removeListener(() {}); // Eliminar todos los listeners
+
     _themeChangeSubscription?.cancel();
     super.dispose();
   }
@@ -479,10 +544,13 @@ class _MyAppState extends State<MyApp> {
       homeScreen = const SignInScreen();
     } else if (_isLoggedIn && _userData != null) {
       // Show dashboard if user is logged in
-      homeScreen = const DashboardScreen();
+      homeScreen = DashboardScreen(
+        userId: _userData!['id'].toString(),
+        userInfo: _userData!,
+      );
     } else {
       // Show onboarding for new users
-      homeScreen = OnboardingScreen();
+      homeScreen = const OnboardingScreen();
     }
 
     // Final MaterialApp configuration with localization support
@@ -492,6 +560,7 @@ class _MyAppState extends State<MyApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
       home: homeScreen,
+      routes: {'/signin': (context) => const SignInScreen()},
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
         GlobalMaterialLocalizations.delegate,

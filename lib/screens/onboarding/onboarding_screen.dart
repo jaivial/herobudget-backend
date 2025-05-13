@@ -1738,7 +1738,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
       if (result['success']) {
         // Success
-        final userInfo = result['user'];
+        final userInfo = result['user_data'];
         final userId = userInfo['id'].toString();
 
         // Navigate to dashboard and remove all previous routes
@@ -1753,15 +1753,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
       } else {
         // Show error message
-        ToastUtil.showErrorToast(context, result['error']);
+        ToastUtil.showErrorToast(context, result['message']);
 
         // Set specific field errors if applicable
-        if (result['error'].toString().contains('email')) {
+        if (result['error_type'] == 'email_not_found') {
           setState(() {
             _signinEmailError = 'Invalid email address';
           });
         }
-        if (result['error'].toString().contains('password')) {
+        if (result['error_type'] == 'invalid_credentials') {
           setState(() {
             _signinPasswordError = 'Invalid password';
           });

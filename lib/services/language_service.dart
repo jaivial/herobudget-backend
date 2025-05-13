@@ -3,6 +3,32 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import 'package:flutter/material.dart';
+import '../utils/app_localizations.dart';
+
+// Notificador para cambios en el idioma
+class LanguageChangeNotifier extends ChangeNotifier {
+  static final LanguageChangeNotifier _instance =
+      LanguageChangeNotifier._internal();
+
+  factory LanguageChangeNotifier() {
+    return _instance;
+  }
+
+  LanguageChangeNotifier._internal();
+
+  // Último idioma seleccionado
+  String _lastLanguage = 'en';
+  String get lastLanguage => _lastLanguage;
+
+  // Método para notificar a la UI sobre el cambio de idioma
+  void notifyLanguageChanged(String newLanguage) {
+    _lastLanguage = newLanguage;
+    notifyListeners();
+  }
+}
+
+// Instancia global del notificador
+final languageNotifier = LanguageChangeNotifier();
 
 class LanguageService {
   static String get baseUrl => ApiConfig.languageServiceUrl;
@@ -54,6 +80,15 @@ class LanguageService {
     try {
       print('Saving language preference: $languageCode');
 
+      // Almacenar el idioma previo antes de hacer el cambio
+      final String? prevLanguage = await getLanguagePreference();
+
+      // Si es el mismo idioma, no hacer nada para evitar bucles
+      if (prevLanguage == languageCode) {
+        print('Language already set to $languageCode, skipping');
+        return true;
+      }
+
       // First, try to save on the server (sets cookie) but with a quick timeout
       // Wrapped in a try-catch with silent failure to avoid excessive error logs
       try {
@@ -90,6 +125,13 @@ class LanguageService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(languagePreferenceKey, languageCode);
       print('Language preference saved to local storage: $languageCode');
+
+      // Notificar a la UI sobre el cambio de idioma solo si realmente cambió
+      if (prevLanguage != languageCode) {
+        // Usar el notificador correcto
+        languageNotifier.notifyLanguageChanged(languageCode);
+      }
+
       return true;
     } catch (e) {
       print('Failed to save language preference: $languageCode, error: $e');
@@ -163,5 +205,43 @@ class LanguageService {
   static Future<bool> isUserLocaleSupported() async {
     final userLocale = await getLanguagePreference();
     return userLocale != null && supportedLanguages.containsKey(userLocale);
+  }
+
+  // Muestra una notificación cuando el idioma cambia
+  static void showLanguageChangeNotification(
+    BuildContext context,
+    String languageCode,
+  ) {
+    // Obtener el nombre del idioma para mostrar en la notificación
+    final String languageName =
+        supportedLanguages[languageCode]?.split(' ')[0] ?? 'Unknown';
+
+    // Obtener traducciones
+    final localizations = AppLocalizations.of(context);
+
+    // Buscar la clave "language_changed" que debería estar traducida a cada idioma
+    String notificationText = localizations.translate('language_changed');
+
+    // Mostrar SnackBar con animación
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Text(getLanguageFlag(languageCode)),
+            const SizedBox(width: 8),
+            Text(notificationText),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        action: SnackBarAction(
+          label: 'OK',
+          onPressed: () {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          },
+        ),
+      ),
+    );
   }
 }

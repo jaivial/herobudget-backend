@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../utils/app_localizations.dart';
 
 class PeriodSelector extends StatefulWidget {
   final String initialPeriod;
@@ -51,7 +52,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
       case 'annual':
         return _currentDate.year.toString();
       case 'custom':
-        return 'Personalizado';
+        return context.tr.translate('custom_period');
       default:
         return formatter.format(_currentDate);
     }
@@ -189,7 +190,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Seleccionar rango de fechas',
+                    context.tr.translate('select_date_range'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: isDarkMode ? Colors.white : null,
                     ),
@@ -199,7 +200,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                   // Selector de fecha de inicio
                   ListTile(
                     title: Text(
-                      'Fecha de inicio',
+                      context.tr.translate('start_date'),
                       style: TextStyle(
                         color:
                             isDarkMode ? Colors.white.withOpacity(0.9) : null,
@@ -237,7 +238,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                   // Selector de fecha de fin
                   ListTile(
                     title: Text(
-                      'Fecha de fin',
+                      context.tr.translate('end_date'),
                       style: TextStyle(
                         color:
                             isDarkMode ? Colors.white.withOpacity(0.9) : null,
@@ -288,7 +289,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                                   ? Colors.white
                                   : Theme.of(context).colorScheme.primary,
                         ),
-                        child: const Text('Cancelar'),
+                        child: Text(context.tr.translate('cancel')),
                       ),
                       const SizedBox(width: 16),
                       ElevatedButton(
@@ -304,7 +305,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                               Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                         ),
-                        child: const Text('Aplicar'),
+                        child: Text(context.tr.translate('apply')),
                       ),
                     ],
                   ),
@@ -331,7 +332,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
             IconButton(
               onPressed: _navigateToPreviousPeriod,
               icon: const Icon(Icons.chevron_left),
-              tooltip: 'Periodo anterior',
+              tooltip: context.tr.translate('previous_period'),
             ),
 
             // Título del periodo actual
@@ -354,7 +355,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
             IconButton(
               onPressed: _navigateToNextPeriod,
               icon: const Icon(Icons.chevron_right),
-              tooltip: 'Periodo siguiente',
+              tooltip: context.tr.translate('next_period'),
             ),
           ],
         ),
@@ -367,37 +368,37 @@ class _PeriodSelectorState extends State<PeriodSelector> {
           child: Row(
             children: [
               _PeriodTypeButton(
-                label: 'Diario',
+                label: context.tr.translate('daily_period'),
                 isSelected: _currentPeriod == 'daily',
                 onTap: () => _changePeriodType('daily'),
               ),
               _PeriodTypeButton(
-                label: 'Semanal',
+                label: context.tr.translate('weekly_period'),
                 isSelected: _currentPeriod == 'weekly',
                 onTap: () => _changePeriodType('weekly'),
               ),
               _PeriodTypeButton(
-                label: 'Mensual',
+                label: context.tr.translate('monthly_period'),
                 isSelected: _currentPeriod == 'monthly',
                 onTap: () => _changePeriodType('monthly'),
               ),
               _PeriodTypeButton(
-                label: 'Trimestral',
+                label: context.tr.translate('quarterly_period'),
                 isSelected: _currentPeriod == 'quarterly',
                 onTap: () => _changePeriodType('quarterly'),
               ),
               _PeriodTypeButton(
-                label: 'Semestral',
+                label: context.tr.translate('semiannual_period'),
                 isSelected: _currentPeriod == 'semiannual',
                 onTap: () => _changePeriodType('semiannual'),
               ),
               _PeriodTypeButton(
-                label: 'Anual',
+                label: context.tr.translate('annual_period'),
                 isSelected: _currentPeriod == 'annual',
                 onTap: () => _changePeriodType('annual'),
               ),
               _PeriodTypeButton(
-                label: 'Personalizado',
+                label: context.tr.translate('custom_period'),
                 isSelected: _currentPeriod == 'custom',
                 onTap: _showCustomRangeSelector,
                 icon: Icons.calendar_today,

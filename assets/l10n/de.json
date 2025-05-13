@@ -90,5 +90,6 @@
     "no_account_found": "Kein Konto mit dieser E-Mail-Adresse gefunden",
     "failed_to_send_reset_email": "Fehler beim Senden der Rücksetz-E-Mail",
     "failed_to_update_password": "Fehler beim Aktualisieren des Passworts",
-    "change_language": "Sprache ändern"
+    "change_language": "Sprache ändern",
+    "money_flow": "Geldfluss"
 }

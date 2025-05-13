@@ -3,6 +3,7 @@ import '../main.dart';
 import '../widgets/language_selector_button.dart';
 import '../widgets/localized_screen_wrapper.dart';
 import '../utils/app_localizations.dart';
+import '../services/language_service.dart';
 
 /// A service class with static methods to help with common app-wide functionality
 class AppService {
@@ -49,13 +50,13 @@ class AppService {
 
   /// Updates the app's locale without restarting
   static void changeAppLocale(BuildContext context, String locale) async {
-    print('Changing app locale to: $locale');
+    print('AppService.changeAppLocale: Changing app locale to: $locale');
 
-    // Notify the language change so that listening widgets update
-    languageChangeNotifier.notifyLanguageChange(locale);
+    // Usar únicamente el servicio centralizado de idioma para evitar ciclos
+    // Esto simplifica el flujo de cambio de idioma
+    await LanguageService.saveLanguagePreference(locale);
 
-    // Update the application globally using the static function from MyApp
-    // This will force a rebuild of the application with the new language
-    MyApp.refreshLocale(context, locale);
+    // Mostrar la notificación de cambio de idioma
+    LanguageService.showLanguageChangeNotification(context, locale);
   }
 }

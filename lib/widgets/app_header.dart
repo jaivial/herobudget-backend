@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/dashboard_service.dart';
+import '../services/language_service.dart';
+import '../services/auth_service.dart';
+import '../services/app_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_localizations.dart';
+import '../main.dart';
+import 'language_selector_widget.dart';
+import 'language_selector_button.dart';
 import 'dart:convert';
 
 class AppHeader extends StatefulWidget {
@@ -24,12 +31,28 @@ class _AppHeaderState extends State<AppHeader> {
     super.initState();
     _loadPreferredLanguage();
     _loadThemeMode();
+
+    // Escuchar cambios de idioma desde otros lugares de la app
+    languageNotifier.addListener(_updateLocale);
+  }
+
+  @override
+  void dispose() {
+    languageNotifier.removeListener(_updateLocale);
+    super.dispose();
+  }
+
+  // Método para actualizar el idioma cuando cambie en otro lugar
+  void _updateLocale() {
+    setState(() {
+      currentLocale = languageNotifier.lastLanguage;
+    });
   }
 
   Future<void> _loadPreferredLanguage() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final locale = await LanguageService.getLanguagePreference();
     setState(() {
-      currentLocale = prefs.getString('locale') ?? 'es';
+      currentLocale = locale ?? 'es';
     });
   }
 
@@ -38,6 +61,46 @@ class _AppHeaderState extends State<AppHeader> {
     setState(() {
       currentThemeMode = mode;
     });
+  }
+
+  // Método para cerrar sesión
+  Future<void> _handleLogout() async {
+    // Mostrar diálogo de confirmación
+    final bool? confirmLogout = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(context.tr.translate('logout')),
+          content: Text(
+            context.tr.translate('logout_confirmation') ??
+                '¿Estás seguro que deseas cerrar sesión?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(context.tr.translate('cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              child: Text(context.tr.translate('logout')),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Si el usuario confirma, proceder con el cierre de sesión
+    if (confirmLogout == true) {
+      await AuthService.signOut(context);
+      // Redirigir al usuario a la pantalla de inicio de sesión
+      if (context.mounted) {
+        Navigator.of(context).pushReplacementNamed('/signin');
+      }
+    }
   }
 
   @override
@@ -57,7 +120,7 @@ class _AppHeaderState extends State<AppHeader> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Sección izquierda - Toggle de tema (reemplazando al avatar del usuario)
+          // Sección izquierda - Toggle de tema
           ThemeToggleButton(
             currentThemeMode: currentThemeMode,
             onThemeModeChanged: (ThemeMode mode) {
@@ -67,6 +130,10 @@ class _AppHeaderState extends State<AppHeader> {
               themeChangeNotifier.notifyThemeChange(mode);
             },
           ),
+
+          // Selector de idioma
+          const SizedBox(width: 12),
+          const LanguageSelectorButton(),
 
           // Sección central - Logo de la aplicación
           Expanded(
@@ -79,18 +146,8 @@ class _AppHeaderState extends State<AppHeader> {
             ),
           ),
 
-          // Sección derecha - Idioma
-          LanguageSelector(
-            currentLocale: currentLocale,
-            onLanguageChanged: (locale) {
-              setState(() {
-                currentLocale = locale;
-              });
-              if (widget.onLanguageChanged != null) {
-                widget.onLanguageChanged!(locale);
-              }
-            },
-          ),
+          // Sección derecha - Solo botón de cerrar sesión
+          LogoutButton(onLogout: _handleLogout),
         ],
       ),
     );
@@ -159,85 +216,59 @@ class LanguageSelector extends StatefulWidget {
 }
 
 class _LanguageSelectorState extends State<LanguageSelector> {
-  final List<Map<String, dynamic>> _languages = [
-    {'code': 'es', 'name': 'Español', 'flag': '🇪🇸'},
-    {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
-    {'code': 'fr', 'name': 'Français', 'flag': '🇫🇷'},
-    {'code': 'de', 'name': 'Deutsch', 'flag': '🇩🇪'},
-    {'code': 'it', 'name': 'Italiano', 'flag': '🇮🇹'},
-  ];
-
-  String get _currentLanguageFlag {
-    final language = _languages.firstWhere(
-      (lang) => lang['code'] == widget.currentLocale,
-      orElse: () => _languages.first,
-    );
-    return language['flag'];
-  }
-
-  void _showLanguageSelector(BuildContext context) {
+  void _showLanguageSelectorModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'Selecciona un idioma',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              ..._languages.map((language) {
-                return ListTile(
-                  leading: Text(
-                    language['flag'],
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                  title: Text(language['name']),
-                  trailing:
-                      widget.currentLocale == language['code']
-                          ? const Icon(Icons.check, color: Colors.green)
-                          : null,
-                  onTap: () {
-                    widget.onLanguageChanged(language['code']);
-                    _savePreferredLanguage(language['code']);
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-            ],
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: LanguageSelectorWidget(
+            showCloseButton: true,
+            onLocaleSelected: (locale) {
+              widget.onLanguageChanged(locale);
+              Navigator.of(context).pop();
+            },
           ),
         );
       },
     );
   }
 
-  Future<void> _savePreferredLanguage(String locale) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('locale', locale);
+  String _getLanguageFlag(String code) {
+    return LanguageService.getLanguageFlag(code);
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
-      onTap: () => _showLanguageSelector(context),
+      onTap: () => _showLanguageSelectorModal(context),
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(8),
+          color:
+              isDarkMode
+                  ? Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withOpacity(0.2)
+                  : Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            width: 1.5,
           ),
         ),
-        child: Text(_currentLanguageFlag, style: const TextStyle(fontSize: 20)),
+        child: Text(
+          _getLanguageFlag(widget.currentLocale),
+          style: const TextStyle(fontSize: 20),
+        ),
       ),
     );
   }
@@ -257,6 +288,10 @@ class ThemeToggleButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDarkMode = currentThemeMode == ThemeMode.dark;
     final iconColor = Theme.of(context).colorScheme.primary;
+    final backgroundColor =
+        isDarkMode
+            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2)
+            : Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1);
 
     return GestureDetector(
       onTap: () {
@@ -268,10 +303,11 @@ class ThemeToggleButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(8),
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            width: 1.5,
           ),
         ),
         child: Icon(
@@ -285,5 +321,41 @@ class ThemeToggleButton extends StatelessWidget {
 
   Future<void> _saveThemeMode(ThemeMode mode) async {
     await AppTheme.saveThemeMode(mode);
+  }
+}
+
+// Botón de cierre de sesión
+class LogoutButton extends StatelessWidget {
+  final VoidCallback onLogout;
+
+  const LogoutButton({super.key, required this.onLogout});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Tooltip(
+      message: context.tr.translate('logout'),
+      child: InkWell(
+        onTap: onLogout,
+        borderRadius: BorderRadius.circular(12),
+        child: Ink(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color:
+                isDarkMode
+                    ? colorScheme.errorContainer.withOpacity(0.2)
+                    : colorScheme.errorContainer.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: colorScheme.error.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Icon(Icons.logout, size: 20, color: colorScheme.error),
+        ),
+      ),
+    );
   }
 }

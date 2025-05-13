@@ -249,14 +249,33 @@ class AuthService {
   // Sign out
   static Future<void> signOut(BuildContext context) async {
     try {
+      print('Iniciando proceso de cierre de sesión');
       final prefs = await SharedPreferences.getInstance();
+
+      // Eliminar información de usuario
       await prefs.remove(userIdKey);
       await prefs.remove(userDataKey);
 
-      // Also sign out from Google if needed
-      await _googleSignIn.signOut();
+      // Eliminar también claves antiguas por si acaso
+      await prefs.remove('user_info');
+      await prefs.remove('user');
+
+      // Limpiar cualquier otra información de sesión
+      // pero mantener preferencias como idioma y tema
+
+      // Cerrar sesión de Google si está activa
+      try {
+        if (await _googleSignIn.isSignedIn()) {
+          await _googleSignIn.signOut();
+          print('Sesión de Google cerrada');
+        }
+      } catch (e) {
+        print('Error al cerrar sesión de Google: $e');
+      }
+
+      print('Sesión cerrada exitosamente');
     } catch (e) {
-      print('Error signing out: $e');
+      print('Error al cerrar sesión: $e');
     }
   }
 

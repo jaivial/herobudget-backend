@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
-import 'package:intl/intl.dart';
+import '../utils/app_localizations.dart';
 
 class BudgetOverviewWidget extends StatelessWidget {
   final BudgetOverview budgetOverview;
@@ -9,12 +9,7 @@ class BudgetOverviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Formateo de moneda
-    final currencyFormatter = NumberFormat.currency(
-      locale: 'es_MX',
-      symbol: '\$',
-      decimalDigits: 2,
-    );
+    final localizations = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -36,9 +31,12 @@ class BudgetOverviewWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Money Flow',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                localizations.translate('money_flow'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               _PercentageBadge(percentage: budgetOverview.moneyFlow.percent),
             ],
@@ -51,7 +49,7 @@ class BudgetOverviewWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                currencyFormatter.format(budgetOverview.remainingAmount),
+                localizations.formatCurrency(budgetOverview.remainingAmount),
                 style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -59,7 +57,7 @@ class BudgetOverviewWidget extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'left',
+                localizations.translate('left'),
                 style: TextStyle(
                   fontSize: 16,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -76,14 +74,14 @@ class BudgetOverviewWidget extends StatelessWidget {
                 const Text('+'),
                 const SizedBox(width: 4),
                 Text(
-                  currencyFormatter.format(
+                  localizations.formatCurrency(
                     budgetOverview.moneyFlow.fromPrevious,
                   ),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  'from previous month',
+                  localizations.translate('from_previous_month'),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -106,14 +104,18 @@ class BudgetOverviewWidget extends StatelessWidget {
             children: [
               _LegendItem(
                 color: Colors.purple,
-                label: 'Spent',
-                amount: currencyFormatter.format(budgetOverview.spentAmount),
+                label: localizations.translate('spent'),
+                amount: localizations.formatCurrency(
+                  budgetOverview.spentAmount,
+                ),
               ),
               const SizedBox(width: 16),
               _LegendItem(
                 color: Colors.amber,
-                label: 'Upcoming',
-                amount: currencyFormatter.format(budgetOverview.upcomingAmount),
+                label: localizations.translate('upcoming'),
+                amount: localizations.formatCurrency(
+                  budgetOverview.upcomingAmount,
+                ),
               ),
             ],
           ),
@@ -125,13 +127,13 @@ class BudgetOverviewWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Combined expenses:',
+                localizations.translate('combined_expenses'),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
-                '${currencyFormatter.format(budgetOverview.combinedExpense)} (${budgetOverview.expensePercent.toStringAsFixed(0)}%)',
+                '${localizations.formatCurrency(budgetOverview.combinedExpense)} (${budgetOverview.expensePercent.toStringAsFixed(0)}%)',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -144,13 +146,13 @@ class BudgetOverviewWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Daily rate:',
+                localizations.translate('daily_rate'),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
-                currencyFormatter.format(budgetOverview.dailyRate),
+                localizations.formatCurrency(budgetOverview.dailyRate),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -168,10 +170,10 @@ class BudgetOverviewWidget extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Warning: High spending rate',
-                      style: TextStyle(
+                      localizations.translate('high_spending_warning'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
                       ),
@@ -189,7 +191,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                         vertical: 8,
                       ),
                     ),
-                    child: const Text('Dismiss'),
+                    child: Text(localizations.translate('dismiss')),
                   ),
                 ],
               ),
