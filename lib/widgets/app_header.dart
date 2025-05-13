@@ -57,8 +57,16 @@ class _AppHeaderState extends State<AppHeader> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Sección izquierda - Avatar del usuario
-          UserAvatar(user: widget.user),
+          // Sección izquierda - Toggle de tema (reemplazando al avatar del usuario)
+          ThemeToggleButton(
+            currentThemeMode: currentThemeMode,
+            onThemeModeChanged: (ThemeMode mode) {
+              setState(() {
+                currentThemeMode = mode;
+              });
+              themeChangeNotifier.notifyThemeChange(mode);
+            },
+          ),
 
           // Sección central - Logo de la aplicación
           Expanded(
@@ -71,35 +79,17 @@ class _AppHeaderState extends State<AppHeader> {
             ),
           ),
 
-          // Sección derecha - Controles
-          Row(
-            children: [
-              // Toggle de tema
-              ThemeToggleButton(
-                currentThemeMode: currentThemeMode,
-                onThemeModeChanged: (ThemeMode mode) {
-                  setState(() {
-                    currentThemeMode = mode;
-                  });
-                  themeChangeNotifier.notifyThemeChange(mode);
-                },
-              ),
-
-              const SizedBox(width: 8),
-
-              // Selector de idioma
-              LanguageSelector(
-                currentLocale: currentLocale,
-                onLanguageChanged: (locale) {
-                  setState(() {
-                    currentLocale = locale;
-                  });
-                  if (widget.onLanguageChanged != null) {
-                    widget.onLanguageChanged!(locale);
-                  }
-                },
-              ),
-            ],
+          // Sección derecha - Idioma
+          LanguageSelector(
+            currentLocale: currentLocale,
+            onLanguageChanged: (locale) {
+              setState(() {
+                currentLocale = locale;
+              });
+              if (widget.onLanguageChanged != null) {
+                widget.onLanguageChanged!(locale);
+              }
+            },
           ),
         ],
       ),

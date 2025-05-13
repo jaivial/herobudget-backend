@@ -6,6 +6,7 @@ import '../services/savings_service.dart';
 import '../services/cash_bank_service.dart';
 import '../services/bills_service.dart';
 import '../widgets/app_header.dart';
+import '../widgets/app_bottom_navigation.dart';
 import '../widgets/budget_overview.dart';
 import '../widgets/cash_bank_distribution.dart';
 import '../widgets/finance_metrics.dart';
@@ -28,6 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late Future<DashboardModel> _dashboardFuture;
   String _currentPeriod = 'monthly';
   UserModel? _user;
+  int _currentNavigationIndex = 0;
 
   @override
   void initState() {
@@ -87,166 +89,203 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Cabecero de la aplicación
-            AppHeader(
-              user: _user,
-              onLanguageChanged: (locale) {
-                // Cambiar idioma
-              },
-            ),
+      body: Stack(
+        children: [
+          // Contenido principal (sin bottomNavigationBar)
+          SafeArea(
+            bottom:
+                false, // Importante: no aplicar SafeArea en la parte inferior
+            child: Column(
+              children: [
+                // Cabecero de la aplicación
+                AppHeader(
+                  user: _user,
+                  onLanguageChanged: (locale) {
+                    // Cambiar idioma
+                  },
+                ),
 
-            // Contenido principal
-            Expanded(
-              child: FutureBuilder<DashboardModel>(
-                future: _dashboardFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Colors.red,
+                // Contenido principal - Con padding inferior para dar espacio a la barra de navegación
+                Expanded(
+                  child: FutureBuilder<DashboardModel>(
+                    future: _dashboardFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(height: 16),
+                              Text('Error: ${snapshot.error}'),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _refreshDashboard,
+                                child: const Text('Reintentar'),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
-                          Text('Error: ${snapshot.error}'),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _refreshDashboard,
-                            child: const Text('Reintentar'),
+                        );
+                      } else if (!snapshot.hasData) {
+                        return const Center(
+                          child: Text('No hay datos disponibles'),
+                        );
+                      }
+
+                      // Datos del dashboard
+                      final dashboardData = snapshot.data!;
+
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          _refreshDashboard();
+                        },
+                        child: ListView(
+                          // Añadir padding inferior para compensar la barra de navegación
+                          padding: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            top: 16,
+                            bottom:
+                                90, // Suficiente espacio para la barra de navegación
                           ),
-                        ],
+                          children: [
+                            // Selector de periodo
+                            PeriodSelector(
+                              initialPeriod: _currentPeriod,
+                              onPeriodChanged: _onPeriodChanged,
+                              onCustomRangeSelected: _onCustomRangeSelected,
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Resumen de presupuesto
+                            BudgetOverviewWidget(
+                              budgetOverview: dashboardData.budgetOverview,
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Resumen de ahorros
+                            SavingsOverviewWidget(
+                              savingsOverview: dashboardData.savingsOverview,
+                              onEditGoal: () {
+                                // Mostrar diálogo para editar meta
+                                _showEditGoalDialog(
+                                  dashboardData.savingsOverview.goal,
+                                );
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Distribución de efectivo y banco
+                            CashBankDistributionWidget(
+                              distribution: dashboardData.cashDistribution,
+                              onTransferTap: () {
+                                // Mostrar diálogo para transferir entre efectivo y banco
+                                _showTransferDialog(
+                                  dashboardData.cashDistribution,
+                                );
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Métricas financieras
+                            FinanceMetricsWidget(
+                              metrics: dashboardData.financeMetrics,
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Facturas próximas
+                            UpcomingBillsWidget(
+                              bills: dashboardData.upcomingBills,
+                              onAddBill: () {
+                                // Mostrar modal para agregar factura
+                                _showAddBillDialog();
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Acciones rápidas
+                            QuickActionsWidget(
+                              onIncomePressed: () {
+                                // Lógica para registrar ingreso
+                                _showAddIncomeDialog();
+                              },
+                              onExpensePressed: () {
+                                // Lógica para registrar gasto
+                                _showAddExpenseDialog();
+                              },
+                              onPayBillPressed: () {
+                                // Lógica para pagar factura
+                                _showPayBillDialog(dashboardData.upcomingBills);
+                              },
+                              onAddCategoryPressed: () {
+                                // Lógica para agregar categoría
+                                _showAddCategoryDialog();
+                              },
+                            ),
+
+                            const SizedBox(height: 20),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Barra de navegación superpuesta al contenido
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: AppBottomNavigation(
+              currentIndex: _currentNavigationIndex,
+              onTabChanged: (index) {
+                setState(() {
+                  _currentNavigationIndex = index;
+                });
+
+                // Navegar a otras pantallas según el índice
+                switch (index) {
+                  case 0:
+                    // Ya estamos en Dashboard/Home
+                    break;
+                  case 1:
+                    // Navegar a Transacciones
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Navegando a Transacciones'),
                       ),
                     );
-                  } else if (!snapshot.hasData) {
-                    return const Center(
-                      child: Text('No hay datos disponibles'),
+                    break;
+                  case 2:
+                    // Navegar a Estadísticas
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Navegando a Estadísticas')),
                     );
-                  }
-
-                  // Datos del dashboard
-                  final dashboardData = snapshot.data!;
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      _refreshDashboard();
-                    },
-                    child: ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        // Selector de periodo
-                        PeriodSelector(
-                          initialPeriod: _currentPeriod,
-                          onPeriodChanged: _onPeriodChanged,
-                          onCustomRangeSelected: _onCustomRangeSelected,
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Resumen de presupuesto
-                        BudgetOverviewWidget(
-                          budgetOverview: dashboardData.budgetOverview,
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Resumen de ahorros
-                        SavingsOverviewWidget(
-                          savingsOverview: dashboardData.savingsOverview,
-                          onEditGoal: () {
-                            // Mostrar diálogo para editar meta
-                            _showEditGoalDialog(
-                              dashboardData.savingsOverview.goal,
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Distribución de efectivo y banco
-                        CashBankDistributionWidget(
-                          distribution: dashboardData.cashDistribution,
-                          onTransferTap: () {
-                            // Mostrar diálogo para transferir entre efectivo y banco
-                            _showTransferDialog(dashboardData.cashDistribution);
-                          },
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Métricas financieras
-                        FinanceMetricsWidget(
-                          metrics: dashboardData.financeMetrics,
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Facturas próximas
-                        UpcomingBillsWidget(
-                          bills: dashboardData.upcomingBills,
-                          onAddBill: () {
-                            // Mostrar modal para agregar factura
-                            _showAddBillDialog();
-                          },
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Acciones rápidas
-                        QuickActionsWidget(
-                          onIncomePressed: () {
-                            // Lógica para registrar ingreso
-                            _showAddIncomeDialog();
-                          },
-                          onExpensePressed: () {
-                            // Lógica para registrar gasto
-                            _showAddExpenseDialog();
-                          },
-                          onPayBillPressed: () {
-                            // Lógica para pagar factura
-                            _showPayBillDialog(dashboardData.upcomingBills);
-                          },
-                          onAddCategoryPressed: () {
-                            // Lógica para agregar categoría
-                            _showAddCategoryDialog();
-                          },
-                        ),
-
-                        const SizedBox(height: 20),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                    break;
+                  case 3:
+                    // Navegar a Perfil
+                    Navigator.pushNamed(context, '/profile');
+                    break;
+                }
+              },
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.insert_chart),
-            label: 'Insights',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline),
-            label: 'Add',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        onTap: (index) {
-          // Manejar navegación
-        },
       ),
     );
   }
