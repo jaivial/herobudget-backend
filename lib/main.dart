@@ -80,6 +80,11 @@ class MyApp extends StatefulWidget {
   static void refreshLocale(BuildContext context, String locale) {
     myAppKey.currentState?.refreshLocale(locale);
   }
+
+  // Add method to expose refreshTheme functionality
+  static void refreshTheme(BuildContext context, ThemeMode mode) {
+    myAppKey.currentState?.refreshTheme(mode);
+  }
 }
 
 class _MyAppState extends State<MyApp> {
@@ -87,11 +92,13 @@ class _MyAppState extends State<MyApp> {
   String? _verificationCode;
   StreamSubscription? _deepLinkSubscription;
   StreamSubscription? _languageChangeSubscription;
+  StreamSubscription? _themeChangeSubscription;
   bool _isLoggedIn = false;
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
   Locale? _appLocale;
   bool _isLocaleSupported = true;
+  ThemeMode _themeMode = ThemeMode.light;
 
   // Flag to prevent concurrent navigation
   bool _isHandlingDeepLink = false;
@@ -144,11 +151,19 @@ class _MyAppState extends State<MyApp> {
           refreshLocale(locale);
         });
 
+    // Subscribe to theme change events
+    _themeChangeSubscription = themeChangeNotifier.themeChangeStream.listen((
+      mode,
+    ) {
+      refreshTheme(mode);
+    });
+
     // First handle deep links, then check user status
     _initializeDeepLinking().then((_) {
       // After deep link handling, migrate data and check user
       _migrateOldUserData().then((_) {
         _checkUserAndLanguage();
+        _loadThemeMode();
       });
     });
   }
@@ -378,10 +393,38 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  // Cargar el modo de tema desde SharedPreferences
+  Future<void> _loadThemeMode() async {
+    try {
+      final themeMode = await AppTheme.getThemeMode();
+      setState(() {
+        _themeMode = themeMode;
+      });
+    } catch (e) {
+      print('Error loading theme mode: $e');
+    }
+  }
+
+  // Método para actualizar el tema sin reiniciar la app
+  void refreshTheme(ThemeMode mode) async {
+    print('Refreshing theme to: $mode');
+
+    // Guardar la preferencia
+    await AppTheme.saveThemeMode(mode);
+
+    // Actualizar el estado
+    if (mounted) {
+      setState(() {
+        _themeMode = mode;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _deepLinkSubscription?.cancel();
     _languageChangeSubscription?.cancel();
+    _themeChangeSubscription?.cancel();
     super.dispose();
   }
 
@@ -392,6 +435,8 @@ class _MyAppState extends State<MyApp> {
       return MaterialApp(
         title: 'Hero Budget',
         theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: _themeMode,
         home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
@@ -401,6 +446,8 @@ class _MyAppState extends State<MyApp> {
       return MaterialApp(
         title: 'Hero Budget',
         theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: _themeMode,
         home: LanguageSelectorScreen(),
         localizationsDelegates: [
           const AppLocalizationsDelegate(),
@@ -442,6 +489,8 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'Hero Budget',
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: _themeMode,
       home: homeScreen,
       localizationsDelegates: const [
         AppLocalizationsDelegate(),

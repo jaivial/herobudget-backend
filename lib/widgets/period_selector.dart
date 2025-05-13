@@ -169,10 +169,13 @@ class _PeriodSelectorState extends State<PeriodSelector> {
     // Configurar fechas iniciales
     DateTime startDate = DateTime.now().subtract(const Duration(days: 7));
     DateTime endDate = DateTime.now();
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor:
+          isDarkMode ? Theme.of(context).colorScheme.surface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -187,15 +190,35 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                 children: [
                   Text(
                     'Seleccionar rango de fechas',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: isDarkMode ? Colors.white : null,
+                    ),
                   ),
                   const SizedBox(height: 20),
 
                   // Selector de fecha de inicio
                   ListTile(
-                    title: const Text('Fecha de inicio'),
-                    subtitle: Text(DateFormat.yMMMd().format(startDate)),
-                    trailing: const Icon(Icons.calendar_today),
+                    title: Text(
+                      'Fecha de inicio',
+                      style: TextStyle(
+                        color:
+                            isDarkMode ? Colors.white.withOpacity(0.9) : null,
+                      ),
+                    ),
+                    subtitle: Text(
+                      DateFormat.yMMMd().format(startDate),
+                      style: TextStyle(
+                        color:
+                            isDarkMode ? Colors.white.withOpacity(0.7) : null,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.calendar_today,
+                      color:
+                          isDarkMode
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
+                    ),
                     onTap: () async {
                       final pickedDate = await showDatePicker(
                         context: context,
@@ -213,9 +236,27 @@ class _PeriodSelectorState extends State<PeriodSelector> {
 
                   // Selector de fecha de fin
                   ListTile(
-                    title: const Text('Fecha de fin'),
-                    subtitle: Text(DateFormat.yMMMd().format(endDate)),
-                    trailing: const Icon(Icons.calendar_today),
+                    title: Text(
+                      'Fecha de fin',
+                      style: TextStyle(
+                        color:
+                            isDarkMode ? Colors.white.withOpacity(0.9) : null,
+                      ),
+                    ),
+                    subtitle: Text(
+                      DateFormat.yMMMd().format(endDate),
+                      style: TextStyle(
+                        color:
+                            isDarkMode ? Colors.white.withOpacity(0.7) : null,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.calendar_today,
+                      color:
+                          isDarkMode
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
+                    ),
                     onTap: () async {
                       final pickedDate = await showDatePicker(
                         context: context,
@@ -241,6 +282,12 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                         onPressed: () {
                           Navigator.pop(context);
                         },
+                        style: TextButton.styleFrom(
+                          foregroundColor:
+                              isDarkMode
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.primary,
+                        ),
                         child: const Text('Cancelar'),
                       ),
                       const SizedBox(width: 16),
@@ -252,6 +299,11 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                           Navigator.pop(context);
                           widget.onCustomRangeSelected(startDate, endDate);
                         },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
                         child: const Text('Aplicar'),
                       ),
                     ],
@@ -267,6 +319,8 @@ class _PeriodSelectorState extends State<PeriodSelector> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       children: [
         // Controles de navegación de periodo
@@ -287,7 +341,11 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                 child: Text(
                   periodTitle,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    // Mejorar contraste en modo oscuro
+                    color: isDarkMode ? Colors.white : null,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -367,29 +425,51 @@ class _PeriodTypeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // Usar colores fijos que garanticen visibilidad en modo oscuro
+    final Color backgroundColor =
+        isSelected
+            ? (isDarkMode
+                ? const Color(0xFF6A1B9A)
+                : Theme.of(context).colorScheme.primaryContainer)
+            : (isDarkMode
+                ? const Color(0xFF2D2D2D)
+                : Theme.of(context).colorScheme.surface);
+
+    // Usar color de texto blanco para garantizar visibilidad en modo oscuro
+    final Color textColor =
+        isSelected
+            ? Colors.white
+            : (isDarkMode
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface);
+
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              isSelected
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Theme.of(context).colorScheme.surface,
-          foregroundColor:
-              isSelected
-                  ? Theme.of(context).colorScheme.onPrimaryContainer
-                  : Theme.of(context).colorScheme.onSurface,
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
             side: BorderSide(
+              width: 1.5,
               color:
                   isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                      ? (isDarkMode
+                          ? Colors.purple.shade300
+                          : Theme.of(context).colorScheme.primary)
+                      : (isDarkMode
+                          ? Colors.grey
+                          : Theme.of(
+                            context,
+                          ).colorScheme.outline.withOpacity(0.3)),
             ),
           ),
+          elevation: isSelected ? 1 : 0,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -398,7 +478,13 @@ class _PeriodTypeButton extends StatelessWidget {
               Icon(icon, size: 18),
               const SizedBox(width: 6),
             ],
-            Text(label),
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ],
         ),
       ),

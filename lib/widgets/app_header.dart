@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/dashboard_service.dart';
+import '../theme/app_theme.dart';
 import 'dart:convert';
 
 class AppHeader extends StatefulWidget {
@@ -16,17 +17,26 @@ class AppHeader extends StatefulWidget {
 
 class _AppHeaderState extends State<AppHeader> {
   String currentLocale = 'es';
+  ThemeMode currentThemeMode = ThemeMode.light;
 
   @override
   void initState() {
     super.initState();
     _loadPreferredLanguage();
+    _loadThemeMode();
   }
 
   Future<void> _loadPreferredLanguage() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       currentLocale = prefs.getString('locale') ?? 'es';
+    });
+  }
+
+  Future<void> _loadThemeMode() async {
+    final mode = await AppTheme.getThemeMode();
+    setState(() {
+      currentThemeMode = mode;
     });
   }
 
@@ -61,17 +71,35 @@ class _AppHeaderState extends State<AppHeader> {
             ),
           ),
 
-          // Sección derecha - Selector de idioma
-          LanguageSelector(
-            currentLocale: currentLocale,
-            onLanguageChanged: (locale) {
-              setState(() {
-                currentLocale = locale;
-              });
-              if (widget.onLanguageChanged != null) {
-                widget.onLanguageChanged!(locale);
-              }
-            },
+          // Sección derecha - Controles
+          Row(
+            children: [
+              // Toggle de tema
+              ThemeToggleButton(
+                currentThemeMode: currentThemeMode,
+                onThemeModeChanged: (ThemeMode mode) {
+                  setState(() {
+                    currentThemeMode = mode;
+                  });
+                  themeChangeNotifier.notifyThemeChange(mode);
+                },
+              ),
+
+              const SizedBox(width: 8),
+
+              // Selector de idioma
+              LanguageSelector(
+                currentLocale: currentLocale,
+                onLanguageChanged: (locale) {
+                  setState(() {
+                    currentLocale = locale;
+                  });
+                  if (widget.onLanguageChanged != null) {
+                    widget.onLanguageChanged!(locale);
+                  }
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -222,5 +250,50 @@ class _LanguageSelectorState extends State<LanguageSelector> {
         child: Text(_currentLanguageFlag, style: const TextStyle(fontSize: 20)),
       ),
     );
+  }
+}
+
+class ThemeToggleButton extends StatelessWidget {
+  final ThemeMode currentThemeMode;
+  final Function(ThemeMode) onThemeModeChanged;
+
+  const ThemeToggleButton({
+    super.key,
+    required this.currentThemeMode,
+    required this.onThemeModeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDarkMode = currentThemeMode == ThemeMode.dark;
+    final iconColor = Theme.of(context).colorScheme.primary;
+
+    return GestureDetector(
+      onTap: () {
+        // Alternar entre modos claro y oscuro
+        final newMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
+        onThemeModeChanged(newMode);
+        _saveThemeMode(newMode);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          ),
+        ),
+        child: Icon(
+          isDarkMode ? Icons.light_mode : Icons.dark_mode,
+          size: 20,
+          color: iconColor,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveThemeMode(ThemeMode mode) async {
+    await AppTheme.saveThemeMode(mode);
   }
 }
