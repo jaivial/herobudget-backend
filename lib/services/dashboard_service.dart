@@ -161,18 +161,18 @@ class DashboardService {
     }
   }
 
-  // Obtener los datos del dashboard
+  // Get dashboard data
   Future<DashboardModel> fetchDashboardData({String period = 'monthly'}) async {
     try {
-      // Obtener el ID de usuario de SharedPreferences
+      // Get user ID from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
 
       if (userId == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception('User not authenticated');
       }
 
-      // Realizar la petición HTTP usando la URL del servicio de datos del dashboard
+      // Make HTTP request using dashboard data service URL
       final response = await http.get(
         Uri.parse(
           '${dashboardDataUrl}/dashboard/data?user_id=$userId&period=$period',
@@ -180,61 +180,59 @@ class DashboardService {
         headers: {'Content-Type': 'application/json'},
       );
 
-      // Verificar si la respuesta es exitosa
+      // Check if response is successful
       if (response.statusCode == 200) {
-        // Parsear la respuesta JSON
+        // Parse JSON response
         final Map<String, dynamic> data = json.decode(response.body);
         return DashboardModel.fromJson(data);
       } else {
         throw Exception(
-          'Error al obtener datos del dashboard: ${response.statusCode}',
+          'Error fetching dashboard data: ${response.statusCode}',
         );
       }
     } catch (e) {
-      // En caso de error, devolver un modelo con valores por defecto
-      print('Error en fetchDashboardData: $e');
-      throw Exception('Error al obtener datos del dashboard: $e');
+      // In case of error, return a model with default values
+      print('Error in fetchDashboardData: $e');
+      throw Exception('Error fetching dashboard data: $e');
     }
   }
 
-  // Cambiar el periodo de tiempo
+  // Change time period
   Future<DashboardModel> changePeriod(String period) async {
     return await fetchDashboardData(period: period);
   }
 
-  // Actualizar el objetivo de ahorro
+  // Update savings goal
   Future<bool> updateSavingsGoal(double goal) async {
     try {
-      // Obtener el ID de usuario de SharedPreferences
+      // Get user ID from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
 
       if (userId == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception('User not authenticated');
       }
 
-      // Realizar la petición HTTP
+      // Make HTTP request
       final response = await http.post(
         Uri.parse('$baseUrl/savings/update'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': userId, 'goal': goal}),
       );
 
-      // Verificar si la respuesta es exitosa
+      // Check if response is successful
       if (response.statusCode == 200) {
         return true;
       } else {
-        throw Exception(
-          'Error al actualizar objetivo de ahorro: ${response.statusCode}',
-        );
+        throw Exception('Error updating savings goal: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error en updateSavingsGoal: $e');
+      print('Error in updateSavingsGoal: $e');
       return false;
     }
   }
 
-  // Registrar un nuevo gasto
+  // Register a new expense
   Future<bool> addExpense({
     required String name,
     required double amount,
@@ -242,15 +240,15 @@ class DashboardService {
     String? notes,
   }) async {
     try {
-      // Obtener el ID de usuario de SharedPreferences
+      // Get user ID from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
 
       if (userId == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception('User not authenticated');
       }
 
-      // Realizar la petición HTTP
+      // Make HTTP request
       final response = await http.post(
         Uri.parse('$baseUrl/expenses/add'),
         headers: {'Content-Type': 'application/json'},
@@ -264,19 +262,19 @@ class DashboardService {
         }),
       );
 
-      // Verificar si la respuesta es exitosa
+      // Check if response is successful
       if (response.statusCode == 200) {
         return true;
       } else {
-        throw Exception('Error al registrar gasto: ${response.statusCode}');
+        throw Exception('Error adding expense: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error en addExpense: $e');
+      print('Error in addExpense: $e');
       return false;
     }
   }
 
-  // Registrar un nuevo ingreso
+  // Register a new income
   Future<bool> addIncome({
     required String name,
     required double amount,
@@ -284,15 +282,15 @@ class DashboardService {
     String? notes,
   }) async {
     try {
-      // Obtener el ID de usuario de SharedPreferences
+      // Get user ID from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
 
       if (userId == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception('User not authenticated');
       }
 
-      // Realizar la petición HTTP
+      // Make HTTP request
       final response = await http.post(
         Uri.parse('$baseUrl/income/add'),
         headers: {'Content-Type': 'application/json'},
@@ -306,19 +304,19 @@ class DashboardService {
         }),
       );
 
-      // Verificar si la respuesta es exitosa
+      // Check if response is successful
       if (response.statusCode == 200) {
         return true;
       } else {
-        throw Exception('Error al registrar ingreso: ${response.statusCode}');
+        throw Exception('Error adding income: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error en addIncome: $e');
+      print('Error in addIncome: $e');
       return false;
     }
   }
 
-  // Agregar una nueva factura
+  // Add a new bill
   Future<bool> addBill({
     required String name,
     required double amount,
@@ -328,15 +326,15 @@ class DashboardService {
     required bool recurring,
   }) async {
     try {
-      // Obtener el ID de usuario de SharedPreferences
+      // Get user ID from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
 
       if (userId == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception('User not authenticated');
       }
 
-      // Realizar la petición HTTP
+      // Make HTTP request
       final response = await http.post(
         Uri.parse('$baseUrl/bills/add'),
         headers: {'Content-Type': 'application/json'},
@@ -354,44 +352,44 @@ class DashboardService {
         }),
       );
 
-      // Verificar si la respuesta es exitosa
+      // Check if response is successful
       if (response.statusCode == 200) {
         return true;
       } else {
-        throw Exception('Error al agregar factura: ${response.statusCode}');
+        throw Exception('Error adding bill: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error en addBill: $e');
+      print('Error in addBill: $e');
       return false;
     }
   }
 
-  // Marcar una factura como pagada
+  // Mark a bill as paid
   Future<bool> payBill(int billId) async {
     try {
-      // Obtener el ID de usuario de SharedPreferences
+      // Get user ID from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
 
       if (userId == null) {
-        throw Exception('Usuario no autenticado');
+        throw Exception('User not authenticated');
       }
 
-      // Realizar la petición HTTP
+      // Make HTTP request
       final response = await http.post(
         Uri.parse('$baseUrl/bills/pay'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': userId, 'bill_id': billId}),
       );
 
-      // Verificar si la respuesta es exitosa
+      // Check if response is successful
       if (response.statusCode == 200) {
         return true;
       } else {
-        throw Exception('Error al pagar factura: ${response.statusCode}');
+        throw Exception('Error paying bill: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error en payBill: $e');
+      print('Error in payBill: $e');
       return false;
     }
   }

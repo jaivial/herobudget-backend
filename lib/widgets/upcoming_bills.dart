@@ -140,13 +140,6 @@ class BillItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Money formatter
-    final currencyFormatter = NumberFormat.currency(
-      locale: 'es_MX',
-      symbol: '\$',
-      decimalDigits: 2,
-    );
-
     // Determine colors based on status
     final Color borderColor =
         bill.overdue
@@ -250,30 +243,45 @@ class BillItem extends StatelessWidget {
                     ),
                   ),
 
-                  // Amount and date
+                  // Amount and due date
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        currencyFormatter.format(bill.amount),
+                        context.tr.formatCurrency(bill.amount),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        _formatDueDate(bill.dueDate),
-                        style: TextStyle(
-                          color:
-                              bill.overdue
-                                  ? Colors.red.shade800
-                                  : Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                          fontSize: 12,
-                        ),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            context.tr.formatDate(
+                              DateTime.parse(bill.dueDate),
+                              pattern: 'MMM d',
+                            ),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 8),
+                      if (onPayBill != null)
+                        ElevatedButton(
+                          onPressed: onPayBill,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            textStyle: const TextStyle(fontSize: 12),
+                            minimumSize: const Size(60, 30),
+                          ),
+                          child: Text(context.tr.translate('pay')),
+                        ),
                     ],
                   ),
                 ],
@@ -283,14 +291,5 @@ class BillItem extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDueDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString);
-      return DateFormat('MMM d').format(date);
-    } catch (e) {
-      return dateString;
-    }
   }
 }

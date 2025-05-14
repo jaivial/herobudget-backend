@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
-import 'package:intl/intl.dart';
 import '../utils/app_localizations.dart';
 
 class SavingsOverviewWidget extends StatelessWidget {
@@ -15,13 +14,6 @@ class SavingsOverviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Money formatter
-    final currencyFormatter = NumberFormat.currency(
-      locale: 'es_MX',
-      symbol: '\$',
-      decimalDigits: 2,
-    );
-
     // Calculate percentage of goal achieved
     final double percentage =
         savingsOverview.goal > 0
@@ -80,7 +72,7 @@ class SavingsOverviewWidget extends StatelessWidget {
           Row(
             children: [
               Text(
-                currencyFormatter.format(savingsOverview.available),
+                context.tr.formatCurrency(savingsOverview.available),
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -88,7 +80,7 @@ class SavingsOverviewWidget extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '/ ${currencyFormatter.format(savingsOverview.goal)}',
+                '/ ${context.tr.formatCurrency(savingsOverview.goal)}',
                 style: TextStyle(
                   fontSize: 16,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -143,7 +135,7 @@ class SavingsOverviewWidget extends StatelessWidget {
                 ),
               ),
               Text(
-                '${context.tr.translate('goal')}: ${currencyFormatter.format(savingsOverview.goal)}',
+                '${context.tr.translate('goal')}: ${context.tr.formatCurrency(savingsOverview.goal)}',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),

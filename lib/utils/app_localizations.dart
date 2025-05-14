@@ -194,11 +194,48 @@ class AppLocalizations {
   String formatCurrency(double amount, {String? symbol}) {
     try {
       final String localeCode = locale.toString();
-      final NumberFormat formatter = NumberFormat.currency(
-        locale: localeCode,
-        symbol: symbol ?? '\$',
-      );
-      return formatter.format(amount);
+
+      // Special handling for Euro countries to place the symbol after the amount
+      final bool isEuroCountry = [
+        'de',
+        'fr',
+        'it',
+        'es',
+        'pt',
+        'nl',
+        'el',
+        'fi',
+        'sk',
+        'si',
+        'ie',
+        'lt',
+        'lv',
+        'ee',
+        'at',
+        'cy',
+        'mt',
+        'lu',
+        'be',
+        'gsw',
+      ].contains(locale.languageCode);
+
+      final String currencySymbol = symbol ?? '\$';
+
+      if (isEuroCountry && (currencySymbol == '€' || currencySymbol == 'EUR')) {
+        // For Euro countries, format with symbol at the end
+        final NumberFormat formatter = NumberFormat.currency(
+          locale: localeCode,
+          symbol: '',
+        );
+        return '${formatter.format(amount)} €';
+      } else {
+        // Default formatting with symbol at the beginning
+        final NumberFormat formatter = NumberFormat.currency(
+          locale: localeCode,
+          symbol: currencySymbol,
+        );
+        return formatter.format(amount);
+      }
     } catch (e) {
       // Fallback for unsupported locales
       final NumberFormat formatter = NumberFormat.currency(

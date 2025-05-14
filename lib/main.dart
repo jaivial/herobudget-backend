@@ -16,6 +16,7 @@ import 'screens/verification/email_verification_success_screen.dart';
 import 'screens/reset_password/reset_password_screen.dart';
 import 'screens/auth/signin_screen.dart';
 import 'screens/language_selector_screen.dart';
+import 'screens/profile/profile_screen.dart';
 import 'utils/deep_link_handler.dart';
 import 'utils/platform_channel_fixes.dart';
 import 'theme/app_theme.dart';
@@ -560,7 +561,10 @@ class _MyAppState extends State<MyApp> {
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
       home: homeScreen,
-      routes: {'/signin': (context) => const SignInScreen()},
+      routes: {
+        '/signin': (context) => const SignInScreen(),
+        '/profile': (context) => const ProfileScreen(),
+      },
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
         GlobalMaterialLocalizations.delegate,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
-import 'package:intl/intl.dart';
 import '../utils/app_localizations.dart';
 
 class FinanceMetricsWidget extends StatelessWidget {
@@ -10,13 +9,6 @@ class FinanceMetricsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Money formatter
-    final currencyFormatter = NumberFormat.currency(
-      locale: 'es_MX',
-      symbol: '\$',
-      decimalDigits: 2,
-    );
-
     // Calculate total
     final double total = metrics.income + metrics.expenses + metrics.bills;
 
@@ -115,19 +107,19 @@ class FinanceMetricsWidget extends StatelessWidget {
                     _MetricLegendItem(
                       color: Colors.green,
                       label: context.tr.translate('income'),
-                      value: currencyFormatter.format(metrics.income),
+                      value: context.tr.formatCurrency(metrics.income),
                       percent: incomePercent,
                     ),
                     _MetricLegendItem(
                       color: Colors.red,
                       label: context.tr.translate('expenses'),
-                      value: currencyFormatter.format(metrics.expenses),
+                      value: context.tr.formatCurrency(metrics.expenses),
                       percent: expensesPercent,
                     ),
                     _MetricLegendItem(
                       color: Colors.blue,
                       label: context.tr.translate('budget'),
-                      value: currencyFormatter.format(metrics.bills),
+                      value: context.tr.formatCurrency(metrics.bills),
                       percent: billsPercent,
                     ),
                   ],

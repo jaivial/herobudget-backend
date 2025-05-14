@@ -128,5 +128,7 @@
     "start_date": "开始日期",
     "end_date": "结束日期",
     "apply": "应用",
-    "quick_actions": "快速操作"
+    "quick_actions": "快速操作",
+    "budget_overview": "预算概览",
+    "current": "当前"
 }

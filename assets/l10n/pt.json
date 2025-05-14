@@ -90,5 +90,21 @@
     "no_account_found": "Nenhuma conta encontrada com este endereço de email",
     "failed_to_send_reset_email": "Falha ao enviar email de redefinição",
     "failed_to_update_password": "Falha ao atualizar senha",
-    "change_language": "Alterar idioma"
+    "change_language": "Alterar idioma",
+    "money_flow": "Fluxo de dinheiro",
+    "total_budget": "Orçamento total",
+    "remaining": "Restante",
+    "spent": "Gasto",
+    "budget_overview": "Visão geral do orçamento",
+    "current": "Atual",
+    "edit_goal": "Editar meta",
+    "cash_bank_distribution": "Dinheiro e banco",
+    "transfer": "Transferir",
+    "finance_metrics": "Métricas financeiras",
+    "income_vs_expenses": "Receitas vs despesas",
+    "savings_rate": "Taxa de poupança",
+    "upcoming_bills": "Contas próximas",
+    "due_date": "Data de vencimento",
+    "add_bill": "Adicionar conta",
+    "quick_actions": "Ações rápidas"
 }

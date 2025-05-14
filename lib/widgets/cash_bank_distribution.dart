@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
-import 'package:intl/intl.dart';
 import '../utils/app_localizations.dart';
 
 class CashBankDistributionWidget extends StatelessWidget {
@@ -15,13 +14,6 @@ class CashBankDistributionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Money formatter
-    final currencyFormatter = NumberFormat.currency(
-      locale: 'es_MX',
-      symbol: '\$',
-      decimalDigits: 2,
-    );
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -91,7 +83,7 @@ class CashBankDistributionWidget extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      currencyFormatter.format(distribution.cashAmount),
+                      context.tr.formatCurrency(distribution.cashAmount),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -143,7 +135,7 @@ class CashBankDistributionWidget extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      currencyFormatter.format(distribution.bankAmount),
+                      context.tr.formatCurrency(distribution.bankAmount),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -182,7 +174,7 @@ class CashBankDistributionWidget extends StatelessWidget {
                 ),
               ),
               Text(
-                currencyFormatter.format(distribution.monthlyTotal),
+                context.tr.formatCurrency(distribution.monthlyTotal),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,

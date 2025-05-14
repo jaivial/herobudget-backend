@@ -63,46 +63,6 @@ class _AppHeaderState extends State<AppHeader> {
     });
   }
 
-  // Método para cerrar sesión
-  Future<void> _handleLogout() async {
-    // Mostrar diálogo de confirmación
-    final bool? confirmLogout = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(context.tr.translate('logout')),
-          content: Text(
-            context.tr.translate('logout_confirmation') ??
-                '¿Estás seguro que deseas cerrar sesión?',
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(context.tr.translate('cancel')),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: Theme.of(context).colorScheme.onError,
-              ),
-              child: Text(context.tr.translate('logout')),
-            ),
-          ],
-        );
-      },
-    );
-
-    // Si el usuario confirma, proceder con el cierre de sesión
-    if (confirmLogout == true) {
-      await AuthService.signOut(context);
-      // Redirigir al usuario a la pantalla de inicio de sesión
-      if (context.mounted) {
-        Navigator.of(context).pushReplacementNamed('/signin');
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -131,10 +91,6 @@ class _AppHeaderState extends State<AppHeader> {
             },
           ),
 
-          // Selector de idioma
-          const SizedBox(width: 12),
-          const LanguageSelectorButton(),
-
           // Sección central - Logo de la aplicación
           Expanded(
             child: Center(
@@ -146,8 +102,8 @@ class _AppHeaderState extends State<AppHeader> {
             ),
           ),
 
-          // Sección derecha - Solo botón de cerrar sesión
-          LogoutButton(onLogout: _handleLogout),
+          // Sección derecha - Selector de idioma
+          const LanguageSelectorButton(),
         ],
       ),
     );
@@ -321,41 +277,5 @@ class ThemeToggleButton extends StatelessWidget {
 
   Future<void> _saveThemeMode(ThemeMode mode) async {
     await AppTheme.saveThemeMode(mode);
-  }
-}
-
-// Botón de cierre de sesión
-class LogoutButton extends StatelessWidget {
-  final VoidCallback onLogout;
-
-  const LogoutButton({super.key, required this.onLogout});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Tooltip(
-      message: context.tr.translate('logout'),
-      child: InkWell(
-        onTap: onLogout,
-        borderRadius: BorderRadius.circular(12),
-        child: Ink(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color:
-                isDarkMode
-                    ? colorScheme.errorContainer.withOpacity(0.2)
-                    : colorScheme.errorContainer.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: colorScheme.error.withOpacity(0.3),
-              width: 1.5,
-            ),
-          ),
-          child: Icon(Icons.logout, size: 20, color: colorScheme.error),
-        ),
-      ),
-    );
   }
 }

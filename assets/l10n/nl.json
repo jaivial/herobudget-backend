@@ -90,5 +90,21 @@
     "no_account_found": "Geen account gevonden met dit e-mailadres",
     "failed_to_send_reset_email": "Kon geen reset e-mail verzenden",
     "failed_to_update_password": "Kon wachtwoord niet bijwerken",
-    "change_language": "Taal wijzigen"
+    "change_language": "Taal wijzigen",
+    "money_flow": "Geldstroom",
+    "total_budget": "Totaal budget",
+    "remaining": "Resterend",
+    "spent": "Uitgegeven",
+    "budget_overview": "Budgetoverzicht",
+    "current": "Huidig",
+    "edit_goal": "Doel bewerken",
+    "cash_bank_distribution": "Contant en bank",
+    "transfer": "Overschrijven",
+    "finance_metrics": "Financiële metrics",
+    "income_vs_expenses": "Inkomsten vs uitgaven",
+    "savings_rate": "Spaarpercentage",
+    "upcoming_bills": "Aankomende rekeningen",
+    "due_date": "Vervaldatum",
+    "add_bill": "Rekening toevoegen",
+    "quick_actions": "Snelle acties"
 }

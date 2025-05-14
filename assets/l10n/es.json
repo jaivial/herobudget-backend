@@ -200,5 +200,12 @@
     "tomorrow": "Mañana",
     "language_changed": "Idioma cambiado a Español",
     "changing_language": "Cambiando idioma...",
-    "language_change_in_progress": "Cambio de idioma en progreso..."
+    "language_change_in_progress": "Cambio de idioma en progreso...",
+    "email_verified": "Correo verificado",
+    "email_not_verified": "Correo no verificado",
+    "edit_profile": "Editar Perfil",
+    "edit_profile_coming_soon": "Función de editar perfil próximamente",
+    "notifications_coming_soon": "Función de notificaciones próximamente",
+    "delete_account_coming_soon": "Función de eliminar cuenta próximamente",
+    "select_theme": "Seleccionar Tema"
 }
