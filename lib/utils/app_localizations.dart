@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'currency_utils.dart';
 
 class AppLocalizations {
   final Locale locale;
@@ -195,6 +196,11 @@ class AppLocalizations {
     try {
       final String localeCode = locale.toString();
 
+      // Get the currency symbol based on the language if not explicitly provided
+      final String currencySymbol =
+          symbol ??
+          CurrencyUtils.getCurrencySymbolForLanguage(locale.languageCode);
+
       // Special handling for Euro countries to place the symbol after the amount
       final bool isEuroCountry = [
         'de',
@@ -219,8 +225,6 @@ class AppLocalizations {
         'gsw',
       ].contains(locale.languageCode);
 
-      final String currencySymbol = symbol ?? '\$';
-
       if (isEuroCountry && (currencySymbol == '€' || currencySymbol == 'EUR')) {
         // For Euro countries, format with symbol at the end
         final NumberFormat formatter = NumberFormat.currency(
@@ -238,9 +242,12 @@ class AppLocalizations {
       }
     } catch (e) {
       // Fallback for unsupported locales
+      final String currencySymbol =
+          symbol ??
+          CurrencyUtils.getCurrencySymbolForLanguage(locale.languageCode);
       final NumberFormat formatter = NumberFormat.currency(
         locale: 'en_US',
-        symbol: symbol ?? '\$',
+        symbol: currencySymbol,
       );
       return formatter.format(amount);
     }

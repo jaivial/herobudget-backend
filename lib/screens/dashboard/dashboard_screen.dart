@@ -21,9 +21,11 @@ import '../../services/savings_service.dart';
 import '../../services/cash_bank_service.dart';
 import '../../services/bills_service.dart';
 import '../onboarding/onboarding_screen.dart';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui';
+import '../../utils/currency_utils.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -518,7 +520,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           left: 16,
           right: 16,
           top: 16,
-          bottom: 90, // Enough space for navigation bar
+          bottom: 100, // Increased space for navigation bar with bottom margin
         ),
         children: [
           // Period selector
@@ -603,7 +605,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     final double radius = math.min(120, screenWidth * 0.35);
 
     // Posición base para las acciones (ajustar según sea necesario)
-    const double baseBottomPosition = 90;
+    const double baseBottomPosition =
+        100; // Increased to match the taller navigation bar
 
     // Lista para almacenar los widgets de acciones
     List<Widget> actionWidgets = [];
@@ -666,11 +669,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               _toggleQuickMenu(); // Close menu
 
               // Show feedback for selected action
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${context.tr.translate('action')}: $label'),
-                ),
-              );
+              _showActionSnackbar(label);
             },
             customBorder: const CircleBorder(),
             child: Container(
@@ -717,6 +716,11 @@ class _DashboardScreenState extends State<DashboardScreen>
       text: currentGoal.toString(),
     );
 
+    // Get currency symbol for current locale
+    final String currencySymbol = CurrencyUtils.getCurrencySymbolForLocale(
+      Localizations.localeOf(context),
+    );
+
     showDialog(
       context: context,
       builder: (context) {
@@ -727,7 +731,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: context.tr.translate('goal_amount'),
-              prefixText: '\$',
+              prefixText: currencySymbol,
             ),
           ),
           actions: [
@@ -767,6 +771,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   void _showTransferDialog(CashBankDistribution distribution) {
     final amountController = TextEditingController();
     bool isCashToBank = true;
+
+    // Get currency symbol for current locale
+    final String currencySymbol = CurrencyUtils.getCurrencySymbolForLocale(
+      Localizations.localeOf(context),
+    );
 
     showDialog(
       context: context,
@@ -812,14 +821,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: context.tr.translate('amount'),
-                      prefixText: '\$',
+                      prefixText: currencySymbol,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     isCashToBank
-                        ? '${context.tr.translate('available_cash')}: \$${distribution.cashAmount.toStringAsFixed(2)}'
-                        : '${context.tr.translate('available_in_bank')}: \$${distribution.bankAmount.toStringAsFixed(2)}',
+                        ? '${context.tr.translate('available_cash')}: ${currencySymbol}${distribution.cashAmount.toStringAsFixed(2)}'
+                        : '${context.tr.translate('available_in_bank')}: ${currencySymbol}${distribution.bankAmount.toStringAsFixed(2)}',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -871,7 +880,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                '${context.tr.translate('transfer_successful')} \$${amount.toStringAsFixed(2)}',
+                                '${context.tr.translate('transfer_successful')} ${currencySymbol}${amount.toStringAsFixed(2)}',
                               ),
                             ),
                           );
@@ -938,6 +947,21 @@ class _DashboardScreenState extends State<DashboardScreen>
   void _showAddCategoryDialog() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.tr.translate('add_category_dialog'))),
+    );
+  }
+
+  // Show a snackbar with the action label
+  void _showActionSnackbar(String label) {
+    // Get currency symbol for current locale
+    final String currencySymbol = CurrencyUtils.getCurrencySymbolForLocale(
+      Localizations.localeOf(context),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${context.tr.translate('action')}: ${label}'),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 }

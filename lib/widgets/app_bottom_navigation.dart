@@ -16,7 +16,8 @@ class AppBottomNavigation extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      height: 70,
+      height: 80,
+      padding: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: const BorderRadius.only(
@@ -25,7 +26,7 @@ class AppBottomNavigation extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(26),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -36,12 +37,7 @@ class AppBottomNavigation extends StatelessWidget {
         children: [
           // Botón para ir al Dashboard/Home
           Expanded(
-            child: _buildNavItem(
-              context,
-              icon: Icons.home_rounded,
-              label: 'Inicio',
-              index: 0,
-            ),
+            child: _buildNavItem(context, icon: Icons.home_rounded, index: 0),
           ),
 
           // Botón para ir a Transacciones
@@ -49,7 +45,6 @@ class AppBottomNavigation extends StatelessWidget {
             child: _buildNavItem(
               context,
               icon: Icons.receipt_long_rounded,
-              label: 'Transacciones',
               index: 1,
             ),
           ),
@@ -62,19 +57,13 @@ class AppBottomNavigation extends StatelessWidget {
             child: _buildNavItem(
               context,
               icon: Icons.bar_chart_rounded,
-              label: 'Estadísticas',
               index: 2,
             ),
           ),
 
           // Botón para ir al Perfil
           Expanded(
-            child: _buildNavItem(
-              context,
-              icon: Icons.person_rounded,
-              label: 'Perfil',
-              index: 3,
-            ),
+            child: _buildNavItem(context, icon: Icons.person_rounded, index: 3),
           ),
         ],
       ),
@@ -84,7 +73,6 @@ class AppBottomNavigation extends StatelessWidget {
   Widget _buildNavItem(
     BuildContext context, {
     required IconData icon,
-    required String label,
     required int index,
   }) {
     final isSelected = currentIndex == index;
@@ -101,20 +89,8 @@ class AppBottomNavigation extends StatelessWidget {
             color:
                 isSelected
                     ? colorScheme.primary
-                    : colorScheme.onSurface.withOpacity(0.6),
-            size: 26,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color:
-                  isSelected
-                      ? colorScheme.primary
-                      : colorScheme.onSurface.withOpacity(0.6),
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            ),
+                    : colorScheme.onSurface.withAlpha(153),
+            size: 28,
           ),
         ],
       ),
