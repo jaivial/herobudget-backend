@@ -1,11 +1,16 @@
+import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:math';
+
 class UserModel {
   final String id;
   final String email;
   final String name;
   final String? givenName;
   final String? familyName;
-  final String? picture;
-  final String? displayImage;
+  final String? picture; // URL para usuarios de Google
+  final String?
+  displayImage; // Base64 para usuarios regulares (profile_image_blob)
   final String locale;
   final bool verifiedEmail;
   final String? createdAt;
@@ -37,6 +42,17 @@ class UserModel {
       locale = locale.split(RegExp(r'[-_]'))[0];
     }
 
+    // Manejar campo de imagen de perfil
+    String? displayImage = json['display_image'];
+
+    // Si no hay display_image pero hay profile_image_blob, usar eso
+    if ((displayImage == null || displayImage.isEmpty) &&
+        json['profile_image_blob'] != null &&
+        json['profile_image_blob'].toString().isNotEmpty) {
+      print('Using profile_image_blob as displayImage');
+      displayImage = json['profile_image_blob'].toString();
+    }
+
     return UserModel(
       id: json['id'].toString(),
       email: json['email'] ?? '',
@@ -44,7 +60,7 @@ class UserModel {
       givenName: json['given_name'],
       familyName: json['family_name'],
       picture: json['picture'],
-      displayImage: json['display_image'],
+      displayImage: displayImage,
       googleId: json['google_id'],
       locale: locale,
       verifiedEmail: json['verified_email'] ?? false,
@@ -160,5 +176,159 @@ class UserModel {
     };
 
     return languageToCountry[locale] ?? 'US';
+  }
+
+  // Método para obtener la imagen de perfil adecuada en formato ImageProvider
+  ImageProvider? getProfileImage() {
+    // Diagnóstico básico
+    if (displayImage != null && displayImage!.isNotEmpty) {
+      final preview = displayImage!.substring(0, min(10, displayImage!.length));
+      print(
+        'UserModel: displayImage preview: $preview... (length: ${displayImage!.length})',
+      );
+    }
+    if (picture != null && picture!.isNotEmpty) {
+      final preview = picture!.substring(0, min(10, picture!.length));
+      print(
+        'UserModel: picture preview: $preview... (length: ${picture!.length})',
+      );
+
+      // Si el campo picture comienza con "/9j/" es una imagen JPEG en base64
+      if (picture!.startsWith("/9j/")) {
+        print('UserModel: Detected JPEG base64 in picture field');
+        try {
+          final bytes = base64Decode(picture!);
+          print('UserModel: Successfully decoded JPEG: ${bytes.length} bytes');
+          return MemoryImage(bytes);
+        } catch (e) {
+          print('UserModel: Failed to decode JPEG from picture: $e');
+        }
+      }
+    }
+
+    // Para usuarios de Google, priorizar el campo 'picture' como URL
+    if (googleId != null && googleId!.isNotEmpty) {
+      print('UserModel: Google user detected');
+      // Primero intentar usar 'picture' como URL (si no es base64)
+      if (picture != null &&
+          picture!.isNotEmpty &&
+          !picture!.startsWith("/9j/")) {
+        try {
+          print('UserModel: Trying NetworkImage with picture');
+          return NetworkImage(picture!);
+        } catch (e) {
+          print('UserModel: Error loading Google picture: $e');
+        }
+      }
+
+      // Si no hay 'picture' o falló, intentar usar 'displayImage' como URL
+      if (displayImage != null && displayImage!.isNotEmpty) {
+        try {
+          print('UserModel: Trying NetworkImage with displayImage');
+          return NetworkImage(displayImage!);
+        } catch (e) {
+          print('UserModel: Error loading displayImage as URL: $e');
+        }
+      }
+    }
+    // Para usuarios regulares (no Google)
+    else {
+      print('UserModel: Regular user detected');
+
+      // Si el campo picture contiene una imagen base64 (comienza con /9j/), ya intentamos usarla arriba
+
+      // Intentar usar 'displayImage' como base64 (profile_image_blob)
+      if (displayImage != null && displayImage!.isNotEmpty) {
+        try {
+          // Intento 1: decodificar directamente como base64
+          try {
+            print('UserModel: Attempt 1 - Direct base64 decode');
+            final bytes = base64Decode(displayImage!);
+            print('UserModel: Direct decode successful: ${bytes.length} bytes');
+            return MemoryImage(bytes);
+          } catch (e) {
+            print('UserModel: Direct base64 decode failed: $e');
+          }
+
+          // Intento 2: tratar con el prefijo WebP
+          try {
+            print('UserModel: Attempt 2 - WebP handling');
+            String base64Image = displayImage!;
+            if (!base64Image.startsWith('data:')) {
+              base64Image = 'data:image/webp;base64,${base64Image}';
+            }
+
+            if (base64Image.contains(';base64,')) {
+              base64Image = base64Image.split(';base64,')[1];
+            }
+
+            final bytes = base64Decode(base64Image);
+            print('UserModel: WebP handling successful: ${bytes.length} bytes');
+            return MemoryImage(bytes);
+          } catch (e) {
+            print('UserModel: WebP decode failed: $e');
+          }
+
+          // Intento 3: remover caracteres problemáticos
+          try {
+            print('UserModel: Attempt 3 - Cleaning string');
+            String cleanBase64 = displayImage!
+                .replaceAll('\n', '')
+                .replaceAll('\r', '')
+                .replaceAll(' ', '');
+
+            if (cleanBase64.startsWith(RegExp(r'data:image\/[^;]+;base64,'))) {
+              cleanBase64 = cleanBase64.split(';base64,')[1];
+            }
+
+            // Asegurar que la longitud sea múltiplo de 4
+            while (cleanBase64.length % 4 != 0) {
+              cleanBase64 += '=';
+            }
+
+            final bytes = base64Decode(cleanBase64);
+            print('UserModel: Cleaning successful: ${bytes.length} bytes');
+            return MemoryImage(bytes);
+          } catch (e) {
+            print('UserModel: Clean decode failed: $e');
+          }
+
+          // Intento 4: Manejar formato específico visto en logs
+          try {
+            print('UserModel: Attempt 4 - Handling specific format');
+            // Verificar si comienza con "/9j/" que es típico de JPEG en base64
+            if (displayImage!.startsWith("/9j/")) {
+              final bytes = base64Decode(displayImage!);
+              print(
+                'UserModel: JPEG format handling successful: ${bytes.length} bytes',
+              );
+              return MemoryImage(bytes);
+            }
+          } catch (e) {
+            print('UserModel: JPEG format handling failed: $e');
+          }
+        } catch (e) {
+          print('UserModel: All decode attempts failed: $e');
+        }
+      } else {
+        print('UserModel: No displayImage available');
+      }
+
+      // Si no hay 'displayImage' o falla la decodificación, intentar 'picture' como URL (no como base64)
+      if (picture != null &&
+          picture!.isNotEmpty &&
+          !picture!.startsWith("/9j/")) {
+        try {
+          print('UserModel: Falling back to picture as URL');
+          return NetworkImage(picture!);
+        } catch (e) {
+          print('UserModel: Error loading picture as URL: $e');
+        }
+      }
+    }
+
+    print('UserModel: Using default avatar image');
+    // Fallback a la imagen de assets
+    return const AssetImage('assets/avatars/default_avatar.png');
   }
 }

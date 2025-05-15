@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/dashboard_service.dart';
@@ -9,6 +11,7 @@ import '../../theme/app_theme.dart';
 import '../../utils/extensions.dart';
 import '../../widgets/language_selector_widget.dart';
 import '../onboarding/onboarding_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -28,6 +31,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _loadUserData();
     _loadThemeMode();
+  }
+
+  // Método para verificar el formato de las imágenes
+  void _debugImageFormats() {
+    if (_user == null) return;
+
+    print('===== DEBUG IMAGE FORMATS =====');
+
+    // Verificar campos de imagen
+    if (_user!.displayImage != null) {
+      print('displayImage length: ${_user!.displayImage!.length}');
+
+      // Mostrar solo los primeros 10 caracteres
+      if (_user!.displayImage!.isNotEmpty) {
+        final preview = _user!.displayImage!.substring(
+          0,
+          min(10, _user!.displayImage!.length),
+        );
+        print('displayImage preview: $preview...');
+      }
+
+      // Verificar si parece base64 válido
+      bool seemsValidBase64 = RegExp(
+        r'^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$',
+      ).hasMatch(_user!.displayImage!);
+      print('Seems valid base64: $seemsValidBase64');
+
+      // Verificar si tiene prefijo
+      if (_user!.displayImage!.startsWith('data:')) {
+        print('displayImage has data: prefix');
+      }
+
+      // Intentar decodificar
+      try {
+        final bytes = base64Decode(_user!.displayImage!);
+        print('Successfully decoded as raw base64: ${bytes.length} bytes');
+      } catch (e) {
+        print('Raw base64 decode failed: $e');
+
+        // Intentar limpiar y decodificar
+        try {
+          String cleaned = _user!.displayImage!
+              .replaceAll('\n', '')
+              .replaceAll('\r', '')
+              .replaceAll(' ', '');
+
+          if (cleaned.startsWith(RegExp(r'data:image\/[^;]+;base64,'))) {
+            cleaned = cleaned.split(';base64,')[1];
+          }
+
+          // Asegurar que la longitud sea múltiplo de 4
+          while (cleaned.length % 4 != 0) {
+            cleaned += '=';
+          }
+
+          final bytes = base64Decode(cleaned);
+          print('Successfully decoded after cleaning: ${bytes.length} bytes');
+        } catch (e) {
+          print('Cleaned base64 decode failed: $e');
+        }
+      }
+    } else {
+      print('displayImage is null');
+    }
+
+    if (_user!.picture != null) {
+      // Mostrar solo los primeros 10 caracteres
+      if (_user!.picture!.isNotEmpty) {
+        final preview = _user!.picture!.substring(
+          0,
+          min(10, _user!.picture!.length),
+        );
+        print('picture preview: $preview...');
+      }
+      print('picture exists and seems to be a URL');
+    } else {
+      print('picture is null');
+    }
+
+    print('===== END DEBUG =====');
   }
 
   Future<void> _loadUserData() async {
@@ -50,6 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _user = UserModel.fromJson(userInfo);
             _isLoading = false;
           });
+          _debugImageFormats();
         } else {
           setState(() {
             _errorMessage =
@@ -63,6 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _user = user;
           _isLoading = false;
         });
+        _debugImageFormats();
       }
     } catch (e) {
       setState(() {
@@ -181,7 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ).colorScheme.primary.withOpacity(0.2),
               backgroundImage: _getProfileImage(),
               child:
-                  _user?.displayImage == null
+                  _user?.displayImage == null && _user?.picture == null
                       ? Icon(
                         Icons.person,
                         size: 50,
@@ -509,27 +594,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return null;
     }
 
-    // First try to use displayImage if available
-    if (_user!.displayImage != null && _user!.displayImage!.isNotEmpty) {
-      // If it's a Google user, displayImage is a URL
-      if (_user!.googleId != null && _user!.googleId!.isNotEmpty) {
-        return NetworkImage(_user!.displayImage!);
-      }
-      // If it's a regular user, displayImage might be base64
-      try {
-        return MemoryImage(base64Decode(_user!.displayImage!));
-      } catch (e) {
-        print('Error decoding profile image: $e');
-      }
-    }
-
-    // Then try to use picture if available (usually for Google users)
-    if (_user!.picture != null && _user!.picture!.isNotEmpty) {
-      return NetworkImage(_user!.picture!);
-    }
-
-    // Fallback to the default avatar
-    return const AssetImage('assets/avatars/default_avatar.png');
+    // Usar el método centralizado en UserModel
+    return _user!.getProfileImage();
   }
 
   String _getLanguageName(String languageCode) {

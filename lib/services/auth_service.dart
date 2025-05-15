@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -281,18 +282,66 @@ class AuthService {
 
   // Get current user from local storage
   static Future<UserModel?> getCurrentUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userDataString = prefs.getString(userDataKey);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString('user_data');
 
-    if (userDataString != null) {
-      try {
-        final userInfo = jsonDecode(userDataString);
-        return UserModel.fromJson(userInfo);
-      } catch (e) {
-        print('Error parsing user info: $e');
+      if (userJson != null && userJson.isNotEmpty) {
+        print(
+          'Retrieved user data from SharedPreferences. Length: ${userJson.length}',
+        );
+        final Map<String, dynamic> userData = json.decode(userJson);
+
+        // Verificar si hay información de imagen
+        if (userData.containsKey('picture')) {
+          print(
+            'picture field exists: ${userData['picture'] != null ? 'not null' : 'null'}',
+          );
+          if (userData['picture'] != null) {
+            final picturePreview = userData['picture'].toString().substring(
+              0,
+              min(10, userData['picture'].toString().length),
+            );
+            print('picture preview: $picturePreview...');
+          }
+        }
+
+        if (userData.containsKey('display_image')) {
+          print(
+            'display_image field exists: ${userData['display_image'] != null ? 'not null' : 'null'}',
+          );
+          if (userData['display_image'] != null) {
+            final displayImagePreview = userData['display_image']
+                .toString()
+                .substring(
+                  0,
+                  min(10, userData['display_image'].toString().length),
+                );
+            print('display_image preview: $displayImagePreview...');
+          }
+        }
+
+        if (userData.containsKey('profile_image_blob')) {
+          print(
+            'profile_image_blob field exists: ${userData['profile_image_blob'] != null ? 'not null' : 'null'}',
+          );
+          if (userData['profile_image_blob'] != null) {
+            final blobPreview = userData['profile_image_blob']
+                .toString()
+                .substring(
+                  0,
+                  min(10, userData['profile_image_blob'].toString().length),
+                );
+            print('profile_image_blob preview: $blobPreview...');
+          }
+        }
+
+        return UserModel.fromJson(userData);
       }
+      return null;
+    } catch (e) {
+      print('Error getting current user: $e');
+      return null;
     }
-
-    return null;
   }
 }

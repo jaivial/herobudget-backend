@@ -124,36 +124,13 @@ class UserAvatar extends StatelessWidget {
       child: CircleAvatar(
         radius: 20,
         backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-        backgroundImage: _getProfileImage(user),
+        backgroundImage: user?.getProfileImage(),
         child:
             user == null
                 ? const Icon(Icons.person, color: Colors.white70)
                 : null,
       ),
     );
-  }
-
-  ImageProvider? _getProfileImage(UserModel? user) {
-    if (user == null) {
-      return null;
-    }
-
-    // Si hay una imagen de perfil disponible en displayImage
-    if (user.displayImage != null && user.displayImage!.isNotEmpty) {
-      // Si es usuario de Google, displayImage es una URL
-      if (user.googleId != null && user.googleId!.isNotEmpty) {
-        return NetworkImage(user.displayImage!);
-      }
-      // Si es usuario regular, displayImage es base64
-      try {
-        return MemoryImage(base64Decode(user.displayImage!));
-      } catch (e) {
-        print('Error decoding profile image: $e');
-      }
-    }
-
-    // Fallback a la imagen de assets
-    return const AssetImage('assets/avatars/default_avatar.png');
   }
 }
 
