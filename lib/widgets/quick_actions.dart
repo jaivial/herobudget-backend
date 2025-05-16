@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_localizations.dart';
+import '../screens/category/categories_list_screen.dart';
 
 class QuickActionsWidget extends StatelessWidget {
   final VoidCallback? onIncomePressed;
@@ -71,11 +72,20 @@ class QuickActionsWidget extends StatelessWidget {
                 onPressed: onPayBillPressed,
               ),
               ActionButton(
-                icon: Icons.add_circle_outline,
+                icon: Icons.category,
                 label: context.tr.translate('add_category'),
                 iconColor: Colors.purple,
                 backgroundColor: Colors.purple.withOpacity(0.1),
-                onPressed: onAddCategoryPressed,
+                onPressed:
+                    onAddCategoryPressed ??
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CategoriesListScreen(),
+                        ),
+                      );
+                    },
               ),
             ],
           ),

@@ -21,13 +21,14 @@ BILLS_MANAGEMENT_PORT=8091
 PROFILE_MANAGEMENT_PORT=8092
 INCOME_MANAGEMENT_PORT=8093
 EXPENSE_MANAGEMENT_PORT=8094
+CATEGORIES_MANAGEMENT_PORT=8095
 
 # Function to get service port by name
 get_port() {
   case $1 in
     "google_auth") echo $AUTH_SERVICE_PORT ;;
     "signup") echo $SIGNUP_SERVICE_PORT ;;
-    "language") echo $LANGUAGE_SERVICE_PORT ;;
+    "language_cookie") echo $LANGUAGE_SERVICE_PORT ;;
     "signin") echo $SIGNIN_SERVICE_PORT ;;
     "fetch_dashboard") echo $FETCH_DASHBOARD_PORT ;;
     "reset_password") echo $RESET_PASSWORD_PORT ;;
@@ -39,6 +40,7 @@ get_port() {
     "profile_management") echo $PROFILE_MANAGEMENT_PORT ;;
     "income_management") echo $INCOME_MANAGEMENT_PORT ;;
     "expense_management") echo $EXPENSE_MANAGEMENT_PORT ;;
+    "categories_management") echo $CATEGORIES_MANAGEMENT_PORT ;;
     *) echo "" ;;
   esac
 }
@@ -47,7 +49,7 @@ get_port() {
 services=(
   "google_auth"
   "signup"
-  "language"
+  "language_cookie"
   "signin"
   "reset_password"
   "fetch_dashboard"
@@ -59,6 +61,7 @@ services=(
   "profile_management"
   "income_management"
   "expense_management"
+  "categories_management"
 )
 
 # Check for selected services

@@ -28,6 +28,7 @@ import 'dart:ui';
 import '../../utils/currency_utils.dart';
 import '../income/add_income_screen.dart';
 import '../expense/add_expense_screen.dart';
+import '../category/categories_list_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -975,8 +976,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // Dialog to add category
   void _showAddCategoryDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.tr.translate('add_category_dialog'))),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CategoriesListScreen()),
     );
   }
 
