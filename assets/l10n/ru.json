@@ -107,5 +107,22 @@
     "due_date": "Срок оплаты",
     "add_bill": "Добавить счёт",
     "quick_actions": "Быстрые действия",
-    "payment_method": "Способ оплаты"
+    "payment_method": "Способ оплаты",
+    "update_password": "Обновить пароль",
+    "all": "Все",
+    "categories": "Категории",
+    "category_added_successfully": "Категория успешно добавлена",
+    "category_deleted_successfully": "Категория успешно удалена",
+    "category_name": "Название категории",
+    "category_type": "Тип категории",
+    "confirm_delete": "Подтвердить удаление",
+    "delete_category_confirmation": "Вы уверены, что хотите удалить эту категорию",
+    "enter_category_name": "Пожалуйста, введите название категории",
+    "error_deleting_category": "Ошибка при удалении категории",
+    "filter_by_type": "Фильтровать по типу",
+    "no_categories_found": "Категории не найдены",
+    "search_categories": "Поиск категорий",
+    "select_emoji": "Выберите эмодзи",
+    "selected_emoji": "Выбранный эмодзи",
+    "undo": "Отменить"
 }

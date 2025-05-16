@@ -27,14 +27,27 @@ class CategoryService {
         url += '&type=$type';
       }
 
+      // Debug: Print the URL and base URL for debugging
+      print('DEBUG - Base URL: $_baseUrl');
+      print('DEBUG - Full URL being called: $url');
+
       // Realizar la solicitud HTTP
       final response = await http.get(Uri.parse(url));
+
+      // Debug: Print the response status
+      print('DEBUG - Response status: ${response.statusCode}');
+      print('DEBUG - Response body: ${response.body}');
 
       // Verificar el código de estado
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
         if (jsonData['success'] == true) {
+          // Manejar caso donde data es null (usuario no tiene categorías)
+          if (jsonData['data'] == null) {
+            return []; // Devolver lista vacía
+          }
+
           final categoriesJson = jsonData['data'] as List;
           return categoriesJson.map((json) => Category.fromJson(json)).toList();
         } else {
@@ -48,6 +61,8 @@ class CategoryService {
         );
       }
     } catch (e) {
+      // Debug: Print any exceptions
+      print('DEBUG - Exception caught: $e');
       if (e is ApiException || e is NotAuthenticatedException) {
         rethrow;
       }
@@ -69,12 +84,19 @@ class CategoryService {
       // Crear una copia de la categoría con el ID de usuario
       final categoryWithUserId = category.copyWith(userId: userId);
 
+      // URL for add endpoint - remove "/add" as it's already in the endpoint
+      final String url = '$_baseUrl/add';
+      print('DEBUG - Add category URL: $url');
+
       // Realizar la solicitud HTTP
       final response = await http.post(
-        Uri.parse('$_baseUrl/add'),
+        Uri.parse(url),
         body: json.encode(categoryWithUserId.toJson()),
         headers: {'Content-Type': 'application/json'},
       );
+
+      print('DEBUG - Add response status: ${response.statusCode}');
+      print('DEBUG - Add response body: ${response.body}');
 
       // Verificar el código de estado
       if (response.statusCode == 200) {
@@ -91,6 +113,7 @@ class CategoryService {
         throw ApiException('Error al añadir categoría: ${response.statusCode}');
       }
     } catch (e) {
+      print('DEBUG - Add category exception: $e');
       if (e is ApiException || e is NotAuthenticatedException) {
         rethrow;
       }
@@ -122,12 +145,19 @@ class CategoryService {
         'emoji': category.emoji,
       };
 
+      // URL for update endpoint
+      final String url = '$_baseUrl/update';
+      print('DEBUG - Update category URL: $url');
+
       // Realizar la solicitud HTTP
       final response = await http.post(
-        Uri.parse('$_baseUrl/update'),
+        Uri.parse(url),
         body: json.encode(requestBody),
         headers: {'Content-Type': 'application/json'},
       );
+
+      print('DEBUG - Update response status: ${response.statusCode}');
+      print('DEBUG - Update response body: ${response.body}');
 
       // Verificar el código de estado
       if (response.statusCode == 200) {
@@ -146,6 +176,7 @@ class CategoryService {
         );
       }
     } catch (e) {
+      print('DEBUG - Update category exception: $e');
       if (e is ApiException || e is NotAuthenticatedException) {
         rethrow;
       }
@@ -167,12 +198,19 @@ class CategoryService {
       // Preparar el cuerpo de la solicitud
       final requestBody = {'user_id': userId, 'category_id': categoryId};
 
+      // URL for delete endpoint
+      final String url = '$_baseUrl/delete';
+      print('DEBUG - Delete category URL: $url');
+
       // Realizar la solicitud HTTP
       final response = await http.post(
-        Uri.parse('$_baseUrl/delete'),
+        Uri.parse(url),
         body: json.encode(requestBody),
         headers: {'Content-Type': 'application/json'},
       );
+
+      print('DEBUG - Delete response status: ${response.statusCode}');
+      print('DEBUG - Delete response body: ${response.body}');
 
       // Verificar el código de estado
       if (response.statusCode == 200) {
@@ -189,6 +227,7 @@ class CategoryService {
         );
       }
     } catch (e) {
+      print('DEBUG - Delete category exception: $e');
       if (e is ApiException || e is NotAuthenticatedException) {
         rethrow;
       }

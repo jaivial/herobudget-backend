@@ -126,5 +126,21 @@
     "confirm_password_required": "Confirmação de senha é obrigatória",
     "update_password": "Atualizar senha",
     "edit_profile": "Editar perfil",
-    "payment_method": "Método de pagamento"
+    "payment_method": "Método de pagamento",
+    "all": "Todos",
+    "categories": "Categorias",
+    "category_added_successfully": "Categoria adicionada com sucesso",
+    "category_deleted_successfully": "Categoria excluída com sucesso",
+    "category_name": "Nome da categoria",
+    "category_type": "Tipo de categoria",
+    "confirm_delete": "Confirmar exclusão",
+    "delete_category_confirmation": "Tem certeza que deseja excluir esta categoria",
+    "enter_category_name": "Por favor, insira um nome para a categoria",
+    "error_deleting_category": "Erro ao excluir categoria",
+    "filter_by_type": "Filtrar por tipo",
+    "no_categories_found": "Nenhuma categoria encontrada",
+    "search_categories": "Pesquisar categorias",
+    "select_emoji": "Selecionar emoji",
+    "selected_emoji": "Emoji selecionado",
+    "undo": "Desfazer"
 }

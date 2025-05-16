@@ -129,5 +129,21 @@
     "overdue_by": "Überfällig sit",
     "days": "Täg",
     "update_password": "Passwort aktualisiere",
-    "payment_method": "Zahlungsmethode"
+    "payment_method": "Zahlungsmethode",
+    "all": "Alli",
+    "categories": "Kategorie",
+    "category_added_successfully": "Kategorie erfolgriich hinzuegfüegt",
+    "category_deleted_successfully": "Kategorie erfolgriich glöscht",
+    "category_name": "Kategoriename",
+    "category_type": "Kategorieart",
+    "confirm_delete": "Lösche bestätige",
+    "delete_category_confirmation": "Sind Sie sicher, dass Sie diese Kategorie lösche wend",
+    "enter_category_name": "Bitte gebe Sie en Kategoriename ii",
+    "error_deleting_category": "Fehler bim Lösche vo de Kategorie",
+    "filter_by_type": "Nach Typ filtere",
+    "no_categories_found": "Kei Kategorie gfunde",
+    "search_categories": "Kategorie sueche",
+    "select_emoji": "Emoji uswähle",
+    "selected_emoji": "Usgwählts Emoji",
+    "undo": "Rückgängig mache"
 }

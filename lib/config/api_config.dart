@@ -73,7 +73,7 @@ class ApiConfig {
   static String get expenseManagementServiceUrl =>
       '$baseApiUrl:$expenseManagementServicePort';
   static String get categoriesEndpoint =>
-      '$baseApiUrl:$categoriesManagementServicePort';
+      '$baseApiUrl:$categoriesManagementServicePort/categories';
 
   // This method is simplified as we'll just always use the IP address on iOS devices
   // For more precise detection, you could add device_info_plus package

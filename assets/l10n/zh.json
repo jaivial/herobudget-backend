@@ -132,5 +132,21 @@
     "budget_overview": "预算概览",
     "current": "当前",
     "update_password": "更新密码",
-    "payment_method": "支付方式"
+    "payment_method": "支付方式",
+    "all": "全部",
+    "categories": "类别",
+    "category_added_successfully": "类别添加成功",
+    "category_deleted_successfully": "类别删除成功",
+    "category_name": "类别名称",
+    "category_type": "类别类型",
+    "confirm_delete": "确认删除",
+    "delete_category_confirmation": "您确定要删除此类别吗",
+    "enter_category_name": "请输入类别名称",
+    "error_deleting_category": "删除类别时出错",
+    "filter_by_type": "按类型筛选",
+    "no_categories_found": "未找到类别",
+    "search_categories": "搜索类别",
+    "select_emoji": "选择表情符号",
+    "selected_emoji": "已选择的表情符号",
+    "undo": "撤销"
 }

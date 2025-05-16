@@ -129,5 +129,21 @@
     "overdue_by": "Forfalden med",
     "days": "dage",
     "update_password": "Opdater adgangskode",
-    "payment_method": "Betalingsmetode"
+    "payment_method": "Betalingsmetode",
+    "all": "Alle",
+    "categories": "Kategorier",
+    "category_added_successfully": "Kategori tilføjet med succes",
+    "category_deleted_successfully": "Kategori slettet med succes",
+    "category_name": "Kategorinavn",
+    "category_type": "Kategoritype",
+    "confirm_delete": "Bekræft sletning",
+    "delete_category_confirmation": "Er du sikker på, at du vil slette denne kategori",
+    "enter_category_name": "Indtast venligst et kategorinavn",
+    "error_deleting_category": "Fejl ved sletning af kategori",
+    "filter_by_type": "Filtrer efter type",
+    "no_categories_found": "Ingen kategorier fundet",
+    "search_categories": "Søg kategorier",
+    "select_emoji": "Vælg emoji",
+    "selected_emoji": "Valgt emoji",
+    "undo": "Fortryd"
 }

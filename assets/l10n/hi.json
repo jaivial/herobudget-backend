@@ -129,5 +129,21 @@
     "overdue_by": "इतने दिन अतिदेय",
     "days": "दिन",
     "update_password": "पासवर्ड अपडेट करें",
-    "payment_method": "भुगतान विधि"
+    "payment_method": "भुगतान विधि",
+    "all": "सभी",
+    "categories": "श्रेणियाँ",
+    "category_added_successfully": "श्रेणी सफलतापूर्वक जोड़ी गई",
+    "category_deleted_successfully": "श्रेणी सफलतापूर्वक हटा दी गई",
+    "category_name": "श्रेणी का नाम",
+    "category_type": "श्रेणी का प्रकार",
+    "confirm_delete": "हटाने की पुष्टि करें",
+    "delete_category_confirmation": "क्या आप वाकई इस श्रेणी को हटाना चाहते हैं",
+    "enter_category_name": "कृपया श्रेणी का नाम दर्ज करें",
+    "error_deleting_category": "श्रेणी हटाने में त्रुटि",
+    "filter_by_type": "प्रकार के अनुसार फ़िल्टर करें",
+    "no_categories_found": "कोई श्रेणी नहीं मिली",
+    "search_categories": "श्रेणियाँ खोजें",
+    "select_emoji": "इमोजी चुनें",
+    "selected_emoji": "चयनित इमोजी",
+    "undo": "पूर्ववत करें"
 }

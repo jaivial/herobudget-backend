@@ -137,5 +137,21 @@
     "confirm_password_required": "パスワード確認は必須です",
     "update_password": "パスワードを更新",
     "edit_profile": "プロフィールを編集",
-    "payment_method": "支払方法"
+    "payment_method": "支払い方法",
+    "all": "すべて",
+    "categories": "カテゴリー",
+    "category_added_successfully": "カテゴリーが正常に追加されました",
+    "category_deleted_successfully": "カテゴリーが正常に削除されました",
+    "category_name": "カテゴリー名",
+    "category_type": "カテゴリータイプ",
+    "confirm_delete": "削除の確認",
+    "delete_category_confirmation": "このカテゴリーを削除してもよろしいですか",
+    "enter_category_name": "カテゴリー名を入力してください",
+    "error_deleting_category": "カテゴリーの削除中にエラーが発生しました",
+    "filter_by_type": "タイプでフィルター",
+    "no_categories_found": "カテゴリーが見つかりません",
+    "search_categories": "カテゴリーを検索",
+    "select_emoji": "絵文字を選択",
+    "selected_emoji": "選択された絵文字",
+    "undo": "元に戻す"
 }

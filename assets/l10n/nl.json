@@ -126,5 +126,21 @@
     "confirm_password_required": "Bevestiging van wachtwoord is verplicht",
     "update_password": "Wachtwoord bijwerken",
     "edit_profile": "Profiel bewerken",
-    "payment_method": "Betaalmethode"
+    "payment_method": "Betaalmethode",
+    "all": "Alle",
+    "categories": "Categorieën",
+    "category_added_successfully": "Categorie succesvol toegevoegd",
+    "category_deleted_successfully": "Categorie succesvol verwijderd",
+    "category_name": "Categorienaam",
+    "category_type": "Categorietype",
+    "confirm_delete": "Verwijderen bevestigen",
+    "delete_category_confirmation": "Weet je zeker dat je deze categorie wilt verwijderen",
+    "enter_category_name": "Voer een categorienaam in",
+    "error_deleting_category": "Fout bij het verwijderen van de categorie",
+    "filter_by_type": "Filteren op type",
+    "no_categories_found": "Geen categorieën gevonden",
+    "search_categories": "Zoek categorieën",
+    "select_emoji": "Selecteer emoji",
+    "selected_emoji": "Geselecteerde emoji",
+    "undo": "Ongedaan maken"
 }

@@ -5,8 +5,9 @@ import '../../utils/app_localizations.dart';
 
 class AddCategoryScreen extends StatefulWidget {
   final Function? onSuccess;
+  final Category? categoryToEdit;
 
-  const AddCategoryScreen({super.key, this.onSuccess});
+  const AddCategoryScreen({super.key, this.onSuccess, this.categoryToEdit});
 
   @override
   State<AddCategoryScreen> createState() => _AddCategoryScreenState();
@@ -21,6 +22,8 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   String _selectedEmoji = '📊'; // Default emoji
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isEditMode = false;
+  final TextEditingController _customEmojiController = TextEditingController();
 
   // Lista de emojis disponibles
   final List<String> _emojis = [
@@ -59,8 +62,20 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.categoryToEdit != null) {
+      _isEditMode = true;
+      _nameController.text = widget.categoryToEdit!.name;
+      _selectedType = widget.categoryToEdit!.type;
+      _selectedEmoji = widget.categoryToEdit!.emoji;
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
+    _customEmojiController.dispose();
     super.dispose();
   }
 
@@ -74,21 +89,28 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       try {
         // Create category object
         final category = Category(
-          userId: '', // Will be filled in by the service
+          id: _isEditMode ? widget.categoryToEdit!.id : null,
+          userId: _isEditMode ? widget.categoryToEdit!.userId : '',
           name: _nameController.text.trim(),
           type: _selectedType,
           emoji: _selectedEmoji,
         );
 
-        // Save category
-        await _categoryService.addCategory(category);
+        // Save or update category
+        if (_isEditMode) {
+          await _categoryService.updateCategory(category);
+        } else {
+          await _categoryService.addCategory(category);
+        }
 
         // Success
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                context.tr.translate('category_added_successfully'),
+                _isEditMode
+                    ? context.tr.translate('category_updated_successfully')
+                    : context.tr.translate('category_added_successfully'),
               ),
             ),
           );
@@ -99,7 +121,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
           }
 
           // Close the screen
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true);
         }
       } catch (e) {
         setState(() {
@@ -110,10 +132,54 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     }
   }
 
+  Future<void> _openEmojiKeyboard() async {
+    _customEmojiController.clear();
+    await showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(context.tr.translate('select_emoji')),
+            content: TextField(
+              controller: _customEmojiController,
+              decoration: InputDecoration(hintText: '😀 🎮 🚗 💰'),
+              autofocus: true,
+              onChanged: (value) {
+                if (value.isNotEmpty) {
+                  _customEmojiController.text = value[0];
+                }
+              },
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(context.tr.translate('cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (_customEmojiController.text.isNotEmpty) {
+                    setState(() {
+                      _selectedEmoji = _customEmojiController.text[0];
+                    });
+                  }
+                  Navigator.of(context).pop();
+                },
+                child: Text(context.tr.translate('select')),
+              ),
+            ],
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr.translate('add_category'))),
+      appBar: AppBar(
+        title: Text(
+          _isEditMode
+              ? context.tr.translate('edit_category')
+              : context.tr.translate('add_category'),
+        ),
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -170,9 +236,22 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 const SizedBox(height: 24),
 
                 // Emoji selector
-                Text(
-                  context.tr.translate('select_emoji'),
-                  style: const TextStyle(fontSize: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      context.tr.translate('select_emoji'),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _openEmojiKeyboard,
+                      icon: const Icon(Icons.emoji_emotions),
+                      label: Text(context.tr.translate('custom_emoji')),
+                      style: ElevatedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 10),
                 Container(
@@ -243,7 +322,11 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     child:
                         _isLoading
                             ? const CircularProgressIndicator()
-                            : Text(context.tr.translate('save')),
+                            : Text(
+                              _isEditMode
+                                  ? context.tr.translate('update')
+                                  : context.tr.translate('save'),
+                            ),
                   ),
                 ),
               ],

@@ -130,5 +130,21 @@
     "password_too_short": "Le mot de passe doit comporter au moins 6 caractères",
     "confirm_password_required": "La confirmation du mot de passe est requise",
     "update_password": "Mettre à jour le mot de passe",
-    "payment_method": "Méthode de paiement"
+    "payment_method": "Méthode de paiement",
+    "all": "Tous",
+    "categories": "Catégories",
+    "category_added_successfully": "Catégorie ajoutée avec succès",
+    "category_deleted_successfully": "Catégorie supprimée avec succès",
+    "category_name": "Nom de la catégorie",
+    "category_type": "Type de catégorie",
+    "confirm_delete": "Confirmer la suppression",
+    "delete_category_confirmation": "Êtes-vous sûr de vouloir supprimer cette catégorie",
+    "enter_category_name": "Veuillez entrer un nom de catégorie",
+    "error_deleting_category": "Erreur lors de la suppression de la catégorie",
+    "filter_by_type": "Filtrer par type",
+    "no_categories_found": "Aucune catégorie trouvée",
+    "search_categories": "Rechercher des catégories",
+    "select_emoji": "Sélectionner un emoji",
+    "selected_emoji": "Emoji sélectionné",
+    "undo": "Annuler"
 }

@@ -118,8 +118,7 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
         builder:
             (context) => AddCategoryScreen(
               onSuccess: _loadCategories,
-              // In a real implementation, we would pass the category to edit
-              // and modify AddCategoryScreen to handle both adding and editing
+              categoryToEdit: category,
             ),
       ),
     );
@@ -315,7 +314,11 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
-            child: Text(category.emoji, style: const TextStyle(fontSize: 20)),
+            child: Text(
+              category.emoji,
+              style: const TextStyle(fontSize: 20),
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
         title: Text(
