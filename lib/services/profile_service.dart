@@ -3,7 +3,9 @@ import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
+import '../services/signin_service.dart';
 
 /// Servicio para manejar las operaciones relacionadas con el perfil del usuario
 class ProfileService {
@@ -185,6 +187,32 @@ class ProfileService {
         print('Error convirtiendo imagen a base64: $e');
       }
       rethrow;
+    }
+  }
+
+  /// Sincroniza los datos del usuario en el almacenamiento local
+  ///
+  /// Este método es útil para asegurarse de que los datos locales
+  /// estén sincronizados con los del servidor después de actualizaciones
+  static Future<void> syncUserLocalData(UserModel user) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        SignInService.userDataKey,
+        jsonEncode(user.toJson()),
+      );
+
+      if (kDebugMode) {
+        print(
+          'ProfileService.syncUserLocalData: Datos del usuario sincronizados localmente',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print(
+          'ProfileService.syncUserLocalData: Error sincronizando datos: $e',
+        );
+      }
     }
   }
 

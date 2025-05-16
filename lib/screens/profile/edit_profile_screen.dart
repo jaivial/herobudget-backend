@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/user_model.dart';
 import '../../services/profile_service.dart';
+import '../../services/signin_service.dart';
 import '../../utils/extensions.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -205,6 +207,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           finalUserToReturn = updatedUser.copyWith(displayImage: _base64Image);
         }
 
+        // Sincronizar los datos del usuario en el almacenamiento local
+        await ProfileService.syncUserLocalData(finalUserToReturn);
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(context.tr.translate('profile_updated_successfully')),
@@ -253,6 +258,15 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       );
 
       if (mounted) {
+        // Actualizar el modelo de usuario con la nueva contraseña
+        final updatedUser = widget.user.copyWith(
+          password: _newPasswordController.text,
+          updatedAt: DateTime.now(),
+        );
+
+        // Sincronizar la información actualizada en el almacenamiento local
+        await ProfileService.syncUserLocalData(updatedUser);
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
