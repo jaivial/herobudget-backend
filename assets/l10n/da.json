@@ -127,5 +127,7 @@
     "no_bills": "Ingen regninger tilgængelige",
     "overdue": "Forfalden",
     "overdue_by": "Forfalden med",
-    "days": "dage"
+    "days": "dage",
+    "update_password": "Opdater adgangskode",
+    "payment_method": "Betalingsmetode"
 }

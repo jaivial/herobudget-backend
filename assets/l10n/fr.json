@@ -129,5 +129,6 @@
     "new_password_required": "Le nouveau mot de passe est requis",
     "password_too_short": "Le mot de passe doit comporter au moins 6 caractères",
     "confirm_password_required": "La confirmation du mot de passe est requise",
-    "update_password": "Mettre à jour le mot de passe"
+    "update_password": "Mettre à jour le mot de passe",
+    "payment_method": "Méthode de paiement"
 }

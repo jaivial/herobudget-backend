@@ -127,5 +127,7 @@
     "no_bills": "Kei Rächnige verfüegbar",
     "overdue": "Überfällig",
     "overdue_by": "Überfällig sit",
-    "days": "Täg"
+    "days": "Täg",
+    "update_password": "Passwort aktualisiere",
+    "payment_method": "Zahlungsmethode"
 }

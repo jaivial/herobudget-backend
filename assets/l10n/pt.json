@@ -125,5 +125,6 @@
     "password_too_short": "A senha deve ter pelo menos 6 caracteres",
     "confirm_password_required": "Confirmação de senha é obrigatória",
     "update_password": "Atualizar senha",
-    "edit_profile": "Editar perfil"
+    "edit_profile": "Editar perfil",
+    "payment_method": "Método de pagamento"
 }

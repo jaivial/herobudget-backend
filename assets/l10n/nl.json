@@ -125,5 +125,6 @@
     "password_too_short": "Wachtwoord moet minimaal 6 tekens bevatten",
     "confirm_password_required": "Bevestiging van wachtwoord is verplicht",
     "update_password": "Wachtwoord bijwerken",
-    "edit_profile": "Profiel bewerken"
+    "edit_profile": "Profiel bewerken",
+    "payment_method": "Betaalmethode"
 }

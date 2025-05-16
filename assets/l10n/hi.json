@@ -127,5 +127,7 @@
     "no_bills": "कोई बिल उपलब्ध नहीं है",
     "overdue": "अतिदेय",
     "overdue_by": "इतने दिन अतिदेय",
-    "days": "दिन"
+    "days": "दिन",
+    "update_password": "पासवर्ड अपडेट करें",
+    "payment_method": "भुगतान विधि"
 }

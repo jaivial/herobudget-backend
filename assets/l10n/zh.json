@@ -130,5 +130,7 @@
     "apply": "应用",
     "quick_actions": "快速操作",
     "budget_overview": "预算概览",
-    "current": "当前"
+    "current": "当前",
+    "update_password": "更新密码",
+    "payment_method": "支付方式"
 }

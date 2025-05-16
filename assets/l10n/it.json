@@ -146,5 +146,6 @@
     "password_too_short": "La password deve essere di almeno 6 caratteri",
     "confirm_password_required": "La conferma della password è obbligatoria",
     "update_password": "Aggiorna password",
-    "edit_profile": "Modifica profilo"
+    "edit_profile": "Modifica profilo",
+    "payment_method": "Metodo di pagamento"
 }

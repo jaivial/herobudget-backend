@@ -129,5 +129,6 @@
     "new_password_required": "Neues Passwort ist erforderlich",
     "password_too_short": "Passwort muss mindestens 6 Zeichen lang sein",
     "confirm_password_required": "Passwortbestätigung ist erforderlich",
-    "update_password": "Passwort aktualisieren"
+    "update_password": "Passwort aktualisieren",
+    "payment_method": "Zahlungsmethode"
 }
