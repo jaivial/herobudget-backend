@@ -426,6 +426,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             const Divider(),
 
+            // Fix emojis tool
+            ListTile(
+              leading: const Icon(Icons.emoji_emotions, color: Colors.amber),
+              title: const Text('Reparar Emojis'),
+              subtitle: const Text(
+                'Solucionar problemas con emojis en categorías',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).pushNamed('/fix_emojis');
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+
+            const Divider(),
+
             // Notifications configuration
             ListTile(
               leading: const Icon(Icons.notifications),

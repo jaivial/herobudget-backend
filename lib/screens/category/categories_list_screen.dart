@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/category_model.dart';
 import '../../services/category_service.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/string_extensions.dart';
 import 'add_category_screen.dart';
 
 class CategoriesListScreen extends StatefulWidget {
@@ -249,9 +250,12 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
     required Function(bool) onSelected,
     Color? color,
   }) {
+    // Capitalizar la primera letra del label
+    final String displayLabel = label.capitalize();
+
     return FilterChip(
       label: Text(
-        label,
+        displayLabel,
         style: TextStyle(color: selected ? Colors.white : null),
       ),
       selected: selected,
@@ -306,21 +310,7 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
         _deleteCategory(category);
       },
       child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: typeColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              category.emoji,
-              style: const TextStyle(fontSize: 20),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
+        leading: _buildEmojiContainer(category.emoji, typeColor),
         title: Text(
           category.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -330,9 +320,10 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
             Icon(typeIcon, size: 16, color: typeColor),
             const SizedBox(width: 4),
             Text(
+              // Usar el texto capitalizado
               category.type == 'income'
-                  ? context.tr.translate('income')
-                  : context.tr.translate('expense'),
+                  ? context.tr.translate('income').capitalize()
+                  : context.tr.translate('expense').capitalize(),
               style: TextStyle(color: typeColor),
             ),
           ],
@@ -342,6 +333,40 @@ class _CategoriesListScreenState extends State<CategoriesListScreen> {
           onPressed: () => _editCategory(category),
         ),
         onTap: () => _editCategory(category),
+      ),
+    );
+  }
+
+  // Widget personalizado para mostrar emojis
+  Widget _buildEmojiContainer(String emoji, Color bgColor) {
+    // Depurar: Imprimir la representación del emoji
+    print('DEBUG - Emoji original: $emoji');
+
+    // Asegurarse de que usamos el emoji correcto
+    String displayEmoji = emoji;
+
+    // Solo reemplazar si está vacío o es "ð" (carácter corrupto)
+    if (emoji.isEmpty || emoji == "ð" || emoji == "ð ") {
+      // Situación de error - emoji no válido
+      displayEmoji = '📊'; // Emoji predeterminado
+      print('DEBUG - Emoji inválido detectado, usando predeterminado');
+    }
+
+    print('DEBUG - Emoji a mostrar: $displayEmoji');
+
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: bgColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Text(
+          displayEmoji,
+          style: const TextStyle(fontSize: 24),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }

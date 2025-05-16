@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/category_model.dart';
 import '../../services/category_service.dart';
 import '../../utils/app_localizations.dart';
+import '../../utils/string_extensions.dart';
+import '../../utils/emoji_utils.dart';
 
 class AddCategoryScreen extends StatefulWidget {
   final Function? onSuccess;
@@ -64,11 +66,18 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Si estamos editando, cargar los datos de la categoría
     if (widget.categoryToEdit != null) {
       _isEditMode = true;
       _nameController.text = widget.categoryToEdit!.name;
       _selectedType = widget.categoryToEdit!.type;
-      _selectedEmoji = widget.categoryToEdit!.emoji;
+
+      // Aplicar la utilidad de emoji para asegurar que se muestra correctamente
+      _selectedEmoji = EmojiUtils.prepareForDisplay(
+        widget.categoryToEdit!.emoji,
+      );
+      print('DEBUG - Emoji para edición: $_selectedEmoji');
     }
   }
 
@@ -87,18 +96,50 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       });
 
       try {
+        // Normalizar el emoji antes de guardarlo
+        String normalizedEmoji = _selectedEmoji;
+        print(
+          'DEBUG - Guardando emoji: $normalizedEmoji (longitud: ${normalizedEmoji.length})',
+        );
+
+        // IMPORTANTE: Verificar el modo de edición
+        print(
+          'DEBUG - Modo al guardar: ${_isEditMode ? "EDICIÓN" : "CREACIÓN"}',
+        );
+
+        // Si estamos en modo edición, mostrar el emoji original vs el nuevo
+        if (_isEditMode) {
+          print('DEBUG - Emoji original: ${widget.categoryToEdit!.emoji}');
+          print('DEBUG - Emoji nuevo: $_selectedEmoji');
+          print(
+            'DEBUG - ¿Son iguales? ${widget.categoryToEdit!.emoji == _selectedEmoji}',
+          );
+        }
+
+        // Solo reemplazar si está vacío
+        if (normalizedEmoji.isEmpty) {
+          normalizedEmoji = '📊';
+          print('DEBUG - Emoji vacío, usando predeterminado');
+        }
+
         // Create category object
         final category = Category(
           id: _isEditMode ? widget.categoryToEdit!.id : null,
           userId: _isEditMode ? widget.categoryToEdit!.userId : '',
           name: _nameController.text.trim(),
           type: _selectedType,
-          emoji: _selectedEmoji,
+          emoji: normalizedEmoji,
         );
+
+        // Log del objeto de categoría completo
+        print('DEBUG - Objeto categoría a guardar: ${category.toJson()}');
 
         // Save or update category
         if (_isEditMode) {
-          await _categoryService.updateCategory(category);
+          final updatedCategory = await _categoryService.updateCategory(
+            category,
+          );
+          print('DEBUG - Categoría actualizada: ${updatedCategory.toJson()}');
         } else {
           await _categoryService.addCategory(category);
         }
@@ -128,6 +169,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
           _errorMessage = e.toString();
           _isLoading = false;
         });
+        print('DEBUG - Error al guardar categoría: $e');
       }
     }
   }
@@ -139,15 +181,49 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       builder:
           (context) => AlertDialog(
             title: Text(context.tr.translate('select_emoji')),
-            content: TextField(
-              controller: _customEmojiController,
-              decoration: InputDecoration(hintText: '😀 🎮 🚗 💰'),
-              autofocus: true,
-              onChanged: (value) {
-                if (value.isNotEmpty) {
-                  _customEmojiController.text = value[0];
-                }
-              },
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _customEmojiController,
+                  decoration: InputDecoration(
+                    hintText: '😀 🎮 🚗 💰',
+                    helperText: context.tr.translate('type_or_paste_emoji'),
+                  ),
+                  autofocus: true,
+                  onChanged: (value) {
+                    // Limitar a un solo emoji
+                    if (value.isNotEmpty) {
+                      // Intentar extraer el primer emoji
+                      final String firstEmoji = value.characters.first;
+                      _customEmojiController.text = firstEmoji;
+                      _customEmojiController
+                          .selection = TextSelection.fromPosition(
+                        TextPosition(offset: firstEmoji.length),
+                      );
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Vista previa del emoji
+                if (_customEmojiController.text.isNotEmpty)
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _customEmojiController.text,
+                        style: const TextStyle(fontSize: 40),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             actions: [
               TextButton(
@@ -158,7 +234,21 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 onPressed: () {
                   if (_customEmojiController.text.isNotEmpty) {
                     setState(() {
-                      _selectedEmoji = _customEmojiController.text[0];
+                      _selectedEmoji = _customEmojiController.text;
+
+                      // Registro para depuración
+                      print('DEBUG - Emoji seleccionado: $_selectedEmoji');
+                      print(
+                        'DEBUG - Longitud del emoji: ${_selectedEmoji.length}',
+                      );
+
+                      // Verificar si el emoji necesitará codificación
+                      bool needsEncoding = EmojiUtils.containsEmoji(
+                        _selectedEmoji,
+                      );
+                      print(
+                        'DEBUG - ¿El emoji necesita codificación? $needsEncoding',
+                      );
                     });
                   }
                   Navigator.of(context).pop();
@@ -345,6 +435,9 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
   ) {
     final isSelected = _selectedType == type;
 
+    // Capitalizar la primera letra del label
+    final String displayLabel = label.capitalize();
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -366,7 +459,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
             Icon(icon, color: color),
             const SizedBox(height: 8),
             Text(
-              label,
+              displayLabel,
               style: TextStyle(
                 color: isSelected ? color : null,
                 fontWeight: isSelected ? FontWeight.bold : null,
@@ -385,6 +478,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
       onTap: () {
         setState(() {
           _selectedEmoji = emoji;
+          print('DEBUG - Emoji seleccionado de predefinidos: $_selectedEmoji');
         });
       },
       child: Container(
@@ -404,7 +498,13 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
           ),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
+        child: Center(
+          child: Text(
+            emoji,
+            style: const TextStyle(fontSize: 24),
+            textAlign: TextAlign.center,
+          ),
+        ),
       ),
     );
   }

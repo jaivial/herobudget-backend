@@ -1,3 +1,5 @@
+import '../utils/emoji_utils.dart';
+
 class Category {
   final int? id;
   final String userId;
@@ -18,23 +20,33 @@ class Category {
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
+    // Decode the emoji when deserializing from JSON
+    String rawEmoji = json['emoji'] ?? '📊';
+    String decodedEmoji = EmojiUtils.prepareForDisplay(rawEmoji);
+
+    print('DEBUG - Emoji original: $rawEmoji');
+    print('DEBUG - Emoji a mostrar: $decodedEmoji');
+
     return Category(
       id: json['id'],
       userId: json['user_id'] ?? '',
       name: json['name'] ?? '',
       type: json['type'] ?? '',
-      emoji: json['emoji'] ?? '📊',
+      emoji: decodedEmoji,
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
     );
   }
 
   Map<String, dynamic> toJson() {
+    // Encode the emoji when serializing to JSON
+    String encodedEmoji = EmojiUtils.prepareForStorage(emoji);
+
     final Map<String, dynamic> data = {
       'user_id': userId,
       'name': name,
       'type': type,
-      'emoji': emoji,
+      'emoji': encodedEmoji,
     };
 
     // Add optional fields only if they are not null

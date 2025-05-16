@@ -25,6 +25,7 @@ import 'services/signin_service.dart';
 import 'services/dashboard_service.dart';
 import 'services/auth_service.dart';
 import 'utils/app_localizations.dart';
+import 'screens/category/fix_emoji_screen.dart';
 
 // Language change notifier singleton
 class LanguageChangeNotifier {
@@ -557,6 +558,7 @@ class _MyAppState extends State<MyApp> {
     // Final MaterialApp configuration with localization support
     return MaterialApp(
       title: 'Hero Budget',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
@@ -564,6 +566,7 @@ class _MyAppState extends State<MyApp> {
       routes: {
         '/signin': (context) => const SignInScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/fix_emojis': (context) => const FixEmojiScreen(),
       },
       localizationsDelegates: const [
         AppLocalizationsDelegate(),

@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/category_model.dart';
 import '../config/api_config.dart';
 import '../utils/api_exceptions.dart';
+import '../utils/emoji_utils.dart';
+import './api_helper.dart';
 
 class CategoryService {
   // URL base para el servicio de categorías
@@ -31,33 +33,24 @@ class CategoryService {
       print('DEBUG - Base URL: $_baseUrl');
       print('DEBUG - Full URL being called: $url');
 
-      // Realizar la solicitud HTTP
-      final response = await http.get(Uri.parse(url));
+      // Usar ApiHelper para la solicitud HTTP con manejo UTF-8 correcto
+      final jsonData = await ApiHelper.get(url);
 
-      // Debug: Print the response status
-      print('DEBUG - Response status: ${response.statusCode}');
-      print('DEBUG - Response body: ${response.body}');
+      // Debug: Print the response for debugging
+      print('DEBUG - Datos recibidos correctamente con ApiHelper');
 
-      // Verificar el código de estado
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-
-        if (jsonData['success'] == true) {
-          // Manejar caso donde data es null (usuario no tiene categorías)
-          if (jsonData['data'] == null) {
-            return []; // Devolver lista vacía
-          }
-
-          final categoriesJson = jsonData['data'] as List;
-          return categoriesJson.map((json) => Category.fromJson(json)).toList();
-        } else {
-          throw ApiException(
-            jsonData['message'] ?? 'Error al obtener categorías',
-          );
+      // Verificar el código de éxito
+      if (jsonData['success'] == true) {
+        // Manejar caso donde data es null (usuario no tiene categorías)
+        if (jsonData['data'] == null) {
+          return []; // Devolver lista vacía
         }
+
+        final categoriesJson = jsonData['data'] as List;
+        return categoriesJson.map((json) => Category.fromJson(json)).toList();
       } else {
         throw ApiException(
-          'Error al obtener categorías: ${response.statusCode}',
+          jsonData['message'] ?? 'Error al obtener categorías',
         );
       }
     } catch (e) {
@@ -81,36 +74,32 @@ class CategoryService {
         throw NotAuthenticatedException('Usuario no autenticado');
       }
 
-      // Crear una copia de la categoría con el ID de usuario
-      final categoryWithUserId = category.copyWith(userId: userId);
+      // Asegurar que el emoji esté codificado
+      String encodedEmoji = EmojiUtils.prepareForStorage(category.emoji);
 
-      // URL for add endpoint - remove "/add" as it's already in the endpoint
+      // Crear una copia de la categoría con el ID de usuario y emoji codificado
+      final Map<String, dynamic> requestBody = {
+        'user_id': userId,
+        'name': category.name,
+        'type': category.type,
+        'emoji': encodedEmoji,
+      };
+
+      // URL for add endpoint
       final String url = '$_baseUrl/add';
       print('DEBUG - Add category URL: $url');
+      print('DEBUG - Request body: $requestBody');
 
-      // Realizar la solicitud HTTP
-      final response = await http.post(
-        Uri.parse(url),
-        body: json.encode(categoryWithUserId.toJson()),
-        headers: {'Content-Type': 'application/json'},
-      );
+      // Usar ApiHelper para la solicitud HTTP con manejo UTF-8 correcto
+      final jsonData = await ApiHelper.postJson(url, requestBody);
 
-      print('DEBUG - Add response status: ${response.statusCode}');
-      print('DEBUG - Add response body: ${response.body}');
+      print('DEBUG - Add response procesada correctamente');
 
-      // Verificar el código de estado
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-
-        if (jsonData['success'] == true) {
-          return Category.fromJson(jsonData['data']);
-        } else {
-          throw ApiException(
-            jsonData['message'] ?? 'Error al añadir categoría',
-          );
-        }
+      // Verificar el código de éxito
+      if (jsonData['success'] == true) {
+        return Category.fromJson(jsonData['data']);
       } else {
-        throw ApiException('Error al añadir categoría: ${response.statusCode}');
+        throw ApiException(jsonData['message'] ?? 'Error al añadir categoría');
       }
     } catch (e) {
       print('DEBUG - Add category exception: $e');
@@ -136,43 +125,52 @@ class CategoryService {
         throw NotAuthenticatedException('Usuario no autenticado');
       }
 
+      // Asegurar que el emoji esté codificado
+      String encodedEmoji = EmojiUtils.prepareForStorage(category.emoji);
+
       // Preparar el cuerpo de la solicitud
       final requestBody = {
         'user_id': userId,
         'category_id': category.id,
         'name': category.name,
         'type': category.type,
-        'emoji': category.emoji,
+        'emoji': encodedEmoji,
       };
+
+      // Logs detallados para depurar problema de emoji
+      print('DEBUG - Solicitud de actualización:');
+      print('DEBUG - ID: ${category.id}');
+      print('DEBUG - Nombre: ${category.name}');
+      print('DEBUG - Tipo: ${category.type}');
+      print('DEBUG - Emoji (objeto Category): ${category.emoji}');
+      print('DEBUG - Emoji codificado: $encodedEmoji');
+      print('DEBUG - requestBody completo: $requestBody');
 
       // URL for update endpoint
       final String url = '$_baseUrl/update';
       print('DEBUG - Update category URL: $url');
 
-      // Realizar la solicitud HTTP
-      final response = await http.post(
-        Uri.parse(url),
-        body: json.encode(requestBody),
-        headers: {'Content-Type': 'application/json'},
-      );
+      // Usar ApiHelper para la solicitud HTTP con manejo UTF-8 correcto
+      final jsonData = await ApiHelper.postJson(url, requestBody);
 
-      print('DEBUG - Update response status: ${response.statusCode}');
-      print('DEBUG - Update response body: ${response.body}');
+      print('DEBUG - Update response procesada correctamente');
 
-      // Verificar el código de estado
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
+      // Verificar el código de éxito
+      if (jsonData['success'] == true) {
+        final updatedCategory = Category.fromJson(jsonData['data']);
 
-        if (jsonData['success'] == true) {
-          return Category.fromJson(jsonData['data']);
-        } else {
-          throw ApiException(
-            jsonData['message'] ?? 'Error al actualizar categoría',
-          );
-        }
+        // Verificar que el emoji se actualizó correctamente
+        print(
+          'DEBUG - Emoji actualizado recibido del servidor: ${updatedCategory.emoji}',
+        );
+        print(
+          'DEBUG - ¿Coincide con el enviado? ${updatedCategory.emoji == category.emoji}',
+        );
+
+        return updatedCategory;
       } else {
         throw ApiException(
-          'Error al actualizar categoría: ${response.statusCode}',
+          jsonData['message'] ?? 'Error al actualizar categoría',
         );
       }
     } catch (e) {
@@ -202,28 +200,15 @@ class CategoryService {
       final String url = '$_baseUrl/delete';
       print('DEBUG - Delete category URL: $url');
 
-      // Realizar la solicitud HTTP
-      final response = await http.post(
-        Uri.parse(url),
-        body: json.encode(requestBody),
-        headers: {'Content-Type': 'application/json'},
-      );
+      // Usar ApiHelper para la solicitud HTTP con manejo UTF-8 correcto
+      final jsonData = await ApiHelper.postJson(url, requestBody);
 
-      print('DEBUG - Delete response status: ${response.statusCode}');
-      print('DEBUG - Delete response body: ${response.body}');
+      print('DEBUG - Delete response procesada correctamente');
 
-      // Verificar el código de estado
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-
-        if (jsonData['success'] != true) {
-          throw ApiException(
-            jsonData['message'] ?? 'Error al eliminar categoría',
-          );
-        }
-      } else {
+      // Verificar el código de éxito
+      if (jsonData['success'] != true) {
         throw ApiException(
-          'Error al eliminar categoría: ${response.statusCode}',
+          jsonData['message'] ?? 'Error al eliminar categoría',
         );
       }
     } catch (e) {
