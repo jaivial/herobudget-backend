@@ -229,6 +229,8 @@
     "payment_method": "Método de Pago",
     "save_income": "Guardar Ingreso",
     "income_added_successfully": "Ingreso añadido con éxito",
+    "save_expense": "Guardar Gasto",
+    "expense_added_successfully": "Gasto añadido con éxito",
     "enter_amount": "Por favor ingresa una cantidad",
     "amount_must_be_positive": "La cantidad debe ser mayor que cero",
     "enter_valid_amount": "Por favor ingresa una cantidad válida",

@@ -177,6 +177,8 @@
     "payment_method": "Payment Method",
     "save_income": "Save Income",
     "income_added_successfully": "Income added successfully",
+    "save_expense": "Save Expense",
+    "expense_added_successfully": "Expense added successfully",
     "enter_amount": "Please enter an amount",
     "amount_must_be_positive": "Amount must be greater than zero",
     "enter_valid_amount": "Please enter a valid amount",

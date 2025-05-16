@@ -232,87 +232,85 @@ class DashboardService {
     }
   }
 
-  // Register a new expense
-  Future<bool> addExpense({
-    required String name,
-    required double amount,
-    required String category,
-    String? notes,
-  }) async {
-    try {
-      // Get user ID from SharedPreferences
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final userId = prefs.getString('user_id');
-
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Make HTTP request
-      final response = await http.post(
-        Uri.parse('$baseUrl/expenses/add'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'user_id': userId,
-          'name': name,
-          'amount': amount,
-          'category': category,
-          'notes': notes,
-          'date': DateTime.now().toIso8601String(),
-        }),
-      );
-
-      // Check if response is successful
-      if (response.statusCode == 200) {
-        return true;
-      } else {
-        throw Exception('Error adding expense: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error in addExpense: $e');
-      return false;
-    }
-  }
-
   // Register a new income
   Future<bool> addIncome({
-    required String name,
     required double amount,
+    required String date,
     required String category,
-    String? notes,
+    required String paymentMethod,
+    String? description,
   }) async {
     try {
-      // Get user ID from SharedPreferences
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      // Get user ID
+      final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getString('user_id');
-
-      if (userId == null) {
+      if (userId == null || userId.isEmpty) {
         throw Exception('User not authenticated');
       }
 
-      // Make HTTP request
       final response = await http.post(
         Uri.parse('$baseUrl/income/add'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
+        body: jsonEncode({
           'user_id': userId,
-          'name': name,
           'amount': amount,
+          'date': date,
           'category': category,
-          'notes': notes,
-          'date': DateTime.now().toIso8601String(),
+          'payment_method': paymentMethod,
+          'description': description,
         }),
       );
 
-      // Check if response is successful
       if (response.statusCode == 200) {
-        return true;
+        final responseData = jsonDecode(response.body);
+        return responseData['success'] == true;
       } else {
         throw Exception('Error adding income: ${response.statusCode}');
       }
     } catch (e) {
       print('Error in addIncome: $e');
-      return false;
+      throw Exception('Failed to add income');
+    }
+  }
+
+  // Register a new expense
+  Future<bool> addExpense({
+    required double amount,
+    required String date,
+    required String category,
+    required String paymentMethod,
+    String? description,
+  }) async {
+    try {
+      // Get user ID
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+      if (userId == null || userId.isEmpty) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/expense/add'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'user_id': userId,
+          'amount': amount,
+          'date': date,
+          'category': category,
+          'payment_method': paymentMethod,
+          'description': description,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        return responseData['success'] == true;
+      } else {
+        throw Exception('Error adding expense: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in addExpense: $e');
+      throw Exception('Failed to add expense');
     }
   }
 

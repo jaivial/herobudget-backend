@@ -27,6 +27,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 import '../../utils/currency_utils.dart';
 import '../income/add_income_screen.dart';
+import '../expense/add_expense_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -943,8 +944,17 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // Dialog to add expense
   void _showAddExpenseDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.tr.translate('add_expense_dialog'))),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddExpenseScreen(
+              onSuccess: () {
+                // Refresh dashboard data when a new expense is added
+                _refreshDashboard();
+              },
+            ),
+      ),
     );
   }
 

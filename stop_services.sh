@@ -1,16 +1,18 @@
 #!/bin/bash
 
-# Script to stop all Go microservices in the /backend folder
+# Define colors
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
 
-echo "Stopping all Go microservices..."
-
-# Define service ports using simple variables instead of associative array
-LANGUAGE_COOKIE_PORT=8083
-SIGNIN_PORT=8084
+# Define service ports
+AUTH_SERVICE_PORT=8081
+SIGNUP_SERVICE_PORT=8082
+LANGUAGE_SERVICE_PORT=8083
+SIGNIN_SERVICE_PORT=8084
 FETCH_DASHBOARD_PORT=8085
 RESET_PASSWORD_PORT=8086
-SIGNUP_PORT=8082
-GOOGLE_AUTH_PORT=8081
 DASHBOARD_DATA_PORT=8087
 BUDGET_MANAGEMENT_PORT=8088
 SAVINGS_MANAGEMENT_PORT=8089
@@ -18,56 +20,68 @@ CASH_BANK_MANAGEMENT_PORT=8090
 BILLS_MANAGEMENT_PORT=8091
 PROFILE_MANAGEMENT_PORT=8092
 INCOME_MANAGEMENT_PORT=8093
+EXPENSE_MANAGEMENT_PORT=8094
 
-# Navigate to the backend directory
-cd "$(dirname "$0")/backend"
+# Service directories
+services=(
+    "google_auth"
+    "signup"
+    "language"
+    "signin"
+    "fetch_dashboard"
+    "reset_password"
+    "dashboard_data"
+    "budget_management"
+    "savings_management"
+    "cash_bank_management"
+    "bills_management"
+    "profile_management"
+    "income_management"
+    "expense_management"
+)
 
-# First try to kill by PID file
-for service_dir in */; do
-  # Remove trailing slash
-  service=${service_dir%/}
-  
-  # Skip if not a directory
-  if [ ! -d "$service" ]; then
-    continue
-  fi
-  
-  # Check if PID file exists
-  if [ -f "${service}/${service}.pid" ]; then
-    PID=$(cat ${service}/${service}.pid)
-    
-    echo "Stopping $service service (PID: $PID)..."
-    
-    # Kill the process
-    if kill $PID 2>/dev/null; then
-      echo "$service service stopped via PID file"
-    else
-      echo "Failed to stop $service service via PID file, will try by port"
+# Output header
+echo -e "${GREEN}Stopping Hero Budget backend services...${NC}"
+echo
+
+# Kill processes by port (more reliable)
+for port in $AUTH_SERVICE_PORT $SIGNUP_SERVICE_PORT $LANGUAGE_SERVICE_PORT $SIGNIN_SERVICE_PORT $FETCH_DASHBOARD_PORT $RESET_PASSWORD_PORT $DASHBOARD_DATA_PORT $BUDGET_MANAGEMENT_PORT $SAVINGS_MANAGEMENT_PORT $CASH_BANK_MANAGEMENT_PORT $BILLS_MANAGEMENT_PORT $PROFILE_MANAGEMENT_PORT $INCOME_MANAGEMENT_PORT $EXPENSE_MANAGEMENT_PORT; do
+    # Find and kill process using this port
+    PID=$(lsof -i :$port -t 2>/dev/null)
+    if [ -n "$PID" ]; then
+        echo -e "${YELLOW}Stopping service on port $port (PID: $PID)...${NC}"
+        kill -9 $PID 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}Service on port $port stopped successfully.${NC}"
+        else
+            echo -e "${RED}Failed to stop service on port $port.${NC}"
+        fi
     fi
-    
-    # Remove the PID file regardless
-    rm -f ${service}/${service}.pid
-  else
-    echo "$service service has no PID file, will try to stop by port"
-  fi
 done
 
-# Then kill any remaining processes by port
-for port in $LANGUAGE_COOKIE_PORT $SIGNIN_PORT $FETCH_DASHBOARD_PORT $RESET_PASSWORD_PORT $SIGNUP_PORT $GOOGLE_AUTH_PORT $DASHBOARD_DATA_PORT $BUDGET_MANAGEMENT_PORT $SAVINGS_MANAGEMENT_PORT $CASH_BANK_MANAGEMENT_PORT $BILLS_MANAGEMENT_PORT $PROFILE_MANAGEMENT_PORT $INCOME_MANAGEMENT_PORT; do
-  # Find process using this port
-  pid=$(lsof -i :$port -t 2>/dev/null)
-  
-  if [ -n "$pid" ]; then
-    echo "Stopping service on port $port (PID: $pid)..."
-    
-    # Kill the process
-    if kill $pid 2>/dev/null; then
-      echo "Service on port $port stopped"
-    else
-      echo "Failed to stop service on port $port, trying with -9"
-      kill -9 $pid 2>/dev/null && echo "Service on port $port force stopped" || echo "Failed to force stop service on port $port"
+# Stop by PID files as backup method
+cd backend
+for service in "${services[@]}"; do
+    if [ -d "$service" ] && [ -f "$service/$service.pid" ]; then
+        PID=$(cat "$service/$service.pid" 2>/dev/null)
+        if [ -n "$PID" ]; then
+            echo -e "${YELLOW}Stopping $service service (PID: $PID)...${NC}"
+            kill -9 $PID 2>/dev/null
+            rm -f "$service/$service.pid"
+            echo -e "${GREEN}$service service stopped.${NC}"
+        fi
     fi
-  fi
 done
+cd ..
 
-echo "All services stopped successfully!" 
+# Clean up executables
+cd backend
+for service in "${services[@]}"; do
+    if [ -d "$service" ] && [ -f "$service/$service.exe" ]; then
+        rm -f "$service/$service.exe"
+    fi
+done
+cd ..
+
+echo
+echo -e "${GREEN}All services stopped.${NC}" 
