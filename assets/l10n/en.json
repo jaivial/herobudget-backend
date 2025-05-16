@@ -173,5 +173,17 @@
     "new_password_required": "New password is required",
     "password_too_short": "Password must be at least 6 characters long",
     "confirm_password_required": "Confirm password is required",
-    "update_password": "Update Password"
+    "update_password": "Update Password",
+    "payment_method": "Payment Method",
+    "save_income": "Save Income",
+    "income_added_successfully": "Income added successfully",
+    "enter_amount": "Please enter an amount",
+    "amount_must_be_positive": "Amount must be greater than zero",
+    "enter_valid_amount": "Please enter a valid amount",
+    "select_date": "Select date",
+    "description_optional": "Description (optional)",
+    "salary": "Salary",
+    "freelance": "Freelance",
+    "investments": "Investments",
+    "gifts": "Gifts"
 }

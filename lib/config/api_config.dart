@@ -44,6 +44,7 @@ class ApiConfig {
   static const int savingsManagementServicePort = 8089;
   static const int cashBankManagementServicePort = 8090;
   static const int billsManagementServicePort = 8091;
+  static const int incomeManagementServicePort = 8093;
 
   // Service endpoints
   static String get signupServiceUrl => '$baseApiUrl:$signupServicePort';
@@ -65,6 +66,8 @@ class ApiConfig {
       '$baseApiUrl:$cashBankManagementServicePort';
   static String get billsManagementUrl =>
       '$baseApiUrl:$billsManagementServicePort';
+  static String get incomeManagementServiceUrl =>
+      '$baseApiUrl:$incomeManagementServicePort';
 
   // This method is simplified as we'll just always use the IP address on iOS devices
   // For more precise detection, you could add device_info_plus package

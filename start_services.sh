@@ -17,6 +17,7 @@ SAVINGS_MANAGEMENT_PORT=8089
 CASH_BANK_MANAGEMENT_PORT=8090
 BILLS_MANAGEMENT_PORT=8091
 PROFILE_MANAGEMENT_PORT=8092
+INCOME_MANAGEMENT_PORT=8093
 
 # Function to check if a port is in use
 is_port_in_use() {
@@ -39,6 +40,7 @@ get_port_for_service() {
     "cash_bank_management") echo $CASH_BANK_MANAGEMENT_PORT ;;
     "bills_management") echo $BILLS_MANAGEMENT_PORT ;;
     "profile_management") echo $PROFILE_MANAGEMENT_PORT ;;
+    "income_management") echo $INCOME_MANAGEMENT_PORT ;;
     *) echo "" ;;
   esac
 }

@@ -26,6 +26,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui';
 import '../../utils/currency_utils.dart';
+import '../income/add_income_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -670,8 +671,16 @@ class _DashboardScreenState extends State<DashboardScreen>
             onTap: () {
               _toggleQuickMenu(); // Close menu
 
-              // Show feedback for selected action
-              _showActionSnackbar(label);
+              // Execute the corresponding action based on the label
+              if (label == context.tr.translate('add_income')) {
+                _showAddIncomeDialog();
+              } else if (label == context.tr.translate('add_expense')) {
+                _showAddExpenseDialog();
+              } else if (label == context.tr.translate('pay_bill')) {
+                _showPayBillDialog(_dashboardModel?.upcomingBills ?? []);
+              } else if (label == context.tr.translate('add_category')) {
+                _showAddCategoryDialog();
+              }
             },
             customBorder: const CircleBorder(),
             child: Container(
@@ -918,8 +927,17 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // Dialog to add income
   void _showAddIncomeDialog() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.tr.translate('add_income_dialog'))),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddIncomeScreen(
+              onSuccess: () {
+                // Refresh dashboard data when a new income is added
+                _refreshDashboard();
+              },
+            ),
+      ),
     );
   }
 
