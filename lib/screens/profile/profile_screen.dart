@@ -126,14 +126,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Intentar obtener el usuario actual
       final user = await AuthService.getCurrentUser();
 
+      // Obtener el idioma preferido actual
+      final currentLocale =
+          await LanguageService.getLanguagePreference() ?? 'en';
+
       if (user == null) {
         // Si no hay usuario, intentar obtenerlo desde el servicio de dashboard
         final userId = await DashboardService.getCurrentUserId();
 
         if (userId != null && userId.isNotEmpty) {
           final userInfo = await DashboardService.fetchUserInfo(userId);
+          final loadedUser = UserModel.fromJson(userInfo);
+
+          // Asegurarse de que el idioma del usuario coincida con el idioma preferido actual
+          final updatedUser =
+              (loadedUser.locale != currentLocale)
+                  ? loadedUser.updateLocale(currentLocale)
+                  : loadedUser;
+
           setState(() {
-            _user = UserModel.fromJson(userInfo);
+            _user = updatedUser;
             _isLoading = false;
           });
           _debugImageFormats();
@@ -146,8 +158,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           });
         }
       } else {
+        // Asegurarse de que el idioma del usuario coincida con el idioma preferido actual
+        final updatedUser =
+            (user.locale != currentLocale)
+                ? user.updateLocale(currentLocale)
+                : user;
+
         setState(() {
-          _user = user;
+          _user = updatedUser;
           _isLoading = false;
         });
         _debugImageFormats();
@@ -545,9 +563,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 setState(() {
                   _user = _user!.updateLocale(locale);
                 });
+
+                // Verificar que la actualización se hizo correctamente
+                print('Idioma actualizado en usuario: ${_user!.locale}');
+              } else {
+                print('No hay usuario para actualizar el idioma');
+                // Si no hay usuario, recargar los datos
+                _loadUserData();
               }
 
               Navigator.pop(context);
+
+              // Forzar una actualización de la UI para reflejar el cambio de idioma
+              setState(() {});
             },
           ),
         );
@@ -625,20 +653,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String _getLanguageName(String languageCode) {
-    final Map<String, String> languages = {
-      'en': 'English',
-      'es': 'Español',
-      'fr': 'Français',
-      'de': 'Deutsch',
-      'it': 'Italiano',
-      'pt': 'Português',
-      'ru': 'Русский',
-      'zh': '中文',
-      'ja': '日本語',
-      'ar': 'العربية',
-    };
-
-    return languages[languageCode] ?? languageCode;
+    // Usar el servicio de idioma para obtener el nombre correcto del idioma
+    final supportedLanguages = LanguageService.getSupportedLanguagesList();
+    for (final language in supportedLanguages) {
+      if (language['code'] == languageCode) {
+        // Devuelve el nombre del idioma sin el paréntesis y el idioma original
+        final fullName = language['name'] ?? languageCode;
+        // Si el nombre contiene espacios (como "Spanish (Español)"), toma el nombre original
+        if (fullName.contains('(')) {
+          // Extrae el texto entre paréntesis
+          final match = RegExp(r'\((.*?)\)').firstMatch(fullName);
+          if (match != null && match.groupCount >= 1) {
+            return match.group(1)!;
+          }
+        }
+        return fullName;
+      }
+    }
+    return languageCode;
   }
 
   String _getThemeName(ThemeMode mode) {
