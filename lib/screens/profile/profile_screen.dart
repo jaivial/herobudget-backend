@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
 import '../../services/dashboard_service.dart';
 import '../../services/language_service.dart';
 import '../../services/app_service.dart';
+import '../../services/profile_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/extensions.dart';
 import '../../widgets/language_selector_widget.dart';
 import '../onboarding/onboarding_screen.dart';
+import 'edit_profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -330,23 +333,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
 
             // Edit profile button
-            OutlinedButton.icon(
+            ElevatedButton.icon(
               onPressed: () {
-                // Implement edit profile
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      context.tr.translate('edit_profile_coming_soon'),
-                    ),
-                  ),
-                );
+                // Navigate to edit profile screen
+                _navigateToEditProfile();
               },
               icon: const Icon(Icons.edit),
-              label: Text(context.tr.translate('edit_profile')),
-              style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              label: Text(
+                context.tr.translate('edit_profile'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 12.0,
                 ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
               ),
             ),
           ],
@@ -442,6 +449,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 16),
+
+            // Test image update button (only in debug mode)
+            if (kDebugMode)
+              ListTile(
+                leading: Icon(
+                  Icons.bug_report,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                title: const Text(
+                  'Test Profile Image Update',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                onTap: _testProfileImageUpdate,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+
+            if (kDebugMode) const Divider(),
 
             // Logout button
             ListTile(
@@ -626,5 +652,257 @@ class _ProfileScreenState extends State<ProfileScreen> {
       default:
         return context.tr.translate('theme_system');
     }
+  }
+
+  // Método para navegar a la pantalla de edición de perfil
+  Future<void> _navigateToEditProfile() async {
+    if (_user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            context.tr.translate('error_loading_user_data') ??
+                'Error: No se pudo cargar la información del usuario',
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Navegar directamente a la pantalla de edición de perfil sin verificar el servicio
+    if (context.mounted) {
+      final updatedUser = await Navigator.of(context).push<UserModel>(
+        MaterialPageRoute(
+          builder: (context) => EditProfileScreen(user: _user!),
+        ),
+      );
+
+      // Si el usuario actualizó su perfil, actualizar la UI
+      if (updatedUser != null) {
+        print('Perfil actualizado recibido: ${updatedUser.name}');
+
+        // Verificar específicamente si la imagen fue actualizada
+        if (updatedUser.displayImage != null &&
+            updatedUser.displayImage!.isNotEmpty) {
+          print('Nueva imagen detectada en el perfil actualizado');
+        }
+
+        setState(() {
+          _user = updatedUser;
+        });
+      }
+    }
+  }
+
+  // Método para probar la actualización de la imagen de perfil
+  Future<void> _testProfileImageUpdate() async {
+    if (_user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay usuario para probar')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Crear una imagen de prueba simple (un cuadrado de color)
+      String testImageBase64 = await _generateTestImageBase64();
+
+      // Mostrar diagnóstico completo del usuario actual
+      print('=========== DIAGNÓSTICO DE USUARIO ACTUAL ===========');
+      print('ID: ${_user!.id}');
+      print('Email: ${_user!.email}');
+      print('Nombre: ${_user!.name}');
+      if (_user!.displayImage != null) {
+        print(
+          'displayImage presente con longitud: ${_user!.displayImage!.length}',
+        );
+        print(
+          'displayImage primeros bytes: ${_user!.displayImage!.substring(0, min(20, _user!.displayImage!.length))}',
+        );
+      } else {
+        print('displayImage es NULL');
+      }
+      if (_user!.picture != null) {
+        print('picture presente con longitud: ${_user!.picture!.length}');
+        print(
+          'picture primeros bytes: ${_user!.picture!.substring(0, min(20, _user!.picture!.length))}',
+        );
+      } else {
+        print('picture es NULL');
+      }
+      print('==================================================');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ejecutando prueba de imagen...')),
+      );
+
+      // Ejecutar la prueba de actualización de imagen
+      await ProfileService.testProfileImageUpdate(
+        userId: int.parse(_user!.id),
+        testImageBase64: testImageBase64,
+      );
+
+      // Realizar una actualización de imagen real y verificar que se haya actualizado correctamente
+      print('=========== REALIZANDO ACTUALIZACIÓN REAL ===========');
+      final updatedUser = await ProfileService.updateProfile(
+        userId: int.parse(_user!.id),
+        name: _user!.name, // mantener el mismo nombre
+        profileImageBase64: testImageBase64, // usar la imagen de prueba
+      );
+
+      print('Usuario actualizado:');
+      print('ID: ${updatedUser.id}');
+      print('Email: ${updatedUser.email}');
+      print('Nombre: ${updatedUser.name}');
+      if (updatedUser.displayImage != null) {
+        print(
+          'displayImage presente con longitud: ${updatedUser.displayImage!.length}',
+        );
+        print(
+          'displayImage primeros bytes: ${updatedUser.displayImage!.substring(0, min(20, updatedUser.displayImage!.length))}',
+        );
+      } else {
+        print('displayImage es NULL');
+      }
+      if (updatedUser.picture != null) {
+        print('picture presente con longitud: ${updatedUser.picture!.length}');
+        print(
+          'picture primeros bytes: ${updatedUser.picture!.substring(0, min(20, updatedUser.picture!.length))}',
+        );
+      } else {
+        print('picture es NULL');
+      }
+
+      // Verificar si la imagen se actualizó correctamente
+      final bool imageUpdateSuccessful =
+          updatedUser.displayImage != null ||
+          (updatedUser.picture != null &&
+              updatedUser.picture!.startsWith('/9j/'));
+
+      print(
+        'Resultado de la actualización de imagen: ${imageUpdateSuccessful ? "EXITOSO" : "FALLIDO"}',
+      );
+      print('==================================================');
+
+      // Actualizar el usuario en la UI
+      setState(() {
+        _user = updatedUser;
+      });
+
+      // Recargar los datos del usuario para confirmar que los cambios persisten
+      await _loadUserData();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            imageUpdateSuccessful
+                ? 'Prueba completada con éxito. La imagen se actualizó correctamente.'
+                : 'Prueba completada. La imagen no se actualizó correctamente. Verificar logs.',
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error en la prueba: $e')));
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Genera una imagen de prueba como base64
+  Future<String> _generateTestImageBase64() async {
+    // Simular una imagen pequeña (1x1 pixel) para pruebas
+    final List<int> bytes = [
+      137,
+      80,
+      78,
+      71,
+      13,
+      10,
+      26,
+      10,
+      0,
+      0,
+      0,
+      13,
+      73,
+      72,
+      68,
+      82,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      8,
+      6,
+      0,
+      0,
+      0,
+      31,
+      21,
+      196,
+      137,
+      0,
+      0,
+      0,
+      13,
+      73,
+      68,
+      65,
+      84,
+      120,
+      1,
+      99,
+      100,
+      96,
+      0,
+      0,
+      0,
+      6,
+      0,
+      3,
+      118,
+      149,
+      185,
+      234,
+      0,
+      0,
+      0,
+      0,
+      73,
+      69,
+      78,
+      68,
+      174,
+      66,
+      96,
+      130,
+    ]; // PNG 1x1 rojo
+
+    // Obtener imagen desde las preferencias compartidas (si existe)
+    final prefs = await SharedPreferences.getInstance();
+    String? savedImage = prefs.getString('test_profile_image');
+
+    if (savedImage != null && savedImage.isNotEmpty) {
+      print('Usando imagen de prueba guardada');
+      return savedImage;
+    }
+
+    final String base64Image = base64Encode(bytes);
+
+    // Guardar para uso futuro
+    await prefs.setString('test_profile_image', base64Image);
+
+    return base64Image;
   }
 }

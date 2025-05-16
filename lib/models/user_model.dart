@@ -1,334 +1,363 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'dart:math';
 
+/// Modelo que representa a un usuario en la aplicación.
+///
+/// Contiene toda la información relevante del usuario,
+/// como su ID, email, nombre, información de perfil, etc.
 class UserModel {
   final String id;
+  final String? googleId;
   final String email;
   final String name;
   final String? givenName;
   final String? familyName;
-  final String? picture; // URL para usuarios de Google
-  final String?
-  displayImage; // Base64 para usuarios regulares (profile_image_blob)
+  final String? picture;
+  final String? displayImage;
   final String locale;
   final bool verifiedEmail;
-  final String? createdAt;
-  final String? updatedAt;
-  final String? googleId;
-  final Map<String, dynamic>? preferences;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? password;
+  final String? profileImageBlob;
 
-  UserModel({
+  /// Constructor principal que inicializa un UserModel con todos sus campos.
+  const UserModel({
     required this.id,
+    this.googleId,
     required this.email,
     required this.name,
     this.givenName,
     this.familyName,
     this.picture,
     this.displayImage,
-    this.googleId,
+    this.profileImageBlob,
     required this.locale,
     required this.verifiedEmail,
-    this.createdAt,
-    this.updatedAt,
-    this.preferences,
+    required this.createdAt,
+    required this.updatedAt,
+    this.password,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    String locale = json['locale'] ?? 'en';
-
-    // Asegurar que solo usamos el código de idioma sin región
-    if (locale.contains('-') || locale.contains('_')) {
-      locale = locale.split(RegExp(r'[-_]'))[0];
-    }
-
-    // Manejar campo de imagen de perfil
-    String? displayImage = json['display_image'];
-
-    // Si no hay display_image pero hay profile_image_blob, usar eso
-    if ((displayImage == null || displayImage.isEmpty) &&
-        json['profile_image_blob'] != null &&
-        json['profile_image_blob'].toString().isNotEmpty) {
-      print('Using profile_image_blob as displayImage');
-      displayImage = json['profile_image_blob'].toString();
-    }
-
-    return UserModel(
-      id: json['id'].toString(),
-      email: json['email'] ?? '',
-      name: json['name'] ?? '',
-      givenName: json['given_name'],
-      familyName: json['family_name'],
-      picture: json['picture'],
-      displayImage: displayImage,
-      googleId: json['google_id'],
-      locale: locale,
-      verifiedEmail: json['verified_email'] ?? false,
-      createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
-      preferences:
-          json['preferences'] is Map
-              ? Map<String, dynamic>.from(json['preferences'])
-              : null,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'email': email,
-      'name': name,
-      'given_name': givenName,
-      'family_name': familyName,
-      'picture': picture,
-      'display_image': displayImage,
-      'google_id': googleId,
-      'locale': locale,
-      'verified_email': verifiedEmail,
-      'created_at': createdAt,
-      'updated_at': updatedAt,
-      'preferences': preferences,
-    };
-  }
-
-  // Método para crear una copia del modelo con campos actualizados
+  /// Crea una copia de este UserModel con los campos especificados modificados
   UserModel copyWith({
     String? id,
+    String? googleId,
     String? email,
     String? name,
     String? givenName,
     String? familyName,
     String? picture,
     String? displayImage,
-    String? googleId,
+    String? profileImageBlob,
     String? locale,
     bool? verifiedEmail,
-    String? createdAt,
-    String? updatedAt,
-    Map<String, dynamic>? preferences,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? password,
   }) {
     return UserModel(
       id: id ?? this.id,
+      googleId: googleId ?? this.googleId,
       email: email ?? this.email,
       name: name ?? this.name,
       givenName: givenName ?? this.givenName,
       familyName: familyName ?? this.familyName,
       picture: picture ?? this.picture,
       displayImage: displayImage ?? this.displayImage,
-      googleId: googleId ?? this.googleId,
+      profileImageBlob: profileImageBlob ?? this.profileImageBlob,
       locale: locale ?? this.locale,
       verifiedEmail: verifiedEmail ?? this.verifiedEmail,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      preferences: preferences ?? this.preferences,
+      password: password ?? this.password,
     );
   }
 
-  // Método para actualizar preferencias específicas sin modificar todo el mapa
-  UserModel updatePreference(String key, dynamic value) {
-    final updatedPreferences = Map<String, dynamic>.from(preferences ?? {});
-    updatedPreferences[key] = value;
+  /// Crea una instancia de UserModel a partir de un mapa JSON
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Convertir las fechas de creación y actualización
+    DateTime parsedCreatedAt;
+    DateTime parsedUpdatedAt;
 
-    return copyWith(preferences: updatedPreferences);
-  }
-
-  // Método específico para actualizar el idioma y mantener coherencia
-  UserModel updateLocale(String newLocale) {
-    // Asegurar que solo usamos el código de idioma sin región
-    if (newLocale.contains('-') || newLocale.contains('_')) {
-      newLocale = newLocale.split(RegExp(r'[-_]'))[0];
+    try {
+      parsedCreatedAt = DateTime.parse(json['created_at'] as String);
+      parsedUpdatedAt = DateTime.parse(json['updated_at'] as String);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error al parsear fecha: $e');
+        print('Valor created_at: ${json['created_at']}');
+        print('Valor updated_at: ${json['updated_at']}');
+      }
+      // Si hay error, usar fecha actual
+      final now = DateTime.now();
+      parsedCreatedAt = now;
+      parsedUpdatedAt = now;
     }
 
-    // Actualizar preferencia de idioma
-    final updatedPreferences = Map<String, dynamic>.from(preferences ?? {});
-    updatedPreferences['language'] = newLocale;
+    // Depuración para entender qué campos relacionados con imágenes están presentes
+    if (kDebugMode) {
+      if (json.containsKey('display_image')) {
+        final displayImage = json['display_image'] as String?;
+        if (displayImage != null && displayImage.isNotEmpty) {
+          print(
+            'UserModel.fromJson: display_image presente (${displayImage.length} bytes)',
+          );
+          if (displayImage.length > 20) {
+            print(
+              'UserModel.fromJson: display_image primeros 20 chars: ${displayImage.substring(0, 20)}',
+            );
+          }
+        } else {
+          print('UserModel.fromJson: display_image está vacío o nulo');
+        }
+      }
 
-    return copyWith(locale: newLocale, preferences: updatedPreferences);
+      if (json.containsKey('picture')) {
+        final picture = json['picture'] as String?;
+        if (picture != null && picture.isNotEmpty) {
+          print(
+            'UserModel.fromJson: picture presente (${picture.length} bytes)',
+          );
+          if (picture.length > 20) {
+            print(
+              'UserModel.fromJson: picture primeros 20 chars: ${picture.substring(0, 20)}',
+            );
+          }
+        } else {
+          print('UserModel.fromJson: picture está vacío o nulo');
+        }
+      }
+
+      if (json.containsKey('profile_image_blob')) {
+        final profileImageBlob = json['profile_image_blob'] as String?;
+        if (profileImageBlob != null && profileImageBlob.isNotEmpty) {
+          print(
+            'UserModel.fromJson: profile_image_blob presente (${profileImageBlob.length} bytes)',
+          );
+          if (profileImageBlob.length > 20) {
+            print(
+              'UserModel.fromJson: profile_image_blob primeros 20 chars: ${profileImageBlob.substring(0, 20)}',
+            );
+          }
+        } else {
+          print('UserModel.fromJson: profile_image_blob está vacío o nulo');
+        }
+      }
+    }
+
+    return UserModel(
+      id: json['id'].toString(),
+      googleId: json['google_id'] as String?,
+      email: json['email'] as String,
+      name: json['name'] as String,
+      givenName: json['given_name'] as String?,
+      familyName: json['family_name'] as String?,
+      picture: json['picture'] as String?,
+      displayImage: json['display_image'] as String?,
+      profileImageBlob: json['profile_image_blob'] as String?,
+      locale: json['locale'] as String? ?? 'en',
+      verifiedEmail: json['verified_email'] as bool? ?? false,
+      createdAt: parsedCreatedAt,
+      updatedAt: parsedUpdatedAt,
+      password: json['password'] as String?,
+    );
   }
 
-  // Métodos de ayuda para información de localización
-  bool get isRTL {
-    // Idiomas de derecha a izquierda
-    const List<String> rtlLanguages = ['ar', 'he', 'fa', 'ur'];
-    return rtlLanguages.contains(locale);
-  }
-
-  String get languageCode => locale;
-
-  // Método para obtener el código de país basado en el idioma
-  String get countryCode {
-    // Mapeamos idiomas a códigos de país para regionalización
-    const Map<String, String> languageToCountry = {
-      'en': 'US',
-      'es': 'ES',
-      'fr': 'FR',
-      'it': 'IT',
-      'de': 'DE',
-      'gsw': 'CH',
-      'el': 'GR',
-      'nl': 'NL',
-      'da': 'DK',
-      'ru': 'RU',
-      'pt': 'PT',
-      'zh': 'CN',
-      'ja': 'JP',
-      'hi': 'IN',
+  /// Convierte el modelo a un mapa JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      if (googleId != null) 'google_id': googleId,
+      'email': email,
+      'name': name,
+      if (givenName != null) 'given_name': givenName,
+      if (familyName != null) 'family_name': familyName,
+      if (picture != null) 'picture': picture,
+      if (displayImage != null) 'display_image': displayImage,
+      if (profileImageBlob != null) 'profile_image_blob': profileImageBlob,
+      'locale': locale,
+      'verified_email': verifiedEmail,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+      if (password != null) 'password': password,
     };
+  }
 
-    return languageToCountry[locale] ?? 'US';
+  /// Devuelve una copia del modelo con el idioma preferido actualizado
+  UserModel updateLocale(String newLocale) {
+    return copyWith(locale: newLocale, updatedAt: DateTime.now());
   }
 
   // Método para obtener la imagen de perfil adecuada en formato ImageProvider
   ImageProvider? getProfileImage() {
     // Diagnóstico básico
+    if (kDebugMode) {
+      if (displayImage != null && displayImage!.isNotEmpty) {
+        print(
+          'UserModel.getProfileImage: displayImage presente (${displayImage!.length} bytes)',
+        );
+        final preview = displayImage!.substring(
+          0,
+          min(20, displayImage!.length),
+        );
+        print('UserModel.getProfileImage: displayImage preview: $preview...');
+      }
+
+      if (profileImageBlob != null && profileImageBlob!.isNotEmpty) {
+        print(
+          'UserModel.getProfileImage: profileImageBlob presente (${profileImageBlob!.length} bytes)',
+        );
+        final preview = profileImageBlob!.substring(
+          0,
+          min(20, profileImageBlob!.length),
+        );
+        print(
+          'UserModel.getProfileImage: profileImageBlob preview: $preview...',
+        );
+      }
+
+      if (picture != null && picture!.isNotEmpty) {
+        print(
+          'UserModel.getProfileImage: picture presente (${picture!.length} bytes)',
+        );
+        final preview = picture!.substring(0, min(20, picture!.length));
+        print('UserModel.getProfileImage: picture preview: $preview...');
+      }
+    }
+
+    // Procesamiento de imagen priorizado
+
+    // 1. Primero verificar el campo profileImageBlob (imagen almacenada en la base de datos)
+    if (profileImageBlob != null && profileImageBlob!.isNotEmpty) {
+      try {
+        if (kDebugMode) {
+          print(
+            'UserModel.getProfileImage: Usando profileImageBlob como fuente de imagen',
+          );
+        }
+
+        // Verificar si contiene el prefijo data:image
+        if (profileImageBlob!.contains(';base64,')) {
+          final base64Data = profileImageBlob!.split(';base64,')[1];
+          return MemoryImage(base64Decode(base64Data));
+        } else {
+          // Intentar decodificar directamente
+          final imageBytes = base64Decode(profileImageBlob!);
+          return MemoryImage(imageBytes);
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print(
+            'UserModel.getProfileImage: Error decodificando profileImageBlob: $e',
+          );
+        }
+      }
+    }
+
+    // 2. Verificar el campo displayImage (podría ser una URL o un base64)
     if (displayImage != null && displayImage!.isNotEmpty) {
-      final preview = displayImage!.substring(0, min(10, displayImage!.length));
-      print(
-        'UserModel: displayImage preview: $preview... (length: ${displayImage!.length})',
-      );
-    }
-    if (picture != null && picture!.isNotEmpty) {
-      final preview = picture!.substring(0, min(10, picture!.length));
-      print(
-        'UserModel: picture preview: $preview... (length: ${picture!.length})',
-      );
-
-      // Si el campo picture comienza con "/9j/" es una imagen JPEG en base64
-      if (picture!.startsWith("/9j/")) {
-        print('UserModel: Detected JPEG base64 in picture field');
-        try {
-          final bytes = base64Decode(picture!);
-          print('UserModel: Successfully decoded JPEG: ${bytes.length} bytes');
-          return MemoryImage(bytes);
-        } catch (e) {
-          print('UserModel: Failed to decode JPEG from picture: $e');
+      try {
+        if (kDebugMode) {
+          print(
+            'UserModel.getProfileImage: Usando displayImage como fuente de imagen',
+          );
         }
-      }
-    }
 
-    // Para usuarios de Google, priorizar el campo 'picture' como URL
-    if (googleId != null && googleId!.isNotEmpty) {
-      print('UserModel: Google user detected');
-      // Primero intentar usar 'picture' como URL (si no es base64)
-      if (picture != null &&
-          picture!.isNotEmpty &&
-          !picture!.startsWith("/9j/")) {
-        try {
-          print('UserModel: Trying NetworkImage with picture');
-          return NetworkImage(picture!);
-        } catch (e) {
-          print('UserModel: Error loading Google picture: $e');
-        }
-      }
-
-      // Si no hay 'picture' o falló, intentar usar 'displayImage' como URL
-      if (displayImage != null && displayImage!.isNotEmpty) {
-        try {
-          print('UserModel: Trying NetworkImage with displayImage');
+        // Si parece una URL
+        if (displayImage!.startsWith('http')) {
           return NetworkImage(displayImage!);
-        } catch (e) {
-          print('UserModel: Error loading displayImage as URL: $e');
+        }
+
+        // Si parece base64
+        if (displayImage!.contains(';base64,') ||
+            displayImage!.startsWith('/9j/') || // JPEG
+            displayImage!.startsWith('iVBOR')) {
+          // PNG
+
+          String base64Data = displayImage!;
+          // Extraer los datos reales si tiene prefijo
+          if (displayImage!.contains(';base64,')) {
+            base64Data = displayImage!.split(';base64,')[1];
+          }
+
+          // Decodificar
+          final imageBytes = base64Decode(base64Data);
+          return MemoryImage(imageBytes);
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print(
+            'UserModel.getProfileImage: Error decodificando displayImage: $e',
+          );
         }
       }
     }
-    // Para usuarios regulares (no Google)
-    else {
-      print('UserModel: Regular user detected');
 
-      // Si el campo picture contiene una imagen base64 (comienza con /9j/), ya intentamos usarla arriba
-
-      // Intentar usar 'displayImage' como base64 (profile_image_blob)
-      if (displayImage != null && displayImage!.isNotEmpty) {
-        try {
-          // Intento 1: decodificar directamente como base64
-          try {
-            print('UserModel: Attempt 1 - Direct base64 decode');
-            final bytes = base64Decode(displayImage!);
-            print('UserModel: Direct decode successful: ${bytes.length} bytes');
-            return MemoryImage(bytes);
-          } catch (e) {
-            print('UserModel: Direct base64 decode failed: $e');
-          }
-
-          // Intento 2: tratar con el prefijo WebP
-          try {
-            print('UserModel: Attempt 2 - WebP handling');
-            String base64Image = displayImage!;
-            if (!base64Image.startsWith('data:')) {
-              base64Image = 'data:image/webp;base64,${base64Image}';
-            }
-
-            if (base64Image.contains(';base64,')) {
-              base64Image = base64Image.split(';base64,')[1];
-            }
-
-            final bytes = base64Decode(base64Image);
-            print('UserModel: WebP handling successful: ${bytes.length} bytes');
-            return MemoryImage(bytes);
-          } catch (e) {
-            print('UserModel: WebP decode failed: $e');
-          }
-
-          // Intento 3: remover caracteres problemáticos
-          try {
-            print('UserModel: Attempt 3 - Cleaning string');
-            String cleanBase64 = displayImage!
-                .replaceAll('\n', '')
-                .replaceAll('\r', '')
-                .replaceAll(' ', '');
-
-            if (cleanBase64.startsWith(RegExp(r'data:image\/[^;]+;base64,'))) {
-              cleanBase64 = cleanBase64.split(';base64,')[1];
-            }
-
-            // Asegurar que la longitud sea múltiplo de 4
-            while (cleanBase64.length % 4 != 0) {
-              cleanBase64 += '=';
-            }
-
-            final bytes = base64Decode(cleanBase64);
-            print('UserModel: Cleaning successful: ${bytes.length} bytes');
-            return MemoryImage(bytes);
-          } catch (e) {
-            print('UserModel: Clean decode failed: $e');
-          }
-
-          // Intento 4: Manejar formato específico visto en logs
-          try {
-            print('UserModel: Attempt 4 - Handling specific format');
-            // Verificar si comienza con "/9j/" que es típico de JPEG en base64
-            if (displayImage!.startsWith("/9j/")) {
-              final bytes = base64Decode(displayImage!);
-              print(
-                'UserModel: JPEG format handling successful: ${bytes.length} bytes',
-              );
-              return MemoryImage(bytes);
-            }
-          } catch (e) {
-            print('UserModel: JPEG format handling failed: $e');
-          }
-        } catch (e) {
-          print('UserModel: All decode attempts failed: $e');
+    // 3. Comprobar si el campo picture contiene una URL
+    if (picture != null && picture!.isNotEmpty) {
+      try {
+        if (kDebugMode) {
+          print(
+            'UserModel.getProfileImage: Usando picture como fuente de imagen',
+          );
         }
-      } else {
-        print('UserModel: No displayImage available');
-      }
 
-      // Si no hay 'displayImage' o falla la decodificación, intentar 'picture' como URL (no como base64)
-      if (picture != null &&
-          picture!.isNotEmpty &&
-          !picture!.startsWith("/9j/")) {
-        try {
-          print('UserModel: Falling back to picture as URL');
+        // Si parece ser una URL
+        if (picture!.startsWith('http')) {
           return NetworkImage(picture!);
-        } catch (e) {
-          print('UserModel: Error loading picture as URL: $e');
+        }
+
+        // Si parece ser base64
+        if (picture!.contains(';base64,') ||
+            picture!.startsWith('/9j/') || // JPEG
+            picture!.startsWith('iVBOR')) {
+          // PNG
+
+          String base64Data = picture!;
+          // Extraer los datos reales si tiene prefijo
+          if (picture!.contains(';base64,')) {
+            base64Data = picture!.split(';base64,')[1];
+          }
+
+          // Decodificar
+          final imageBytes = base64Decode(base64Data);
+          return MemoryImage(imageBytes);
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('UserModel.getProfileImage: Error decodificando picture: $e');
         }
       }
     }
 
-    print('UserModel: Using default avatar image');
-    // Fallback a la imagen de assets
-    return const AssetImage('assets/avatars/default_avatar.png');
+    // Si no se pudo obtener imagen de ninguna fuente
+    if (kDebugMode) {
+      print('UserModel.getProfileImage: No se encontró imagen válida');
+    }
+    return null;
+  }
+
+  // Métodos de ayuda para información de localización
+  String getFlag() {
+    return '${getCountryCode(locale)}';
+  }
+
+  String getCountryCode(String locale) {
+    final Map<String, String> languageToCountry = {
+      'en': 'US',
+      'es': 'ES',
+      'fr': 'FR',
+      'de': 'DE',
+      'it': 'IT',
+      'pt': 'PT',
+      'ru': 'RU',
+      'zh': 'CN',
+      'ja': 'JP',
+      'ar': 'SA',
+    };
+    return languageToCountry[locale] ?? 'US';
   }
 }

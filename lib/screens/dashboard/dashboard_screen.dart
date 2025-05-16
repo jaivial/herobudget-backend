@@ -329,6 +329,8 @@ class _DashboardScreenState extends State<DashboardScreen>
           name: 'Demo User',
           locale: 'en',
           verifiedEmail: true,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
         );
       });
     }
