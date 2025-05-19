@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
 import '../utils/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 class SavingsOverviewWidget extends StatelessWidget {
   final SavingsOverview savingsOverview;
@@ -23,10 +24,15 @@ class SavingsOverviewWidget extends StatelessWidget {
             )
             : 0;
 
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color:
+            isDarkMode
+                ? AppTheme.surfaceDark
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -45,16 +51,26 @@ class SavingsOverviewWidget extends StatelessWidget {
             children: [
               Text(
                 context.tr.translate('savings_overview'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : null,
                 ),
               ),
               // Edit goal button
               TextButton.icon(
                 onPressed: onEditGoal,
-                icon: const Icon(Icons.edit, size: 16),
-                label: Text(context.tr.translate('edit_goal')),
+                icon: Icon(
+                  Icons.edit,
+                  size: 16,
+                  color: isDarkMode ? AppTheme.tertiaryColorDark : null,
+                ),
+                label: Text(
+                  context.tr.translate('edit_goal'),
+                  style: TextStyle(
+                    color: isDarkMode ? AppTheme.tertiaryColorDark : null,
+                  ),
+                ),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -73,9 +89,10 @@ class SavingsOverviewWidget extends StatelessWidget {
             children: [
               Text(
                 context.tr.formatCurrency(savingsOverview.available),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : null,
                 ),
               ),
               const SizedBox(width: 8),
@@ -83,7 +100,10 @@ class SavingsOverviewWidget extends StatelessWidget {
                 '/ ${context.tr.formatCurrency(savingsOverview.goal)}',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color:
+                      isDarkMode
+                          ? Colors.white.withOpacity(0.7)
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -99,7 +119,10 @@ class SavingsOverviewWidget extends StatelessWidget {
                 height: 10,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color:
+                      isDarkMode
+                          ? AppTheme.backgroundDark.withOpacity(0.5)
+                          : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(5),
                 ),
               ),
@@ -110,7 +133,13 @@ class SavingsOverviewWidget extends StatelessWidget {
                   height: 10,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.blue.shade300, Colors.blue.shade600],
+                      colors:
+                          isDarkMode
+                              ? [
+                                AppTheme.primaryColorDark,
+                                AppTheme.secondaryColorDark,
+                              ]
+                              : [Colors.blue.shade300, Colors.blue.shade600],
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
@@ -129,15 +158,19 @@ class SavingsOverviewWidget extends StatelessWidget {
             children: [
               Text(
                 '${percentage.toStringAsFixed(1)}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  color: isDarkMode ? Colors.white : null,
                 ),
               ),
               Text(
                 '${context.tr.translate('goal')}: ${context.tr.formatCurrency(savingsOverview.goal)}',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color:
+                      isDarkMode
+                          ? Colors.white.withOpacity(0.7)
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -155,16 +188,21 @@ class _PercentageBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.2),
+        color:
+            isDarkMode
+                ? AppTheme.primaryColorDark.withOpacity(0.3)
+                : Colors.green.withOpacity(0.2),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         '${percentage.toStringAsFixed(0)}%',
         style: TextStyle(
-          color: Colors.green.shade700,
+          color: isDarkMode ? AppTheme.primaryColorDark : Colors.green.shade700,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -182,6 +220,7 @@ class _SavingsProgressBar extends StatelessWidget {
   Widget build(BuildContext context) {
     // Calcular porcentaje
     double percent = (goal > 0) ? (available / goal * 100) : 0;
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // Limitar porcentaje al 100%
     if (percent > 100) percent = 100;
@@ -192,7 +231,10 @@ class _SavingsProgressBar extends StatelessWidget {
         Container(
           height: 10,
           decoration: BoxDecoration(
-            color: Colors.grey.shade200,
+            color:
+                isDarkMode
+                    ? AppTheme.backgroundDark.withOpacity(0.5)
+                    : Colors.grey.shade200,
             borderRadius: BorderRadius.circular(5),
           ),
         ),
@@ -203,14 +245,19 @@ class _SavingsProgressBar extends StatelessWidget {
           child: Container(
             height: 10,
             decoration: BoxDecoration(
-              color: Colors.green,
               borderRadius: BorderRadius.circular(5),
               gradient: LinearGradient(
-                colors: [
-                  Colors.green.shade300,
-                  Colors.green.shade500,
-                  Colors.green.shade700,
-                ],
+                colors:
+                    isDarkMode
+                        ? [
+                          AppTheme.primaryColorDark,
+                          AppTheme.secondaryColorDark,
+                        ]
+                        : [
+                          Colors.green.shade300,
+                          Colors.green.shade500,
+                          Colors.green.shade700,
+                        ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),

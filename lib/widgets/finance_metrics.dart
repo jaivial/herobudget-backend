@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
 import '../utils/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 class FinanceMetricsWidget extends StatelessWidget {
   final FinanceMetrics metrics;
@@ -11,6 +12,7 @@ class FinanceMetricsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // Calculate total
     final double total = metrics.income + metrics.expenses + metrics.bills;
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // Calculate percentages
     final double incomePercent = total > 0 ? (metrics.income / total * 100) : 0;
@@ -21,7 +23,10 @@ class FinanceMetricsWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color:
+            isDarkMode
+                ? AppTheme.surfaceDark
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -35,213 +40,123 @@ class FinanceMetricsWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            context.tr.translate('finance_metrics'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            AppLocalizations.of(context).translate('finance_distribution'),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : null,
+            ),
           ),
-
           const SizedBox(height: 20),
 
-          // Income vs Expenses Chart
-          _MetricCard(
-            title: context.tr.translate('income_vs_expenses'),
-            child: Column(
-              children: [
-                // Progress bar showing distribution
-                Container(
-                  height: 12,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    color: Colors.grey.shade200,
-                  ),
-                  child: Row(
-                    children: [
-                      // Income segment
-                      Flexible(
-                        flex: incomePercent.toInt(),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.horizontal(
-                              left: const Radius.circular(6),
-                              right: Radius.circular(
-                                expensesPercent <= 0 && billsPercent <= 0
-                                    ? 6
-                                    : 0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Expenses segment
-                      Flexible(
-                        flex: expensesPercent.toInt(),
-                        child: Container(color: Colors.red),
-                      ),
-                      // Bills segment
-                      Flexible(
-                        flex: billsPercent.toInt(),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.blue,
-                            borderRadius: BorderRadius.horizontal(
-                              right: const Radius.circular(6),
-                              left: Radius.circular(
-                                expensesPercent <= 0 && incomePercent <= 0
-                                    ? 6
-                                    : 0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Legend and values
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _MetricLegendItem(
-                      color: Colors.green,
-                      label: context.tr.translate('income'),
-                      value: context.tr.formatCurrency(metrics.income),
-                      percent: incomePercent,
-                    ),
-                    _MetricLegendItem(
-                      color: Colors.red,
-                      label: context.tr.translate('expenses'),
-                      value: context.tr.formatCurrency(metrics.expenses),
-                      percent: expensesPercent,
-                    ),
-                    _MetricLegendItem(
-                      color: Colors.blue,
-                      label: context.tr.translate('budget'),
-                      value: context.tr.formatCurrency(metrics.bills),
-                      percent: billsPercent,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Savings Rate Card
-          _MetricCard(
-            title: context.tr.translate('savings_rate'),
+          Container(
+            height: 20,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+            clipBehavior: Clip.antiAlias,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Graph or visualization would go here
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.purple, width: 8),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '12%',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
+                // Income section
+                Expanded(
+                  flex: incomePercent.round(),
+                  child: Container(
+                    color:
+                        isDarkMode ? AppTheme.primaryColorDark : Colors.green,
                   ),
                 ),
-
-                // Text description
-                const Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 16),
-                    child: Text(
-                      '12% of your income is being saved. Try to save at least 20% for financial health.',
-                    ),
+                // Expenses section
+                Expanded(
+                  flex: expensesPercent.round(),
+                  child: Container(
+                    color:
+                        isDarkMode ? AppTheme.secondaryColorDark : Colors.red,
+                  ),
+                ),
+                // Bills section
+                Expanded(
+                  flex: billsPercent.round(),
+                  child: Container(
+                    color:
+                        isDarkMode ? AppTheme.tertiaryColorDark : Colors.blue,
                   ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
 
-class _MetricCard extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _MetricCard({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
           const SizedBox(height: 16),
-          child,
+
+          // Legend
+          _buildLegendItem(
+            context,
+            'income',
+            metrics.income,
+            incomePercent,
+            isDarkMode ? AppTheme.primaryColorDark : Colors.green,
+            isDarkMode,
+          ),
+          const SizedBox(height: 8),
+          _buildLegendItem(
+            context,
+            'expenses',
+            metrics.expenses,
+            expensesPercent,
+            isDarkMode ? AppTheme.secondaryColorDark : Colors.red,
+            isDarkMode,
+          ),
+          const SizedBox(height: 8),
+          _buildLegendItem(
+            context,
+            'bills',
+            metrics.bills,
+            billsPercent,
+            isDarkMode ? AppTheme.tertiaryColorDark : Colors.blue,
+            isDarkMode,
+          ),
         ],
       ),
     );
   }
-}
 
-class _MetricLegendItem extends StatelessWidget {
-  final Color color;
-  final String label;
-  final String value;
-  final double percent;
-
-  const _MetricLegendItem({
-    required this.color,
-    required this.label,
-    required this.value,
-    required this.percent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget _buildLegendItem(
+    BuildContext context,
+    String label,
+    double amount,
+    double percentage,
+    Color color,
+    bool isDarkMode,
+  ) {
+    return Row(
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 6),
-            Text(label),
-          ],
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
         ),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(width: 8),
         Text(
-          '${percent.toStringAsFixed(1)}%',
+          AppLocalizations.of(context).translate(label),
           style: TextStyle(
+            fontWeight: FontWeight.w500,
+            color: isDarkMode ? Colors.white.withOpacity(0.9) : null,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          '\$${amount.toStringAsFixed(2)}',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDarkMode ? Colors.white : null,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '(${percentage.toStringAsFixed(0)}%)',
+          style: TextStyle(
+            color: isDarkMode ? Colors.white.withOpacity(0.7) : Colors.grey,
             fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],

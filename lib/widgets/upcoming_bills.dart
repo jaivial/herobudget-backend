@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/dashboard_model.dart';
 import '../utils/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 class UpcomingBillsWidget extends StatelessWidget {
   final List<Bill> bills;
@@ -11,10 +12,15 @@ class UpcomingBillsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color:
+            isDarkMode
+                ? AppTheme.surfaceDark
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -30,21 +36,25 @@ class UpcomingBillsWidget extends StatelessWidget {
           // Title and description
           Text(
             context.tr.translate('upcoming_bills'),
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : null,
+            ),
           ),
 
           const SizedBox(height: 8),
 
           // List of bills
           bills.isEmpty
-              ? _EmptyBillsList(onAddBill: onAddBill)
+              ? _EmptyBillsList(onAddBill: onAddBill, isDarkMode: isDarkMode)
               : ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: bills.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
-                  return BillItem(bill: bills[index]);
+                  return BillItem(bill: bills[index], isDarkMode: isDarkMode);
                 },
               ),
 
@@ -60,9 +70,12 @@ class UpcomingBillsWidget extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outline.withOpacity(0.3),
+                      color:
+                          isDarkMode
+                              ? AppTheme.tertiaryColorDark.withOpacity(0.5)
+                              : Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.3),
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -71,13 +84,19 @@ class UpcomingBillsWidget extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.add,
-                        color: Theme.of(context).colorScheme.primary,
+                        color:
+                            isDarkMode
+                                ? AppTheme.primaryColorDark
+                                : Theme.of(context).colorScheme.primary,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         context.tr.translate('add_bill'),
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
+                          color:
+                              isDarkMode
+                                  ? AppTheme.primaryColorDark
+                                  : Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -94,8 +113,9 @@ class UpcomingBillsWidget extends StatelessWidget {
 
 class _EmptyBillsList extends StatelessWidget {
   final VoidCallback? onAddBill;
+  final bool isDarkMode;
 
-  const _EmptyBillsList({this.onAddBill});
+  const _EmptyBillsList({this.onAddBill, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -105,9 +125,12 @@ class _EmptyBillsList extends StatelessWidget {
         Icon(
           Icons.receipt_long_outlined,
           size: 60,
-          color: Theme.of(
-            context,
-          ).colorScheme.onSurfaceVariant.withOpacity(0.3),
+          color:
+              isDarkMode
+                  ? Colors.white.withOpacity(0.3)
+                  : Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withOpacity(0.3),
         ),
         const SizedBox(height: 12),
         Text(
@@ -115,7 +138,10 @@ class _EmptyBillsList extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color:
+                isDarkMode
+                    ? Colors.white.withOpacity(0.7)
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 20),
@@ -125,6 +151,8 @@ class _EmptyBillsList extends StatelessWidget {
           label: Text(context.tr.translate('add_bill')),
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            backgroundColor: isDarkMode ? AppTheme.primaryColorDark : null,
+            foregroundColor: isDarkMode ? Colors.white : null,
           ),
         ),
       ],
@@ -135,8 +163,14 @@ class _EmptyBillsList extends StatelessWidget {
 class BillItem extends StatelessWidget {
   final Bill bill;
   final VoidCallback? onPayBill;
+  final bool isDarkMode;
 
-  const BillItem({super.key, required this.bill, this.onPayBill});
+  const BillItem({
+    super.key,
+    required this.bill,
+    this.onPayBill,
+    required this.isDarkMode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -144,11 +178,17 @@ class BillItem extends StatelessWidget {
     final Color borderColor =
         bill.overdue
             ? Colors.red.shade300
+            : isDarkMode
+            ? AppTheme.tertiaryColorDark.withOpacity(0.5)
             : Theme.of(context).colorScheme.outline.withOpacity(0.2);
 
     final Color backgroundColor =
         bill.overdue
-            ? Colors.red.shade50
+            ? isDarkMode
+                ? Colors.red.shade900.withOpacity(0.3)
+                : Colors.red.shade50
+            : isDarkMode
+            ? AppTheme.surfaceDark.withOpacity(0.7)
             : Theme.of(context).colorScheme.surface;
 
     return Container(
@@ -183,14 +223,20 @@ class BillItem extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withOpacity(0.1),
+                      color:
+                          isDarkMode
+                              ? AppTheme.primaryColorDark.withOpacity(0.2)
+                              : Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       bill.icon,
-                      style: const TextStyle(fontSize: 24),
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: isDarkMode ? Colors.white : null,
+                      ),
                     ),
                   ),
 
@@ -225,9 +271,10 @@ class BillItem extends StatelessWidget {
                         // Name and category
                         Text(
                           bill.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            color: isDarkMode ? Colors.white : null,
                           ),
                         ),
 
@@ -249,22 +296,36 @@ class BillItem extends StatelessWidget {
                     children: [
                       Text(
                         context.tr.formatCurrency(bill.amount),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          color: isDarkMode ? Colors.white : null,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today, size: 12),
+                          Icon(
+                            Icons.calendar_today,
+                            size: 12,
+                            color:
+                                isDarkMode
+                                    ? Colors.white.withOpacity(0.7)
+                                    : null,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             context.tr.formatDate(
                               DateTime.parse(bill.dueDate),
                               pattern: 'MMM d',
                             ),
-                            style: const TextStyle(fontSize: 12),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color:
+                                  isDarkMode
+                                      ? Colors.white.withOpacity(0.7)
+                                      : null,
+                            ),
                           ),
                         ],
                       ),
@@ -279,6 +340,9 @@ class BillItem extends StatelessWidget {
                             ),
                             textStyle: const TextStyle(fontSize: 12),
                             minimumSize: const Size(60, 30),
+                            backgroundColor:
+                                isDarkMode ? AppTheme.primaryColorDark : null,
+                            foregroundColor: isDarkMode ? Colors.white : null,
                           ),
                           child: Text(context.tr.translate('pay')),
                         ),

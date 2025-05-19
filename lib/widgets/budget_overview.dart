@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
 import '../utils/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 class BudgetOverviewWidget extends StatelessWidget {
   final BudgetOverview budgetOverview;
@@ -10,11 +11,15 @@ class BudgetOverviewWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color:
+            isDarkMode
+                ? AppTheme.surfaceDark
+                : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -33,9 +38,10 @@ class BudgetOverviewWidget extends StatelessWidget {
             children: [
               Text(
                 localizations.translate('money_flow'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : null,
                 ),
               ),
               _PercentageBadge(percentage: budgetOverview.moneyFlow.percent),
@@ -52,9 +58,10 @@ class BudgetOverviewWidget extends StatelessWidget {
                 _formatCurrencyEuroStyle(
                   localizations.formatCurrency(budgetOverview.remainingAmount),
                 ),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : null,
                 ),
               ),
               const SizedBox(width: 8),

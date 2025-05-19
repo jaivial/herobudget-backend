@@ -2,20 +2,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  // Your Mac's IP address on your local network
-  // Use "localhost" for emulators and IP address for physical devices
+  // Usar siempre localhost para los servicios locales
   static String get baseApiUrl {
-    // When running on a physical device, use the Mac's IP address
-    if (!kIsWeb &&
-        Platform.isIOS &&
-        !Platform.environment.containsKey('FLUTTER_TEST')) {
-      if (isRunningOnSimulator()) {
-        return 'http://localhost'; // Use localhost for iOS simulators
-      }
-      // Default to localhost for development - replace with actual IP if needed
-      return 'http://localhost'; // Changed from specific IP to localhost
-    }
-    // For emulators and web testing
     return 'http://localhost';
   }
 
@@ -74,9 +62,6 @@ class ApiConfig {
       '$baseApiUrl:$expenseManagementServicePort';
   static String get categoriesEndpoint =>
       '$baseApiUrl:$categoriesManagementServicePort/categories';
-
-  // This method is simplified as we'll just always use the IP address on iOS devices
-  // For more precise detection, you could add device_info_plus package
 
   // Money Flow Sync Service (8096)
   static String get moneyFlowSyncServiceUrl => '$baseApiUrl:8096';

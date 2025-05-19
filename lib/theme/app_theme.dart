@@ -9,11 +9,12 @@ class AppTheme {
   static const Color backgroundLight = Color(0xFFF3E5F5);
 
   // Colores para tema oscuro
-  static const Color primaryColorDark = Color(0xFF9C27B0);
+  static const Color primaryColorDark = Color(0xFF6A1B9A);
   static const Color secondaryColorDark = Color(0xFFBA68C8);
   static const Color tertiaryColorDark = Color(0xFFD1C4E9);
   static const Color backgroundDark = Color(0xFF121212);
   static const Color surfaceDark = Color(0xFF1E1E1E);
+  static const Color purpleAccentDark = Color(0xFF9C27B0);
 
   // Clave para almacenar el modo de tema en SharedPreferences
   static const String themePreferenceKey = 'theme_mode';
@@ -46,23 +47,39 @@ class AppTheme {
     return ThemeData(
       primarySwatch: Colors.purple,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.blue,
+      colorScheme: ColorScheme(
         brightness: Brightness.dark,
+        primary: primaryColorDark,
+        onPrimary: Colors.white,
+        secondary: secondaryColorDark,
+        onSecondary: Colors.white,
+        error: Colors.red,
+        onError: Colors.white,
+        background: backgroundDark,
+        onBackground: Colors.white,
+        surface: surfaceDark,
+        onSurface: Colors.white,
       ),
       useMaterial3: true,
-      cardColor: const Color(0xFF1E1E1E),
-      scaffoldBackgroundColor: const Color(0xFF121212),
+      cardColor: surfaceDark,
+      scaffoldBackgroundColor: backgroundDark,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1E1E1E),
+        backgroundColor: surfaceDark,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          backgroundColor: primaryColorDark,
+          foregroundColor: Colors.white,
         ),
       ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: secondaryColorDark),
+      ),
+      iconTheme: const IconThemeData(color: tertiaryColorDark),
+      dialogBackgroundColor: surfaceDark,
     );
   }
 

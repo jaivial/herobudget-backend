@@ -189,16 +189,54 @@ class DashboardService {
 
         // Obtain money flow data from the new microservice
         try {
-          final moneyFlowResponse = await http.get(
-            Uri.parse(
-              '${moneyFlowCalculationUrl}/money-flow/data?user_id=$userId&period=$period',
-            ),
-            headers: {'Content-Type': 'application/json'},
-          );
+          // Implementar sistema de reintentos para money flow
+          const maxRetries = 3;
+          int currentRetry = 0;
+          bool success = false;
+          dynamic moneyFlowData;
 
-          if (moneyFlowResponse.statusCode == 200) {
-            final moneyFlowData = json.decode(moneyFlowResponse.body);
+          while (currentRetry < maxRetries && !success) {
+            try {
+              final moneyFlowResponse = await http
+                  .get(
+                    Uri.parse(
+                      '${moneyFlowCalculationUrl}/money-flow/data?user_id=$userId&period=$period',
+                    ),
+                    headers: {'Content-Type': 'application/json'},
+                  )
+                  .timeout(const Duration(seconds: 5));
 
+              if (moneyFlowResponse.statusCode == 200) {
+                moneyFlowData = json.decode(moneyFlowResponse.body);
+                success = true;
+              } else {
+                currentRetry++;
+                if (currentRetry < maxRetries) {
+                  // Esperar antes de reintentar (backoff exponencial)
+                  await Future.delayed(
+                    Duration(milliseconds: 500 * currentRetry),
+                  );
+                  print(
+                    'Reintentando obtener money flow data (intento $currentRetry/$maxRetries)',
+                  );
+                }
+              }
+            } catch (retryError) {
+              currentRetry++;
+              if (currentRetry < maxRetries) {
+                // Esperar antes de reintentar (backoff exponencial)
+                await Future.delayed(
+                  Duration(milliseconds: 500 * currentRetry),
+                );
+                print(
+                  'Error al obtener money flow data, reintentando (intento $currentRetry/$maxRetries): $retryError',
+                );
+              }
+            }
+          }
+
+          // Procesar los datos si se obtuvieron correctamente
+          if (success && moneyFlowData != null) {
             // If the money flow data is available, update the budget_overview in the response
             if (moneyFlowData['success'] == true &&
                 moneyFlowData['data'] != null) {
@@ -228,6 +266,10 @@ class DashboardService {
                 }
               }
             }
+          } else {
+            print(
+              'No se pudo obtener money flow data después de $maxRetries intentos',
+            );
           }
         } catch (e) {
           print('Error fetching money flow data: $e');
