@@ -6,6 +6,7 @@ import '../../services/expense_service.dart';
 import '../../services/category_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/currency_utils.dart';
+import '../category/add_category_screen.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final Function? onSuccess;
@@ -149,10 +150,30 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr.translate('add_expense'))),
+      appBar: AppBar(
+        title: Text(context.tr.translate('add_expense')),
+        elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+      ),
       body:
           _isLoadingCategories
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      context.tr.translate('loading_categories'),
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              )
               : SingleChildScrollView(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -161,35 +182,109 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Amount field
-                        TextFormField(
-                          controller: _amountController,
-                          decoration: InputDecoration(
-                            labelText: context.tr.translate('amount'),
-                            prefixText: currencySymbol,
-                            border: const OutlineInputBorder(),
+                        // Amount field with decoration
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return context.tr.translate('enter_amount');
-                            }
-                            try {
-                              final amount = double.parse(
-                                value.replaceAll(',', '.'),
-                              );
-                              if (amount <= 0) {
+                          child: TextFormField(
+                            controller: _amountController,
+                            decoration: InputDecoration(
+                              labelText: context.tr.translate('amount'),
+                              prefixText: currencySymbol,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.5),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .surfaceVariant
+                                          .withOpacity(0.5)
+                                      : Theme.of(context).cardColor,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              labelStyle: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              prefixStyle: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.9),
+                                fontWeight: FontWeight.bold,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.payments_outlined,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Theme.of(context).colorScheme.onSurface,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return context.tr.translate('enter_amount');
+                              }
+                              try {
+                                final amount = double.parse(
+                                  value.replaceAll(',', '.'),
+                                );
+                                if (amount <= 0) {
+                                  return context.tr.translate(
+                                    'amount_must_be_positive',
+                                  );
+                                }
+                              } catch (e) {
                                 return context.tr.translate(
-                                  'amount_must_be_positive',
+                                  'enter_valid_amount',
                                 );
                               }
-                            } catch (e) {
-                              return context.tr.translate('enter_valid_amount');
-                            }
-                            return null;
-                          },
+                              return null;
+                            },
+                          ),
                         ),
 
                         const SizedBox(height: 16),
@@ -201,6 +296,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             decoration: InputDecoration(
                               labelText: context.tr.translate('date'),
                               border: const OutlineInputBorder(),
+                              labelStyle: TextStyle(
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.9)
+                                        : null,
+                              ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -218,52 +320,365 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Category dropdown
-                        _categories.isEmpty
-                            ? Text(
-                              context.tr.translate('no_expense_categories'),
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                            )
-                            : DropdownButtonFormField<String>(
-                              decoration: InputDecoration(
-                                labelText: context.tr.translate('category'),
-                                border: const OutlineInputBorder(),
-                              ),
-                              value:
-                                  _selectedCategory.isEmpty
-                                      ? _categories.first.name
-                                      : _selectedCategory,
-                              items:
-                                  _categories.map((Category category) {
-                                    return DropdownMenuItem<String>(
-                                      value: category.name,
-                                      child: Row(
-                                        children: [
-                                          Text(category.emoji),
-                                          const SizedBox(width: 8),
-                                          Text(category.name),
-                                        ],
+                        // Category dropdown with add button
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    context.tr.translate('category'),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () async {
+                                    // Navigate to the add category screen
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => AddCategoryScreen(
+                                              onSuccess: () {
+                                                // This will be called when a category is successfully added
+                                              },
+                                            ),
                                       ),
                                     );
-                                  }).toList(),
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  setState(() {
-                                    _selectedCategory = newValue;
-                                  });
-                                }
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return context.tr.translate(
-                                    'select_category',
-                                  );
-                                }
-                                return null;
-                              },
+
+                                    // If the user added a category successfully, reload the categories
+                                    if (result == true) {
+                                      await _loadCategories();
+                                    }
+                                  },
+                                  icon: Icon(
+                                    Icons.add_circle_outline,
+                                    color:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white.withOpacity(0.9)
+                                            : null,
+                                  ),
+                                  label: Text(
+                                    context.tr.translate('add_new'),
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Colors.white.withOpacity(0.9)
+                                              : null,
+                                    ),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ),
+                              ],
                             ),
+                            const SizedBox(height: 8),
+                            _categories.isEmpty
+                                ? Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .errorContainer
+                                        .withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error.withOpacity(0.5),
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.warning_amber_rounded,
+                                        color:
+                                            Theme.of(context).colorScheme.error,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          context.tr.translate(
+                                            'no_expense_categories',
+                                          ),
+                                          style: TextStyle(
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.error,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                                : Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color:
+                                          Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .outline
+                                                  .withOpacity(0.3)
+                                              : Colors.grey.shade300,
+                                    ),
+                                    color:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Theme.of(context)
+                                                .colorScheme
+                                                .surfaceVariant
+                                                .withOpacity(0.5)
+                                            : Theme.of(context).cardColor,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    menuMaxHeight: 350,
+                                    itemHeight: 75,
+                                    elevation: 8,
+                                    iconSize: 28,
+                                    decoration: InputDecoration(
+                                      labelText: context.tr.translate(
+                                        'select_category',
+                                      ),
+                                      floatingLabelBehavior:
+                                          FloatingLabelBehavior.always,
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 32,
+                                          ),
+                                      hintStyle: TextStyle(
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.white.withOpacity(0.7)
+                                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                      ),
+                                      labelStyle: TextStyle(
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white.withOpacity(0.9)
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.8),
+                                        fontWeight: FontWeight.w500,
+                                        backgroundColor:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Theme.of(context)
+                                                    .colorScheme
+                                                    .surfaceVariant
+                                                    .withOpacity(0.5)
+                                                : Theme.of(context).cardColor,
+                                        height: 0.1,
+                                      ),
+                                    ),
+                                    value:
+                                        _selectedCategory.isEmpty
+                                            ? _categories.first.name
+                                            : _selectedCategory,
+                                    selectedItemBuilder: (
+                                      BuildContext context,
+                                    ) {
+                                      return _categories.map<Widget>((
+                                        Category category,
+                                      ) {
+                                        return Row(
+                                          children: [
+                                            Container(
+                                              width: 65,
+                                              height: 65,
+                                              margin: const EdgeInsets.only(
+                                                right: 12,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .error
+                                                    .withOpacity(0.15),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .error
+                                                      .withOpacity(0.2),
+                                                  width: 1,
+                                                ),
+                                              ),
+                                              child: Center(
+                                                child: FittedBox(
+                                                  fit: BoxFit.contain,
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          2.0,
+                                                        ),
+                                                    child: Text(
+                                                      category.emoji,
+                                                      style: const TextStyle(
+                                                        fontSize: 90,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: Text(
+                                                category.name,
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color:
+                                                      Theme.of(
+                                                                context,
+                                                              ).brightness ==
+                                                              Brightness.dark
+                                                          ? Colors.white
+                                                          : Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurface,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      }).toList();
+                                    },
+                                    icon: Padding(
+                                      padding: const EdgeInsets.only(
+                                        right: 8.0,
+                                      ),
+                                      child: Icon(
+                                        Icons.arrow_drop_down_circle,
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white.withOpacity(0.9)
+                                                : null,
+                                      ),
+                                    ),
+                                    items:
+                                        _categories.map((Category category) {
+                                          return DropdownMenuItem<String>(
+                                            value: category.name,
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width: 60,
+                                                  height: 60,
+                                                  margin: const EdgeInsets.only(right: 12),
+                                                  decoration: BoxDecoration(
+                                                    color: Theme.of(context).brightness == Brightness.dark
+                                                        ? Theme.of(context).colorScheme.error.withOpacity(0.2)
+                                                        : Theme.of(context).colorScheme.error.withOpacity(0.15),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(
+                                                      color: Theme.of(context).brightness == Brightness.dark
+                                                          ? Colors.white.withOpacity(0.3)
+                                                          : Theme.of(context).colorScheme.error.withOpacity(0.2),
+                                                      width: 1,
+                                                    ),
+                                                  ),
+                                                  child: Center(
+                                                    child: FittedBox(
+                                                      fit: BoxFit.contain,
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.all(4.0),
+                                                        child: Text(
+                                                          category.emoji,
+                                                          style: const TextStyle(
+                                                            fontSize: 30,
+                                                          ),
+                                                          textAlign: TextAlign.center,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Text(
+                                                    category.name,
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      color:
+                                                          Theme.of(
+                                                                    context,
+                                                                  ).brightness ==
+                                                                  Brightness
+                                                                      .dark
+                                                              ? Colors.white
+                                                              : Theme.of(
+                                                                    context,
+                                                                  )
+                                                                  .colorScheme
+                                                                  .onSurface,
+                                                      fontWeight:
+                                                          FontWeight.w500,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }).toList(),
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) {
+                                        setState(() {
+                                          _selectedCategory = newValue;
+                                        });
+                                      }
+                                    },
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return context.tr.translate(
+                                          'select_category',
+                                        );
+                                      }
+                                      return null;
+                                    },
+                                    dropdownColor: Theme.of(context).brightness == Brightness.dark
+                                        ? Theme.of(context).colorScheme.surface
+                                        : Theme.of(context).cardColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                          ],
+                        ),
 
                         const SizedBox(height: 16),
 
@@ -301,6 +716,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           decoration: InputDecoration(
                             labelText: context.tr.translate('description'),
                             border: const OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white.withOpacity(0.9)
+                                      : null,
+                            ),
                           ),
                           maxLines: 3,
                         ),
@@ -341,6 +763,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   Widget _buildPaymentMethodButton(String method, String label, IconData icon) {
     final isSelected = _selectedPaymentMethod == method;
     final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
@@ -351,22 +774,61 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? theme.colorScheme.primaryContainer : null,
+          color:
+              isSelected
+                  ? isDarkMode
+                      ? theme.colorScheme.error.withOpacity(0.7)
+                      : theme.colorScheme.errorContainer.withOpacity(0.7)
+                  : isDarkMode
+                  ? theme.colorScheme.surfaceVariant.withOpacity(0.3)
+                  : null,
           border: Border.all(
             color:
-                isSelected ? theme.colorScheme.primary : Colors.grey.shade300,
+                isSelected
+                    ? theme.colorScheme.error
+                    : isDarkMode
+                    ? Colors.grey.shade700
+                    : Colors.grey.shade300,
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: theme.colorScheme.error.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                  : null,
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? theme.colorScheme.primary : null),
+            Icon(
+              icon,
+              color:
+                  isSelected
+                      ? isDarkMode
+                          ? Colors.white
+                          : theme.colorScheme.error
+                      : isDarkMode
+                      ? Colors.white.withOpacity(0.8)
+                      : null,
+              size: 24,
+            ),
             const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? theme.colorScheme.primary : null,
+                color:
+                    isSelected
+                        ? isDarkMode
+                            ? Colors.white
+                            : theme.colorScheme.error
+                        : isDarkMode
+                        ? Colors.white
+                        : null,
                 fontWeight: isSelected ? FontWeight.bold : null,
               ),
             ),

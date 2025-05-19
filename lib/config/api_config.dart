@@ -77,4 +77,10 @@ class ApiConfig {
 
   // This method is simplified as we'll just always use the IP address on iOS devices
   // For more precise detection, you could add device_info_plus package
+
+  // Money Flow Sync Service (8096)
+  static String get moneyFlowSyncServiceUrl => '$baseApiUrl:8096';
+
+  // Money Flow Calculation Service (8097)
+  static String get moneyFlowCalculationServiceUrl => '$baseApiUrl:8097';
 }

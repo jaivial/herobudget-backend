@@ -58,6 +58,7 @@ class BudgetOverview {
   final double expensePercent;
   final double dailyRate;
   final bool highSpending;
+  final double totalIncome;
 
   BudgetOverview({
     required this.moneyFlow,
@@ -69,6 +70,7 @@ class BudgetOverview {
     required this.expensePercent,
     required this.dailyRate,
     required this.highSpending,
+    required this.totalIncome,
   });
 
   factory BudgetOverview.fromJson(Map<String, dynamic> json) {
@@ -82,6 +84,7 @@ class BudgetOverview {
       expensePercent: json['expense_percent']?.toDouble() ?? 0.0,
       dailyRate: json['daily_rate']?.toDouble() ?? 0.0,
       highSpending: json['high_spending'] ?? false,
+      totalIncome: json['total_income']?.toDouble() ?? 0.0,
     );
   }
 
@@ -96,6 +99,7 @@ class BudgetOverview {
       'expense_percent': expensePercent,
       'daily_rate': dailyRate,
       'high_spending': highSpending,
+      'total_income': totalIncome,
     };
   }
 }

@@ -49,7 +49,9 @@ class BudgetOverviewWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                localizations.formatCurrency(budgetOverview.remainingAmount),
+                _formatCurrencyEuroStyle(
+                  localizations.formatCurrency(budgetOverview.remainingAmount),
+                ),
                 style: const TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -74,14 +76,40 @@ class BudgetOverviewWidget extends StatelessWidget {
                 const Text('+'),
                 const SizedBox(width: 4),
                 Text(
-                  localizations.formatCurrency(
-                    budgetOverview.moneyFlow.fromPrevious,
+                  _formatCurrencyEuroStyle(
+                    localizations.formatCurrency(
+                      budgetOverview.moneyFlow.fromPrevious,
+                    ),
                   ),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  localizations.translate('from_previous_month'),
+                  localizations.translate('from_previous_period'),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Ingresos totales del periodo
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                const Text('+'),
+                const SizedBox(width: 4),
+                Text(
+                  _formatCurrencyEuroStyle(
+                    localizations.formatCurrency(budgetOverview.totalIncome),
+                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  localizations.translate('total_income_period'),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -105,16 +133,16 @@ class BudgetOverviewWidget extends StatelessWidget {
               _LegendItem(
                 color: Colors.purple,
                 label: localizations.translate('spent'),
-                amount: localizations.formatCurrency(
-                  budgetOverview.spentAmount,
+                amount: _formatCurrencyEuroStyle(
+                  localizations.formatCurrency(budgetOverview.spentAmount),
                 ),
               ),
               const SizedBox(width: 16),
               _LegendItem(
                 color: Colors.amber,
                 label: localizations.translate('upcoming'),
-                amount: localizations.formatCurrency(
-                  budgetOverview.upcomingAmount,
+                amount: _formatCurrencyEuroStyle(
+                  localizations.formatCurrency(budgetOverview.upcomingAmount),
                 ),
               ),
             ],
@@ -133,7 +161,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                 ),
               ),
               Text(
-                '${localizations.formatCurrency(budgetOverview.combinedExpense)} (${budgetOverview.expensePercent.toStringAsFixed(0)}%)',
+                '${_formatCurrencyEuroStyle(localizations.formatCurrency(budgetOverview.combinedExpense))} (${budgetOverview.expensePercent.toStringAsFixed(0)}%)',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -152,7 +180,9 @@ class BudgetOverviewWidget extends StatelessWidget {
                 ),
               ),
               Text(
-                localizations.formatCurrency(budgetOverview.dailyRate),
+                _formatCurrencyEuroStyle(
+                  localizations.formatCurrency(budgetOverview.dailyRate),
+                ),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -199,6 +229,20 @@ class BudgetOverviewWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Helper method to ensure Euro currency format with symbol after the amount
+  String _formatCurrencyEuroStyle(String formattedAmount) {
+    // Si ya contiene el símbolo €, asegurarse de que está después del número sin espacio
+    if (formattedAmount.contains('€')) {
+      // Eliminar el símbolo € y cualquier espacio, luego añadirlo al final sin espacio
+      return formattedAmount.replaceAll('€', '').trim() + '€';
+    } else if (formattedAmount.contains('\$')) {
+      // Si contiene $ en su lugar, reemplazarlo con €
+      return formattedAmount.replaceAll('\$', '').trim() + '€';
+    }
+    // Si no tiene símbolo, añadir € al final sin espacio
+    return formattedAmount.trim() + '€';
   }
 }
 
@@ -251,7 +295,10 @@ class _BudgetProgressBar extends StatelessWidget {
     return Container(
       height: 10,
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey.shade800
+                : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Row(

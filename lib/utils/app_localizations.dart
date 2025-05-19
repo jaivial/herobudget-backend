@@ -19,15 +19,46 @@ class AppLocalizations {
     'or_sign_in_with': 'Or sign in with',
     'continue_with_google': 'Continue with Google',
     'cancel': 'Cancel',
+    'money_flow': 'Money Flow',
+    'remaining_amount': 'Remaining Amount',
+    'previous': 'From Previous',
+    'income': 'Income',
+    'expenses': 'Expenses',
+    'upcoming': 'Upcoming',
+    'total_expenses': 'Total Expenses',
+    'budget_used': 'of budget used',
+    'daily_period': 'Today',
+    'weekly_period': 'This Week',
+    'monthly_period': 'This Month',
+    'quarterly_period': 'This Quarter',
+    'semiannual_period': 'This Semester',
+    'annual_period': 'This Year',
   };
 
   AppLocalizations(this.locale);
 
   // Helper method to keep the code in the widgets concise
   static AppLocalizations of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations) ??
-        AppLocalizations(const Locale('en'));
+    final localizations = Localizations.of<AppLocalizations>(
+      context,
+      AppLocalizations,
+    );
+    if (localizations == null) {
+      // Provide a fallback instance with basic translations
+      print(
+        'Warning: AppLocalizations not found in context, providing fallback',
+      );
+      final fallback = AppLocalizations(const Locale('en'));
+      // Initialize with basic translations to prevent further errors
+      fallback._localizedStrings = Map<String, dynamic>.from(_englishFallbacks);
+      return fallback;
+    }
+    return localizations;
   }
+
+  // Static member to have access to the delegate from the MaterialApp
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   static const List<Locale> supportedLocales = [
     Locale('en'), // English
@@ -69,6 +100,20 @@ class AppLocalizations {
           'welcome': 'Welcome to Hero Budget',
           'select_language': 'Select Language',
           'cancel': 'Cancel',
+          'money_flow': 'Money Flow',
+          'remaining_amount': 'Remaining Amount',
+          'previous': 'From Previous',
+          'income': 'Income',
+          'expenses': 'Expenses',
+          'upcoming': 'Upcoming',
+          'total_expenses': 'Total Expenses',
+          'budget_used': 'of budget used',
+          'daily_period': 'Today',
+          'weekly_period': 'This Week',
+          'monthly_period': 'This Month',
+          'quarterly_period': 'This Quarter',
+          'semiannual_period': 'This Semester',
+          'annual_period': 'This Year',
         };
       }
 
@@ -104,6 +149,20 @@ class AppLocalizations {
         'welcome': 'Welcome to Hero Budget',
         'select_language': 'Select Language',
         'cancel': 'Cancel',
+        'money_flow': 'Money Flow',
+        'remaining_amount': 'Remaining Amount',
+        'previous': 'From Previous',
+        'income': 'Income',
+        'expenses': 'Expenses',
+        'upcoming': 'Upcoming',
+        'total_expenses': 'Total Expenses',
+        'budget_used': 'of budget used',
+        'daily_period': 'Today',
+        'weekly_period': 'This Week',
+        'monthly_period': 'This Month',
+        'quarterly_period': 'This Quarter',
+        'semiannual_period': 'This Semester',
+        'annual_period': 'This Year',
       };
       return true;
     }
@@ -323,9 +382,9 @@ class AppLocalizations {
   }
 }
 
-// LocalizationsDelegate is a factory for a set of localized resources
-class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
-  const AppLocalizationsDelegate();
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
 
   @override
   bool isSupported(Locale locale) {
@@ -344,7 +403,7 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   }
 
   @override
-  bool shouldReload(AppLocalizationsDelegate old) => false;
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 // Extension to make it easier to use AppLocalizations

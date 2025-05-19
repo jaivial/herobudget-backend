@@ -517,7 +517,7 @@ class _MyAppState extends State<MyApp> {
         themeMode: _themeMode,
         home: LanguageSelectorScreen(),
         localizationsDelegates: [
-          const AppLocalizationsDelegate(),
+          AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
@@ -568,8 +568,8 @@ class _MyAppState extends State<MyApp> {
         '/profile': (context) => const ProfileScreen(),
         '/fix_emojis': (context) => const FixEmojiScreen(),
       },
-      localizationsDelegates: const [
-        AppLocalizationsDelegate(),
+      localizationsDelegates: [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

@@ -24,6 +24,7 @@ type BudgetData struct {
 	UpcomingAmount  float64 `json:"upcoming_amount"`
 	FromPrevious    float64 `json:"from_previous"`
 	Percent         float64 `json:"percent"`
+	TotalIncome     float64 `json:"total_income"`
 }
 
 type BudgetUpdateRequest struct {
@@ -33,6 +34,7 @@ type BudgetUpdateRequest struct {
 	SpentAmount    float64 `json:"spent_amount"`
 	UpcomingAmount float64 `json:"upcoming_amount"`
 	FromPrevious   float64 `json:"from_previous"`
+	TotalIncome    float64 `json:"total_income"`
 }
 
 type ApiResponse struct {
@@ -76,7 +78,7 @@ func init() {
 }
 
 func createTablesIfNotExist() {
-	// Create budget table
+	// Create budget table with new total_income column
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS budget (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,12 +91,31 @@ func createTablesIfNotExist() {
 			upcoming_amount REAL NOT NULL,
 			from_previous REAL NOT NULL,
 			percent REAL NOT NULL,
+			total_income REAL NOT NULL DEFAULT 0,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		)
 	`)
 	if err != nil {
 		log.Fatalf("Failed to create budget table: %v", err)
+	}
+
+	// Check if total_income column exists and add it if it doesn't
+	var exists int
+	err = db.QueryRow(`
+		SELECT COUNT(*) FROM pragma_table_info('budget') WHERE name='total_income'
+	`).Scan(&exists)
+	
+	if err != nil {
+		log.Printf("Error checking for total_income column: %v", err)
+	} else if exists == 0 {
+		// Add the column if it doesn't exist
+		_, err = db.Exec(`ALTER TABLE budget ADD COLUMN total_income REAL NOT NULL DEFAULT 0`)
+		if err != nil {
+			log.Printf("Error adding total_income column: %v", err)
+		} else {
+			log.Println("Added total_income column to budget table")
+		}
 	}
 }
 
@@ -181,12 +202,14 @@ func handleUpdateBudget(w http.ResponseWriter, r *http.Request) {
 		updateRequest.Period = "monthly"
 	}
 
-	// Calculate the remaining amount
-	remainingAmount := updateRequest.TotalAmount - updateRequest.SpentAmount - updateRequest.UpcomingAmount
+	// Calculate the remaining amount (include income in the calculation)
+	remainingAmount := updateRequest.FromPrevious + updateRequest.TotalIncome - updateRequest.SpentAmount - updateRequest.UpcomingAmount
+	
 	// Calculate the percent (what percentage of the budget is used/upcoming)
 	var percent float64
-	if updateRequest.TotalAmount > 0 {
-		percent = ((updateRequest.SpentAmount + updateRequest.UpcomingAmount) / updateRequest.TotalAmount) * 100
+	totalAvailable := updateRequest.FromPrevious + updateRequest.TotalIncome
+	if totalAvailable > 0 {
+		percent = ((updateRequest.SpentAmount + updateRequest.UpcomingAmount) / totalAvailable) * 100
 	}
 
 	// Insert or update the budget
@@ -194,12 +217,13 @@ func handleUpdateBudget(w http.ResponseWriter, r *http.Request) {
 		UserID:          updateRequest.UserID,
 		Period:          updateRequest.Period,
 		Date:            time.Now().Format("2006-01-02"),
-		TotalAmount:     updateRequest.TotalAmount,
+		TotalAmount:     totalAvailable,
 		RemainingAmount: remainingAmount,
 		SpentAmount:     updateRequest.SpentAmount,
 		UpcomingAmount:  updateRequest.UpcomingAmount,
 		FromPrevious:    updateRequest.FromPrevious,
 		Percent:         percent,
+		TotalIncome:     updateRequest.TotalIncome,
 	}
 
 	err = updateBudgetData(budget)
@@ -218,7 +242,8 @@ func fetchBudgetData(userID, period string) (BudgetData, error) {
 
 	// Query budget data from database
 	err := db.QueryRow(`
-		SELECT user_id, period, date, total_amount, remaining_amount, spent_amount, upcoming_amount, from_previous, percent
+		SELECT user_id, period, date, total_amount, remaining_amount, spent_amount, 
+		       upcoming_amount, from_previous, percent, COALESCE(total_income, 0)
 		FROM budget
 		WHERE user_id = ? AND period = ?
 		ORDER BY created_at DESC
@@ -233,6 +258,7 @@ func fetchBudgetData(userID, period string) (BudgetData, error) {
 		&budget.UpcomingAmount,
 		&budget.FromPrevious,
 		&budget.Percent,
+		&budget.TotalIncome,
 	)
 
 	if err == sql.ErrNoRows {
@@ -246,12 +272,112 @@ func fetchBudgetData(userID, period string) (BudgetData, error) {
 		budget.UpcomingAmount = 0
 		budget.FromPrevious = 0
 		budget.Percent = 0
+		budget.TotalIncome = 0
+		
+		// Check if there's a previous period to inherit from
+		previousPeriod, previousAmount := getPreviousPeriodData(userID, period)
+		if previousAmount > 0 {
+			budget.FromPrevious = previousAmount
+			budget.TotalAmount = previousAmount
+			budget.RemainingAmount = previousAmount
+			
+			// Log the inheritance
+			log.Printf("Inheriting %f from previous period %s for user %s in period %s", 
+				previousAmount, previousPeriod, userID, period)
+		}
+		
 		return budget, nil
 	} else if err != nil {
 		return budget, err
 	}
 
 	return budget, nil
+}
+
+// Get data from previous time periods to inherit the remaining amount
+func getPreviousPeriodData(userID, currentPeriod string) (string, float64) {
+	// Define the previous period based on the current period
+	var previousPeriod string
+	var queryDateCondition string
+	
+	now := time.Now()
+	
+	switch currentPeriod {
+	case "daily":
+		// Previous day
+		previousPeriod = "daily"
+		previousDate := now.AddDate(0, 0, -1).Format("2006-01-02")
+		queryDateCondition = fmt.Sprintf("AND date = '%s'", previousDate)
+	case "weekly":
+		// Previous week
+		previousPeriod = "weekly"
+		// Get the date for the previous week (7 days ago)
+		previousWeekStart := now.AddDate(0, 0, -7).Format("2006-01-02")
+		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousWeekStart)
+	case "monthly":
+		// Previous month
+		previousPeriod = "monthly"
+		// Get the date for the previous month
+		previousMonthStart := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousMonthStart)
+	case "quarterly":
+		// Previous quarter
+		previousPeriod = "quarterly"
+		// Calculate the start of the previous quarter
+		currentQuarter := (int(now.Month())-1)/3 + 1
+		previousQuarter := currentQuarter - 1
+		var year int
+		if previousQuarter <= 0 {
+			previousQuarter = 4
+			year = now.Year() - 1
+		} else {
+			year = now.Year()
+		}
+		previousQuarterStart := time.Date(year, time.Month((previousQuarter-1)*3+1), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousQuarterStart)
+	case "semiannual":
+		// Previous half-year
+		previousPeriod = "semiannual"
+		// Calculate the start of the previous half year
+		currentHalf := (int(now.Month())-1)/6 + 1
+		previousHalf := currentHalf - 1
+		var year int
+		if previousHalf <= 0 {
+			previousHalf = 2
+			year = now.Year() - 1
+		} else {
+			year = now.Year()
+		}
+		previousHalfStart := time.Date(year, time.Month((previousHalf-1)*6+1), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousHalfStart)
+	case "annual":
+		// Previous year
+		previousPeriod = "annual"
+		previousYearStart := time.Date(now.Year()-1, 1, 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousYearStart)
+	default:
+		// If the period is not recognized, don't try to get previous data
+		return "", 0
+	}
+	
+	// Query to get the most recent budget entry for the previous period
+	query := fmt.Sprintf(`
+		SELECT remaining_amount FROM budget 
+		WHERE user_id = ? AND period = ? %s
+		LIMIT 1
+	`, queryDateCondition)
+	
+	var remainingAmount float64
+	err := db.QueryRow(query, userID, previousPeriod).Scan(&remainingAmount)
+	
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Printf("Error getting previous period data: %v", err)
+		}
+		return "", 0
+	}
+	
+	return previousPeriod, remainingAmount
 }
 
 func updateBudgetData(budget BudgetData) error {
@@ -276,6 +402,7 @@ func updateBudgetData(budget BudgetData) error {
 				upcoming_amount = ?,
 				from_previous = ?,
 				percent = ?,
+				total_income = ?,
 				date = ?,
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND period = ?
@@ -286,6 +413,7 @@ func updateBudgetData(budget BudgetData) error {
 			budget.UpcomingAmount,
 			budget.FromPrevious,
 			budget.Percent,
+			budget.TotalIncome,
 			budget.Date,
 			budget.UserID,
 			budget.Period,
@@ -295,8 +423,8 @@ func updateBudgetData(budget BudgetData) error {
 		_, err = db.Exec(`
 			INSERT INTO budget (
 				user_id, period, date, total_amount, remaining_amount, 
-				spent_amount, upcoming_amount, from_previous, percent
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+				spent_amount, upcoming_amount, from_previous, percent, total_income
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`,
 			budget.UserID,
 			budget.Period,
@@ -307,6 +435,7 @@ func updateBudgetData(budget BudgetData) error {
 			budget.UpcomingAmount,
 			budget.FromPrevious,
 			budget.Percent,
+			budget.TotalIncome,
 		)
 	}
 

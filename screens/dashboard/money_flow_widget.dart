@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
-import '../../utils/extensions.dart';
-import '../../theme/app_theme.dart';
-import '../../models/dashboard_model.dart';
+import 'package:hero_budget/utils/app_localizations.dart';
 
 class MoneyFlowWidget extends StatelessWidget {
   final double inflow;
   final double outflow;
+  final double fromPrevious;
+  final double upcomingBills;
+  final double remainingAmount;
   final String period;
 
   const MoneyFlowWidget({
     super.key,
     required this.inflow,
     required this.outflow,
+    required this.fromPrevious,
+    required this.upcomingBills,
+    required this.remainingAmount,
     this.period = 'monthly',
   });
 
   @override
   Widget build(BuildContext context) {
     final netFlow = inflow - outflow;
+    final totalExpenses = outflow + upcomingBills;
     final isPositive = netFlow >= 0;
+    final totalBudget = inflow + fromPrevious;
 
     // Get the localized title
-    final title = context.tr.translate('money_flow');
+    final title = AppLocalizations.of(context).translate('money_flow');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -59,7 +65,7 @@ class MoneyFlowWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  context.tr.translate('${period}_period'),
+                  AppLocalizations.of(context).translate('${period}_period'),
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.primary,
@@ -71,7 +77,7 @@ class MoneyFlowWidget extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Money flow diagram
+          // Money flow diagram with additional components
           Row(
             children: [
               // Income column
@@ -80,29 +86,86 @@ class MoneyFlowWidget extends StatelessWidget {
                   context,
                   Icons.arrow_downward,
                   Colors.green,
-                  context.tr.translate('income'),
+                  AppLocalizations.of(context).translate('income'),
                   inflow,
                 ),
               ),
 
-              // Arrow indicator
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(
-                  isPositive ? Icons.arrow_forward : Icons.arrow_back,
-                  color: isPositive ? Colors.green : Colors.red,
-                  size: 24,
+              // From previous period column
+              Expanded(
+                child: _buildFlowColumn(
+                  context,
+                  Icons.history,
+                  Colors.blue,
+                  AppLocalizations.of(context).translate('previous'),
+                  fromPrevious,
                 ),
               ),
 
-              // Expenses column
+              // Current expenses column
               Expanded(
                 child: _buildFlowColumn(
                   context,
                   Icons.arrow_upward,
                   Colors.red,
-                  context.tr.translate('expenses'),
+                  AppLocalizations.of(context).translate('expenses'),
                   outflow,
+                ),
+              ),
+
+              // Upcoming bills column
+              Expanded(
+                child: _buildFlowColumn(
+                  context,
+                  Icons.calendar_today,
+                  Colors.orange,
+                  AppLocalizations.of(context).translate('upcoming'),
+                  upcomingBills,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Budget progress bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).translate('budget_progress'),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    '${((totalExpenses / totalBudget) * 100).toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value:
+                      totalBudget > 0
+                          ? (totalExpenses / totalBudget).clamp(0.0, 1.0)
+                          : 0,
+                  minHeight: 12,
+                  backgroundColor: Colors.grey.withOpacity(0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    totalExpenses < totalBudget ? Colors.green : Colors.red,
+                  ),
                 ),
               ),
             ],
@@ -125,8 +188,8 @@ class MoneyFlowWidget extends StatelessWidget {
               children: [
                 Text(
                   isPositive
-                      ? context.tr.translate('savings')
-                      : context.tr.translate('deficit'),
+                      ? AppLocalizations.of(context).translate('savings')
+                      : AppLocalizations.of(context).translate('deficit'),
                   style: TextStyle(
                     fontSize: 14,
                     color: isPositive ? Colors.green : Colors.red,
@@ -134,11 +197,21 @@ class MoneyFlowWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '\$${netFlow.abs().toStringAsFixed(2)}',
+                  '\$${remainingAmount.abs().toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: isPositive ? Colors.green : Colors.red,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  AppLocalizations.of(context).translate('remaining_amount'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -159,19 +232,19 @@ class MoneyFlowWidget extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 50,
-          height: 50,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: color, size: 30),
+          child: Icon(icon, color: color, size: 24),
         ),
         const SizedBox(height: 8),
         Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
           ),
         ),
@@ -179,7 +252,7 @@ class MoneyFlowWidget extends StatelessWidget {
         Text(
           '\$${amount.toStringAsFixed(2)}',
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 14,
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
           ),

@@ -1,142 +1,292 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_localizations.dart';
+import 'package:hero_budget/utils/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class MoneyFlowWidget extends StatelessWidget {
   final double inflow;
   final double outflow;
+  final double fromPrevious;
+  final double upcomingBills;
+  final double remainingAmount;
   final String period;
 
   const MoneyFlowWidget({
     super.key,
     required this.inflow,
     required this.outflow,
+    required this.fromPrevious,
+    required this.upcomingBills,
+    required this.remainingAmount,
     this.period = 'monthly',
   });
 
   @override
   Widget build(BuildContext context) {
-    final netFlow = inflow - outflow;
-    final isPositive = netFlow >= 0;
+    // Cálculo del dinero restante según la fórmula: ingresos totales - gastos realizados - facturas pendientes
+    // El dinero heredado de periodos anteriores ya está incluido en los ingresos totales (totalBudget)
+    final totalBudget = inflow + fromPrevious;
+    final totalExpenses = outflow + upcomingBills;
+    final calculatedRemainingAmount = totalBudget - totalExpenses;
 
-    // Get the localized title using AppLocalizations
-    final title = AppLocalizations.of(context).translate('money_flow');
+    final expensePercentage =
+        totalBudget > 0 ? (totalExpenses / totalBudget) * 100 : 0;
+    final remainingPercentage =
+        totalBudget > 0 ? (calculatedRemainingAmount / totalBudget) * 100 : 0;
+
+    // Format numbers with Euro currency
+    final currencyFormat = NumberFormat.currency(
+      symbol: '€',
+      decimalDigits: 2,
+      locale: 'es_ES',
+    );
+
+    // Format function to ensure correct Euro style (symbol after the number)
+    String formatEuroStyle(double amount) {
+      final formatted = currencyFormat.format(amount);
+      // Ensure € symbol is after the number without space
+      if (formatted.startsWith('€')) {
+        return formatted.substring(1).trim() + '€';
+      }
+      // Si tiene espacios entre el número y el símbolo, quitarlos
+      return formatted.replaceAll(' €', '€');
+    }
+
+    // Get localized texts
+    final appLocalizations = AppLocalizations.of(context);
+    final String periodText = appLocalizations.translate('${period}_period');
+    final String moneyFlowText = appLocalizations.translate('money_flow');
+    final String remainingAmountText = appLocalizations.translate(
+      'remaining_amount',
+    );
+    final String fromPreviousText = appLocalizations.translate('previous');
+    final String incomeText = appLocalizations.translate('income');
+    final String expensesText = appLocalizations.translate('expenses');
+    final String upcomingText = appLocalizations.translate('upcoming');
+    final String totalExpensesText = appLocalizations.translate(
+      'total_expenses',
+    );
+    final String budgetUsedText = appLocalizations.translate('budget_used');
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(13), // ~0.05 opacity
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title with period
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                title,
+                moneyFlowText,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer.withAlpha(128), // ~0.5 opacity
+                  color: Colors.blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  AppLocalizations.of(context).translate('${period}_period'),
-                  style: TextStyle(
+                  periodText,
+                  style: const TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.blue,
                   ),
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 20),
-
-          // Money flow diagram
-          Row(
-            children: [
-              // Income column
-              Expanded(
-                child: _buildFlowColumn(
-                  context,
-                  Icons.arrow_downward,
-                  Colors.green,
-                  AppLocalizations.of(context).translate('income'),
-                  inflow,
-                ),
-              ),
-
-              // Arrow indicator
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(
-                  isPositive ? Icons.arrow_forward : Icons.arrow_back,
-                  color: isPositive ? Colors.green : Colors.red,
-                  size: 24,
-                ),
-              ),
-
-              // Expenses column
-              Expanded(
-                child: _buildFlowColumn(
-                  context,
-                  Icons.arrow_upward,
-                  Colors.red,
-                  AppLocalizations.of(context).translate('expenses'),
-                  outflow,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // Net flow result
+          const SizedBox(height: 16),
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color:
-                  isPositive
-                      ? Colors.green.withAlpha(26) // ~0.1 opacity
-                      : Colors.red.withAlpha(26), // ~0.1 opacity
+              color: const Color(0xFFF8F9FE),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isPositive
-                      ? AppLocalizations.of(context).translate('savings')
-                      : AppLocalizations.of(context).translate('deficit'),
-                  style: TextStyle(
+                  remainingAmountText,
+                  style: const TextStyle(
                     fontSize: 14,
-                    color: isPositive ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '\$${netFlow.abs().toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: isPositive ? Colors.green : Colors.red,
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      formatEuroStyle(calculatedRemainingAmount),
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color:
+                            calculatedRemainingAmount >= 0
+                                ? Colors.green
+                                : Colors.red,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            calculatedRemainingAmount >= 0
+                                ? Colors.green.withOpacity(0.1)
+                                : Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            calculatedRemainingAmount >= 0
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            size: 16,
+                            color:
+                                calculatedRemainingAmount >= 0
+                                    ? Colors.green
+                                    : Colors.red,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${remainingPercentage.abs().toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  calculatedRemainingAmount >= 0
+                                      ? Colors.green
+                                      : Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildBudgetItem(
+                  fromPreviousText,
+                  fromPrevious,
+                  Colors.purple,
+                  Icons.history,
+                  formatEuroStyle,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildBudgetItem(
+                  incomeText,
+                  inflow,
+                  Colors.green,
+                  Icons.arrow_downward,
+                  formatEuroStyle,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildBudgetItem(
+                  expensesText,
+                  outflow,
+                  Colors.red,
+                  Icons.arrow_upward,
+                  formatEuroStyle,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildBudgetItem(
+                  upcomingText,
+                  upcomingBills,
+                  Colors.orange,
+                  Icons.calendar_today,
+                  formatEuroStyle,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Gastos combinados (Total expenses)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      totalExpensesText,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formatEuroStyle(totalExpenses),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${expensePercentage.toStringAsFixed(1)}%',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -147,44 +297,47 @@ class MoneyFlowWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildFlowColumn(
-    BuildContext context,
-    IconData icon,
-    Color color,
-    String label,
+  Widget _buildBudgetItem(
+    String title,
     double amount,
+    Color color,
+    IconData icon,
+    String Function(double) formatter,
   ) {
-    return Column(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: color.withAlpha(26), // ~0.1 opacity
-            shape: BoxShape.circle,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black.withOpacity(0.6),
+                ),
+              ),
+            ],
           ),
-          child: Icon(icon, color: color, size: 30),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withAlpha(179), // ~0.7 opacity
+          const SizedBox(height: 8),
+          Text(
+            formatter(amount),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '\$${amount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

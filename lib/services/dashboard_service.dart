@@ -8,6 +8,8 @@ import '../models/dashboard_model.dart';
 class DashboardService {
   static String get baseUrl => ApiConfig.fetchDashboardServiceUrl;
   static String get dashboardDataUrl => ApiConfig.dashboardDataServiceUrl;
+  static String get moneyFlowCalculationUrl =>
+      ApiConfig.moneyFlowCalculationServiceUrl;
 
   // Constants for localStorage keys - consistent across the app
   static const String userIdKey = 'user_id';
@@ -184,6 +186,54 @@ class DashboardService {
       if (response.statusCode == 200) {
         // Parse JSON response
         final Map<String, dynamic> data = json.decode(response.body);
+
+        // Obtain money flow data from the new microservice
+        try {
+          final moneyFlowResponse = await http.get(
+            Uri.parse(
+              '${moneyFlowCalculationUrl}/money-flow/data?user_id=$userId&period=$period',
+            ),
+            headers: {'Content-Type': 'application/json'},
+          );
+
+          if (moneyFlowResponse.statusCode == 200) {
+            final moneyFlowData = json.decode(moneyFlowResponse.body);
+
+            // If the money flow data is available, update the budget_overview in the response
+            if (moneyFlowData['success'] == true &&
+                moneyFlowData['data'] != null) {
+              final moneyFlow = moneyFlowData['data'];
+
+              // Update budget_overview with accurate money flow data
+              if (data['budget_overview'] != null) {
+                data['budget_overview']['remaining_amount'] =
+                    moneyFlow['remaining_amount'];
+                data['budget_overview']['total_amount'] =
+                    moneyFlow['total_budget'];
+                data['budget_overview']['spent_amount'] =
+                    moneyFlow['spent_amount'];
+                data['budget_overview']['upcoming_amount'] =
+                    moneyFlow['upcoming_bills'];
+                data['budget_overview']['combined_expense'] =
+                    moneyFlow['combined_expenses'];
+                data['budget_overview']['expense_percent'] =
+                    moneyFlow['expense_percent'];
+                data['budget_overview']['total_income'] =
+                    moneyFlow['total_income'];
+
+                // Update money_flow inside budget_overview
+                if (data['budget_overview']['money_flow'] != null) {
+                  data['budget_overview']['money_flow']['from_previous'] =
+                      moneyFlow['from_previous'];
+                }
+              }
+            }
+          }
+        } catch (e) {
+          print('Error fetching money flow data: $e');
+          // Continue with original data if money flow calculation fails
+        }
+
         return DashboardModel.fromJson(data);
       } else {
         throw Exception(

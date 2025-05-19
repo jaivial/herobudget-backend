@@ -34,6 +34,7 @@ type BudgetOverview struct {
 	ExpensePercent  float64   `json:"expense_percent"`
 	DailyRate       float64   `json:"daily_rate"`
 	HighSpending    bool      `json:"high_spending"`
+	TotalIncome     float64   `json:"total_income"`
 }
 
 type MoneyFlow struct {
@@ -405,10 +406,60 @@ func fetchBudgetOverview(userID, period string) (BudgetOverview, error) {
 		budgetOverview.UpcomingAmount = 0
 		budgetOverview.MoneyFlow.FromPrevious = 0
 		budgetOverview.MoneyFlow.Percent = 0
-		return budgetOverview, nil
 	} else if err != nil {
 		return budgetOverview, err
 	}
+
+	// Calculate the total income for the period
+	// Fetch total income from incomes table for the specified period
+	var startDate, endDate string
+	now := time.Now()
+	
+	switch period {
+	case "daily":
+		startDate = now.Format("2006-01-02")
+		endDate = now.Format("2006-01-02")
+	case "weekly":
+		// Start of the week (Monday)
+		startDate = now.AddDate(0, 0, -int(now.Weekday())+1).Format("2006-01-02")
+		// End of the week (Sunday)
+		endDate = now.AddDate(0, 0, 7-int(now.Weekday())).Format("2006-01-02")
+	case "monthly":
+		// Start of the month
+		startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		// End of the month
+		endDate = time.Date(now.Year(), now.Month()+1, 0, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+	case "quarterly":
+		quarter := (int(now.Month())-1)/3 + 1
+		startDate = time.Date(now.Year(), time.Month((quarter-1)*3+1), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		endDate = time.Date(now.Year(), time.Month(quarter*3+1), 0, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+	case "semiannual":
+		halfYear := (int(now.Month())-1)/6 + 1
+		startDate = time.Date(now.Year(), time.Month((halfYear-1)*6+1), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		endDate = time.Date(now.Year(), time.Month(halfYear*6+1), 0, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+	case "annual":
+		startDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		endDate = time.Date(now.Year(), 12, 31, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+	default:
+		// Default to monthly if period is not recognized
+		startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+		endDate = time.Date(now.Year(), now.Month()+1, 0, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+	}
+
+	// Get total income for the period
+	var totalIncome float64
+	err = db.QueryRow(`
+		SELECT COALESCE(SUM(amount), 0)
+		FROM incomes
+		WHERE user_id = ? AND date BETWEEN ? AND ?
+	`, userID, startDate, endDate).Scan(&totalIncome)
+
+	if err != nil {
+		log.Printf("Error fetching total income: %v", err)
+		totalIncome = 0 // Default to 0 if there's an error
+	}
+
+	budgetOverview.TotalIncome = totalIncome
 
 	// Calculate combined expense and expense percent
 	budgetOverview.CombinedExpense = budgetOverview.SpentAmount + budgetOverview.UpcomingAmount
@@ -424,7 +475,10 @@ func fetchBudgetOverview(userID, period string) (BudgetOverview, error) {
 	case "weekly":
 		daysInPeriod = 7
 	case "monthly":
-		daysInPeriod = 30
+		// Calculate actual days in the current month
+		year, month, _ := time.Now().Date()
+		lastDay := time.Date(year, month+1, 0, 0, 0, 0, 0, time.Now().Location())
+		daysInPeriod = lastDay.Day()
 	case "quarterly":
 		daysInPeriod = 90
 	case "semiannual":
@@ -552,14 +606,17 @@ func fetchFinanceMetrics(userID, period string) (FinanceMetrics, error) {
 func fetchUpcomingBills(userID string) ([]Bill, error) {
 	var bills []Bill
 
-	// Query bills data from database
+	// Get the current date
+	currentDate := time.Now().Format("2006-01-02")
+
+	// Query bills that are not paid and due in the future, or recurring bills
 	rows, err := db.Query(`
 		SELECT id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon
 		FROM bills
-		WHERE user_id = ? AND (paid = 0 OR due_date >= date('now'))
+		WHERE user_id = ? AND ((due_date >= ? AND paid = 0) OR recurring = 1)
 		ORDER BY due_date ASC
 		LIMIT 10
-	`, userID)
+	`, userID, currentDate)
 
 	if err != nil {
 		return bills, err
