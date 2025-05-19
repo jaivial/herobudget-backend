@@ -71,7 +71,14 @@ func init() {
 
 func main() {
 	http.HandleFunc("/auth/google", handleGoogleAuth)
+	http.HandleFunc("/update/locale", handleUpdateLocale)
+	
+	// Registro de rutas y puertos
+	log.Println("Registering routes:")
+	log.Println("- POST /auth/google")
+	log.Println("- POST /update/locale")
 	log.Println("Server started on :8081")
+	
 	log.Fatal(http.ListenAndServe(":8081", nil))
 }
 

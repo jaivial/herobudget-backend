@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import 'package:flutter/material.dart';
 import '../utils/app_localizations.dart';
+import 'language_update_service.dart';
 
 // Notificador para cambios en el idioma
 class LanguageChangeNotifier extends ChangeNotifier {
@@ -125,6 +126,15 @@ class LanguageService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(languagePreferenceKey, languageCode);
       print('Language preference saved to local storage: $languageCode');
+
+      // Actualizar el idioma en la base de datos de usuarios si hay un usuario logueado
+      try {
+        // Intentar actualizar el idioma en la base de datos
+        await LanguageUpdateService.updateUserLocaleInDatabase(languageCode);
+      } catch (e) {
+        // Ignorar silenciosamente errores al actualizar la base de datos
+        print('Error updating locale in database: $e');
+      }
 
       // Notificar a la UI sobre el cambio de idioma solo si realmente cambió
       if (prevLanguage != languageCode) {

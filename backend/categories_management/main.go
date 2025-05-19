@@ -86,6 +86,7 @@ func openDatabaseConnection() (*sql.DB, error) {
 	}
 
 	// Construct absolute path to the database file
+	dbPath := filepath.Join("..", "google_auth", "users.db")
 	fullDbPath := filepath.Join(cwd, dbPath)
 
 	// Asegurar que la ruta existe
