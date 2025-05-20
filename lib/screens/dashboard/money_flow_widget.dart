@@ -66,11 +66,15 @@ class MoneyFlowWidget extends StatelessWidget {
       'total_expenses',
     );
     final String budgetUsedText = appLocalizations.translate('budget_used');
+    final String totalBudgetText = appLocalizations.translate('total_budget');
+
+    // Determine if we're in dark mode
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -83,6 +87,7 @@ class MoneyFlowWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: Título "Flujo de Dinero" y porcentaje de gastado en morado
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -112,74 +117,50 @@ class MoneyFlowWidget extends StatelessWidget {
               ),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
+                  horizontal: 12,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
+                  color: Colors.deepPurple,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  periodText,
-                  style: const TextStyle(
+                  '${expensePercentage.toStringAsFixed(1)}%',
+                  style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FE),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+
+          const SizedBox(height: 20),
+
+          // Dinero restante en grande y los ingresos totales a la derecha
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: (calculatedRemainingAmount >= 0
-                                ? Colors.green
-                                : Colors.red)
-                            .withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        calculatedRemainingAmount >= 0
-                            ? Icons.savings
-                            : Icons.money_off,
-                        size: 16,
-                        color:
-                            calculatedRemainingAmount >= 0
-                                ? Colors.green
-                                : Colors.red,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Text(
                       remainingAmountText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Colors.black54,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
+                    const SizedBox(height: 4),
                     Text(
                       formatEuroStyle(calculatedRemainingAmount),
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color:
                             calculatedRemainingAmount >= 0
@@ -187,64 +168,67 @@ class MoneyFlowWidget extends StatelessWidget {
                                 : Colors.red,
                       ),
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      totalBudgetText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
-                      decoration: BoxDecoration(
-                        color:
-                            calculatedRemainingAmount >= 0
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            calculatedRemainingAmount >= 0
-                                ? Icons.arrow_upward
-                                : Icons.arrow_downward,
-                            size: 16,
-                            color:
-                                calculatedRemainingAmount >= 0
-                                    ? Colors.green
-                                    : Colors.red,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${remainingPercentage.abs().toStringAsFixed(1)}%',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  calculatedRemainingAmount >= 0
-                                      ? Colors.green
-                                      : Colors.red,
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      formatEuroStyle(totalBudget),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
                       ),
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Dinero heredado del periodo anterior
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.purple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.history, color: Colors.purple, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  '$fromPreviousText: ${formatEuroStyle(fromPrevious)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.purple,
+                  ),
+                ),
               ],
             ),
           ),
+
           const SizedBox(height: 20),
+
           Row(
             children: [
-              Expanded(
-                child: _buildBudgetItem(
-                  fromPreviousText,
-                  fromPrevious,
-                  Colors.purple,
-                  Icons.history,
-                  formatEuroStyle,
-                ),
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: _buildBudgetItem(
                   incomeText,
@@ -254,11 +238,7 @@ class MoneyFlowWidget extends StatelessWidget {
                   formatEuroStyle,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
+              const SizedBox(width: 12),
               Expanded(
                 child: _buildBudgetItem(
                   expensesText,
@@ -268,7 +248,13 @@ class MoneyFlowWidget extends StatelessWidget {
                   formatEuroStyle,
                 ),
               ),
-              const SizedBox(width: 12),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
               Expanded(
                 child: _buildBudgetItem(
                   upcomingText,
@@ -281,14 +267,167 @@ class MoneyFlowWidget extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+
+          // Gráfico de barra para gastos (gastado y próximo)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    totalExpenses > totalBudget
+                        ? Colors.red.withOpacity(0.3)
+                        : Colors.transparent,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  budgetUsedText,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Stack(
+                  children: [
+                    // Barra de fondo
+                    Container(
+                      height: 15,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(7.5),
+                      ),
+                    ),
+                    // Barra de gastos realizados
+                    FractionallySizedBox(
+                      widthFactor:
+                          totalBudget > 0
+                              ? (outflow / totalBudget).clamp(0.0, 1.0)
+                              : 0,
+                      child: Container(
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(7.5),
+                        ),
+                      ),
+                    ),
+                    // Barra de facturas pendientes
+                    FractionallySizedBox(
+                      widthFactor:
+                          totalBudget > 0
+                              ? ((outflow + upcomingBills) / totalBudget).clamp(
+                                    0.0,
+                                    1.0,
+                                  ) -
+                                  (outflow / totalBudget).clamp(0.0, 1.0)
+                              : 0,
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(7.5),
+                        ),
+                      ),
+                    ),
+                    // Indicador de 100%
+                    if (totalExpenses > totalBudget)
+                      Positioned(
+                        right: 0,
+                        child: Container(
+                          width: 15,
+                          height: 15,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          expensesText,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: Colors.orange,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          upcomingText,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '${(expensePercentage).toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _getExpenseStatusColor(
+                          expensePercentage.toDouble(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
 
           // Gastos combinados (Total expenses)
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    expensePercentage > 100
+                        ? Colors.red.withOpacity(0.3)
+                        : Colors.transparent,
+              ),
             ),
             child: Column(
               children: [
@@ -318,15 +457,21 @@ class MoneyFlowWidget extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.black.withOpacity(0.7),
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               formatEuroStyle(totalExpenses),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: _getExpenseStatusColor(
+                                  expensePercentage.toDouble(),
+                                ),
                               ),
                             ),
                           ],
@@ -357,16 +502,45 @@ class MoneyFlowWidget extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: totalBudget > 0 ? totalExpenses / totalBudget : 0,
-                    minHeight: 8,
-                    backgroundColor: Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _getExpenseStatusColor(expensePercentage.toDouble()),
-                    ),
+                const SizedBox(height: 10),
+                // Tasa diaria de gasto
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today,
+                            size: 14,
+                            color: Colors.deepPurple,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Tasa diaria:', // Añadir a AppLocalizations
+                            style: TextStyle(
+                              fontSize: 12,
+                              color:
+                                  Theme.of(context).textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        // Este valor vendrá de la API
+                        _calculateDailyRate(totalExpenses, period),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -375,6 +549,40 @@ class MoneyFlowWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _calculateDailyRate(double expenses, String period) {
+    // Cálculo temporal hasta que se implemente en la API
+    int days = 30; // Por defecto (mensual)
+
+    switch (period) {
+      case 'daily':
+        days = 1;
+      case 'weekly':
+        days = 7;
+      case 'monthly':
+        days = 30;
+      case 'quarterly':
+        days = 90;
+      case 'yearly':
+        days = 365;
+    }
+
+    final dailyRate = expenses / days;
+
+    // Format with currency
+    final currencyFormat = NumberFormat.currency(
+      symbol: '€',
+      decimalDigits: 2,
+      locale: 'es_ES',
+    );
+
+    final formatted = currencyFormat.format(dailyRate);
+    // Ensure € symbol is after the number without space
+    if (formatted.startsWith('€')) {
+      return formatted.substring(1).trim() + '€';
+    }
+    return formatted.replaceAll(' €', '€') + '/día'; // Add /día suffix
   }
 
   Widget _buildBudgetItem(

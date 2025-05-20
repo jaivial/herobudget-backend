@@ -21,6 +21,13 @@ Este documento define los estándares de interfaz de usuario y experiencia de us
 - **Superficie**: `#1E1E1E` (Gris Muy Oscuro)
 - **Acento Púrpura**: `#9C27B0` (Púrpura)
 
+### Colores Semánticos
+- **Éxito/Positivo**: `#4CAF50` (Verde)
+- **Advertencia/En Riesgo**: `#FF9800` (Naranja)
+- **Error/Negativo**: `#F44336` (Rojo)
+- **Información**: `#2196F3` (Azul)
+- **Heredado**: `#9C27B0` (Púrpura)
+
 ## Tipografía
 Hero Budget utiliza la tipografía predeterminada de Material Design.
 
@@ -38,6 +45,18 @@ Hero Budget utiliza la tipografía predeterminada de Material Design.
 - **Tema Claro**: Fondo blanco, texto negro, sin elevación
 - **Tema Oscuro**: Color de superficie `#1E1E1E`, texto blanco, sin elevación
 
+### Indicadores de Gasto
+- **Badge de Porcentaje**: Fondo morado con texto blanco
+- **Monto Restante Positivo**: Color verde
+- **Monto Restante Negativo**: Color rojo
+- **Indicador de Límite Excedido**: Borde rojo y señal de alerta
+
+### Barras de Progreso
+- **Gastos Realizados**: Segmento rojo
+- **Gastos Próximos**: Segmento naranja
+- **Fondo**: Gris claro
+- **Indicador de 100%**: Círculo rojo con signo de exclamación
+
 ## Diseño y Espaciado
 - Diseño coherente con Material Design 3
 - Espaciado estándar entre elementos: 8px, 16px, 24px
@@ -46,6 +65,13 @@ Hero Budget utiliza la tipografía predeterminada de Material Design.
 ## Iconografía
 - Uso de Material Icons para consistencia
 - En tema oscuro: Color terciario `#D1C4E9`
+- **Iconos específicos**:
+  - Flujo de dinero: `account_balance_wallet`
+  - Dinero heredado: `history`
+  - Gastos: `arrow_upward`
+  - Ingresos: `arrow_downward`
+  - Tasa diaria: `calendar_today`
+  - Facturas próximas: `calendar_today`
 
 ## Navegación
 - Navegación por cajón deslizable (Drawer)
@@ -81,12 +107,28 @@ Hero Budget utiliza la tipografía predeterminada de Material Design.
 - Soporte completo para múltiples idiomas
 - Adaptación del diseño para diferentes longitudes de texto
 
+## Elementos de UI específicos
+
+### Widget de Flujo de Dinero
+- **Estructura**: Organización vertical clara con secciones delimitadas
+- **Encabezado**: Título a la izquierda y porcentaje de gasto a la derecha en morado
+- **Monto Restante**: Número grande con color semántico (verde/rojo) según valor
+- **Ingresos Totales**: Alineado a la derecha, tamaño más pequeño, color azul
+- **Dinero Heredado**: Badge morado con icono de historial
+- **Barra de Progreso**: 
+  - Segmento rojo para gastos realizados
+  - Segmento naranja para gastos próximos
+  - Indicador de alerta cuando se supera el 100%
+- **Gastos Combinados**: Con porcentaje y color semántico según nivel de gasto
+- **Tasa Diaria**: Muestra el promedio diario de gasto con formato de divisa
+
 ## Directrices para Desarrolladores
 1. Utilizar siempre constantes de color definidas en `app_theme.dart`
 2. Mantener coherencia con Material Design 3
 3. Probar en modo claro y oscuro
 4. Implementar diseños responsivos que funcionen en diferentes tamaños de pantalla
 5. Seguir las directrices de accesibilidad
+6. Utilizar colores semánticos para comunicar estados (positivo, negativo, advertencia)
 
 ## Convenciones de Nomenclatura
 - Nombres de componentes descriptivos y coherentes
@@ -100,4 +142,4 @@ Este documento debe actualizarse cuando:
 4. Se añaden nuevas funcionalidades con elementos visuales únicos
 
 ---
-Última actualización: [Fecha actual] 
+Última actualización: 2023-10-31 

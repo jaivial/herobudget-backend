@@ -37,6 +37,7 @@ type MoneyFlowData struct {
 	TotalBudget      float64   `json:"total_budget"`
 	CombinedExpenses float64   `json:"combined_expenses"`
 	ExpensePercent   float64   `json:"expense_percent"`
+	DailyRate        float64   `json:"daily_rate"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }
@@ -229,6 +230,18 @@ func calculateMoneyFlow(userID, period string) (MoneyFlowData, error) {
 		moneyFlowData.ExpensePercent = 0
 	}
 
+	// 9. Calcular tasa diaria de gastos (usando gastos combinados)
+	moneyFlowData.DailyRate = calculateDailyRate(moneyFlowData.CombinedExpenses, period, startDate, endDate)
+
+	// Asegurar que la tasa diaria nunca sea cero si hay gastos
+	if moneyFlowData.DailyRate == 0 && moneyFlowData.CombinedExpenses > 0 {
+		log.Printf("Warning: Daily rate calculated as 0 but expenses exist. Applying default calculation.")
+		moneyFlowData.DailyRate = calculateDefaultDailyRate(moneyFlowData.CombinedExpenses, period)
+	}
+
+	log.Printf("Daily rate calculated: %f for period %s with expenses %f",
+		moneyFlowData.DailyRate, period, moneyFlowData.CombinedExpenses)
+
 	// Actualizar marcas de tiempo
 	now := time.Now()
 	moneyFlowData.CreatedAt = now
@@ -337,6 +350,7 @@ func storeMoneyFlowData(data MoneyFlowData) error {
 				from_previous = ?,
 				percent = ?,
 				total_income = ?,
+				daily_rate = ?,
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND period = ?
 		`,
@@ -348,6 +362,7 @@ func storeMoneyFlowData(data MoneyFlowData) error {
 			data.FromPrevious,
 			data.ExpensePercent,
 			data.TotalIncome,
+			data.DailyRate,
 			data.UserID,
 			data.Period)
 	} else {
@@ -355,8 +370,9 @@ func storeMoneyFlowData(data MoneyFlowData) error {
 		_, err = db.Exec(`
 			INSERT INTO budget (
 				user_id, period, date, total_amount, remaining_amount,
-				spent_amount, upcoming_amount, from_previous, percent, total_income
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				spent_amount, upcoming_amount, from_previous, percent, total_income,
+				daily_rate
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`,
 			data.UserID,
 			data.Period,
@@ -367,7 +383,8 @@ func storeMoneyFlowData(data MoneyFlowData) error {
 			data.UpcomingBills,
 			data.FromPrevious,
 			data.ExpensePercent,
-			data.TotalIncome)
+			data.TotalIncome,
+			data.DailyRate)
 	}
 
 	return err
@@ -428,4 +445,77 @@ func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 		Success: false,
 		Message: message,
 	})
+}
+
+// Función para calcular la tasa diaria de gasto basada en el período
+func calculateDailyRate(expenses float64, period string, startDate, endDate string) float64 {
+	// Si no hay gastos, la tasa diaria es cero
+	if expenses <= 0 {
+		return 0
+	}
+
+	// Parseamos las fechas para calcular el número de días
+	start, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		log.Printf("Error parsing startDate: %v", err)
+		return calculateDefaultDailyRate(expenses, period)
+	}
+
+	end, err := time.Parse("2006-01-02", endDate)
+	if err != nil {
+		log.Printf("Error parsing endDate: %v", err)
+		return calculateDefaultDailyRate(expenses, period)
+	}
+
+	// Calculamos el número real de días en el período
+	// Sumamos 1 porque incluimos ambos días (inicio y fin)
+	days := end.Sub(start).Hours()/24 + 1
+
+	log.Printf("Period %s from %s to %s has %.1f days",
+		period, startDate, endDate, days)
+
+	// Si hay algún problema con el cálculo de días, usamos valores predeterminados
+	if days <= 0 {
+		log.Printf("Error: Invalid days calculation (%f). Using default.", days)
+		return calculateDefaultDailyRate(expenses, period)
+	}
+
+	dailyRate := expenses / days
+	log.Printf("Daily rate calculation: %f / %f = %f", expenses, days, dailyRate)
+
+	// Si por alguna razón el dailyRate es 0 pero hay gastos, usar el cálculo predeterminado
+	if dailyRate == 0 && expenses > 0 {
+		log.Printf("Warning: Daily rate calculated as 0 but expenses exist (%f). Using default calculation.", expenses)
+		return calculateDefaultDailyRate(expenses, period)
+	}
+
+	return dailyRate
+}
+
+// Función para calcular la tasa diaria usando valores predeterminados por período
+func calculateDefaultDailyRate(expenses float64, period string) float64 {
+	// Si no hay gastos, la tasa diaria es cero
+	if expenses <= 0 {
+		return 0
+	}
+
+	var days float64 = 30 // default para mensual
+
+	switch period {
+	case "daily":
+		days = 1
+	case "weekly":
+		days = 7
+	case "monthly":
+		days = 30
+	case "quarterly":
+		days = 90
+	case "yearly":
+		days = 365
+	}
+
+	dailyRate := expenses / days
+	log.Printf("Default daily rate calculation: %f / %f = %f", expenses, days, dailyRate)
+
+	return dailyRate
 }

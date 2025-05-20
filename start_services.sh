@@ -23,6 +23,7 @@ INCOME_MANAGEMENT_PORT=8093
 EXPENSE_MANAGEMENT_PORT=8094
 CATEGORIES_MANAGEMENT_PORT=8095
 MONEY_FLOW_SYNC_PORT=8096
+MONEY_FLOW_CALCULATION_PORT=8097
 
 # Function to get service port by name
 get_port() {
@@ -43,6 +44,7 @@ get_port() {
     "expense_management") echo $EXPENSE_MANAGEMENT_PORT ;;
     "categories_management") echo $CATEGORIES_MANAGEMENT_PORT ;;
     "money_flow_sync") echo $MONEY_FLOW_SYNC_PORT ;;
+    "money_flow_calculation") echo $MONEY_FLOW_CALCULATION_PORT ;;
     *) echo "" ;;
   esac
 }
@@ -65,6 +67,7 @@ services=(
   "expense_management"
   "categories_management"
   "money_flow_sync"
+  "money_flow_calculation"
 )
 
 # Check for selected services
@@ -113,16 +116,6 @@ for service in "${services[@]}"; do
   
   echo
 done
-
-# Start Money Flow Sync service
-echo "Starting Money Flow Sync service..."
-cd "$BACKEND_DIR/money_flow_sync" || exit 1
-go run main.go &
-
-# Start Money Flow Calculation service
-echo "Starting Money Flow Calculation service..."
-cd "$BACKEND_DIR/money_flow_calculation" || exit 1
-go run main.go &
 
 echo -e "${GREEN}All requested services started.${NC}"
 echo -e "${YELLOW}Use ./stop_services.sh to stop all services.${NC}" 

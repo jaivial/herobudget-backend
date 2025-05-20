@@ -36,163 +36,497 @@ class BudgetOverviewWidget extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                localizations.translate('money_flow'),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : null,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.account_balance_wallet,
+                      size: 16,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    localizations.translate('money_flow'),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : null,
+                    ),
+                  ),
+                ],
+              ),
+              // Badge de porcentaje con fondo morado
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${budgetOverview.expensePercent.toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              _PercentageBadge(percentage: budgetOverview.moneyFlow.percent),
             ],
           ),
 
           const SizedBox(height: 20),
 
-          // Cantidad restante
+          // Dinero restante (en grande) y presupuesto total (más pequeño a la derecha)
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                _formatCurrencyEuroStyle(
-                  localizations.formatCurrency(budgetOverview.remainingAmount),
-                ),
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : null,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                localizations.translate('left'),
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-
-          // Información desde el periodo anterior
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Row(
-              children: [
-                const Text('+'),
-                const SizedBox(width: 4),
-                Text(
-                  _formatCurrencyEuroStyle(
-                    localizations.formatCurrency(
-                      budgetOverview.moneyFlow.fromPrevious,
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      localizations.translate('remaining_amount'),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
                     ),
-                  ),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatCurrencyEuroStyle(
+                        localizations.formatCurrency(
+                          budgetOverview.remainingAmount,
+                        ),
+                      ),
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color:
+                            budgetOverview.remainingAmount >= 0
+                                ? Colors.green
+                                : Colors.red,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  localizations.translate('from_previous_period'),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      localizations.translate('total_income'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatCurrencyEuroStyle(
+                        localizations.formatCurrency(
+                          budgetOverview.totalIncome,
+                        ),
+                      ),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
 
-          // Ingresos totales del periodo
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+          const SizedBox(height: 12),
+
+          // Dinero heredado del periodo anterior
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.deepPurple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('+'),
-                const SizedBox(width: 4),
+                const Icon(Icons.history, color: Colors.deepPurple, size: 16),
+                const SizedBox(width: 6),
                 Text(
-                  _formatCurrencyEuroStyle(
-                    localizations.formatCurrency(budgetOverview.totalIncome),
-                  ),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  localizations.translate('total_income_period'),
+                  '${localizations.translate('previous')}: ${_formatCurrencyEuroStyle(localizations.formatCurrency(budgetOverview.moneyFlow.fromPrevious))}',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isDarkMode ? Colors.white : Colors.deepPurple,
                   ),
                 ),
               ],
             ),
           ),
 
-          // Barra de progreso
-          _BudgetProgressBar(
-            spent: budgetOverview.spentAmount,
-            upcoming: budgetOverview.upcomingAmount,
-            total: budgetOverview.totalAmount,
+          const SizedBox(height: 20),
+
+          // Gráfico de barra para gastos (gastado y próximo)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    budgetOverview.combinedExpense > budgetOverview.totalAmount
+                        ? Colors.red.withOpacity(0.3)
+                        : Colors.transparent,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                Stack(
+                  children: [
+                    // Barra de fondo
+                    Container(
+                      height: 15,
+                      decoration: BoxDecoration(
+                        color:
+                            isDarkMode
+                                ? Colors.grey.shade800
+                                : Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(7.5),
+                      ),
+                    ),
+                    // Barra de gastos realizados
+                    FractionallySizedBox(
+                      widthFactor:
+                          budgetOverview.totalAmount > 0
+                              ? (budgetOverview.spentAmount /
+                                      budgetOverview.totalAmount)
+                                  .clamp(0.0, 1.0)
+                              : 0,
+                      child: Container(
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color:
+                              budgetOverview.expensePercent >= 100
+                                  ? Colors.red
+                                  : Colors.deepPurple,
+                          borderRadius: BorderRadius.circular(7.5),
+                        ),
+                      ),
+                    ),
+                    // Barra de facturas pendientes
+                    FractionallySizedBox(
+                      widthFactor:
+                          budgetOverview.totalAmount > 0
+                              ? ((budgetOverview.spentAmount +
+                                              budgetOverview.upcomingAmount) /
+                                          budgetOverview.totalAmount)
+                                      .clamp(0.0, 1.0) -
+                                  (budgetOverview.spentAmount /
+                                          budgetOverview.totalAmount)
+                                      .clamp(0.0, 1.0)
+                              : 0,
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        height: 15,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(7.5),
+                        ),
+                      ),
+                    ),
+                    // Indicador de 100%
+                    if (budgetOverview.combinedExpense >
+                        budgetOverview.totalAmount)
+                      Positioned(
+                        right: 0,
+                        child: Container(
+                          width: 15,
+                          height: 15,
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              '!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Mejorar la legibilidad de las leyendas distribuyéndolas en dos líneas
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: _getSpentColor(
+                                    budgetOverview.expensePercent,
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  '${localizations.translate('spent')}:',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        isDarkMode
+                                            ? Colors.white70
+                                            : Colors.black87,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '${_formatCurrencyEuroStyle(localizations.formatCurrency(budgetOverview.spentAmount))} (${_getPercentage(budgetOverview.spentAmount, budgetOverview.totalAmount)}%)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                isDarkMode
+                                    ? Colors.white
+                                    : _getSpentColor(
+                                      budgetOverview.expensePercent,
+                                    ),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: const BoxDecoration(
+                                  color: Colors.orange,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  '${localizations.translate('upcoming')}:',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        isDarkMode
+                                            ? Colors.white70
+                                            : Colors.black87,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '${_formatCurrencyEuroStyle(localizations.formatCurrency(budgetOverview.upcomingAmount))} (${_getPercentage(budgetOverview.upcomingAmount, budgetOverview.totalAmount)}%)',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 16),
 
-          // Leyenda de gastos
-          Row(
-            children: [
-              _LegendItem(
-                color: Colors.purple,
-                label: localizations.translate('spent'),
-                amount: _formatCurrencyEuroStyle(
-                  localizations.formatCurrency(budgetOverview.spentAmount),
+          // Gastos combinados (Total expenses)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    budgetOverview.expensePercent > 100
+                        ? Colors.red.withOpacity(0.3)
+                        : Colors.transparent,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.pie_chart,
+                            size: 16,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              localizations.translate('combined_expenses'),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _formatCurrencyEuroStyle(
+                                localizations.formatCurrency(
+                                  budgetOverview.combinedExpense,
+                                ),
+                              ),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: _getExpenseStatusColor(
+                                  budgetOverview.expensePercent,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getExpenseStatusColor(
+                          budgetOverview.expensePercent,
+                        ).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${budgetOverview.expensePercent.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: _getExpenseStatusColor(
+                            budgetOverview.expensePercent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 16),
-              _LegendItem(
-                color: Colors.amber,
-                label: localizations.translate('upcoming'),
-                amount: _formatCurrencyEuroStyle(
-                  localizations.formatCurrency(budgetOverview.upcomingAmount),
+                const SizedBox(height: 10),
+                // Tasa diaria de gasto con mejor visibilidad
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color:
+                        isDarkMode
+                            ? Colors.grey.shade800.withOpacity(0.6)
+                            : Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today,
+                            size: 14,
+                            color: Colors.deepPurple,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            localizations.translate('daily_rate') + ':',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color:
+                                  isDarkMode
+                                      ? Colors.white
+                                      : Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        _formatCurrencyEuroStyle(
+                              localizations.formatCurrency(
+                                budgetOverview.dailyRate,
+                              ),
+                            ) +
+                            '/día',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : Colors.deepPurple,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Información de gastos combinados
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                localizations.translate('combined_expenses'),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Text(
-                '${_formatCurrencyEuroStyle(localizations.formatCurrency(budgetOverview.combinedExpense))} (${budgetOverview.expensePercent.toStringAsFixed(0)}%)',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-
-          // Tasa diaria
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                localizations.translate('daily_rate'),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              Text(
-                _formatCurrencyEuroStyle(
-                  localizations.formatCurrency(budgetOverview.dailyRate),
-                ),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
+              ],
+            ),
           ),
 
           // Advertencia de gasto elevado (solo si es necesario)
@@ -250,6 +584,32 @@ class BudgetOverviewWidget extends StatelessWidget {
     }
     // Si no tiene símbolo, añadir € al final sin espacio
     return formattedAmount.trim() + '€';
+  }
+
+  Color _getExpenseStatusColor(double percentage) {
+    if (percentage > 100) {
+      return Colors.red;
+    } else if (percentage > 80) {
+      return Colors.orange;
+    } else {
+      return Colors.green;
+    }
+  }
+
+  double _getPercentage(double part, double total) {
+    if (total > 0) {
+      return double.parse(((part / total) * 100).toStringAsFixed(1));
+    } else {
+      return 0;
+    }
+  }
+
+  Color _getSpentColor(double percentage) {
+    if (percentage >= 100) {
+      return Colors.red;
+    } else {
+      return Colors.deepPurple;
+    }
   }
 }
 
