@@ -182,16 +182,24 @@ class DashboardService {
       final dateString =
           "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
 
+      // Log para debug de navegación temporal
+      print(
+        '⏱️ fetchDashboardData - Period: $period, Selected Date: $dateString (${_getReadableDate(date)})',
+      );
+
       // Make HTTP request using dashboard data service URL with additional date parameter
+      final apiUrl =
+          '${dashboardDataUrl}/dashboard/data?user_id=$userId&period=$period&date=$dateString';
+      print('📊 Requesting dashboard data from: $apiUrl');
+
       final response = await http.get(
-        Uri.parse(
-          '${dashboardDataUrl}/dashboard/data?user_id=$userId&period=$period&date=$dateString',
-        ),
+        Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
       );
 
       // Check if response is successful
       if (response.statusCode == 200) {
+        print('✅ Dashboard data received successfully');
         // Parse JSON response
         final Map<String, dynamic> data = json.decode(response.body);
 
@@ -203,13 +211,16 @@ class DashboardService {
           bool success = false;
           dynamic moneyFlowData;
 
+          // Log para debug de money flow request
+          final moneyFlowUrl =
+              '${moneyFlowCalculationUrl}/money-flow/data?user_id=$userId&period=$period&date=$dateString';
+          print('💰 Requesting money flow data from: $moneyFlowUrl');
+
           while (currentRetry < maxRetries && !success) {
             try {
               final moneyFlowResponse = await http
                   .get(
-                    Uri.parse(
-                      '${moneyFlowCalculationUrl}/money-flow/data?user_id=$userId&period=$period&date=$dateString',
-                    ),
+                    Uri.parse(moneyFlowUrl),
                     headers: {'Content-Type': 'application/json'},
                   )
                   .timeout(const Duration(seconds: 5));
@@ -217,8 +228,12 @@ class DashboardService {
               if (moneyFlowResponse.statusCode == 200) {
                 moneyFlowData = json.decode(moneyFlowResponse.body);
                 success = true;
+                print('✅ Money flow data received successfully');
               } else {
                 currentRetry++;
+                print(
+                  '⚠️ Money flow request failed with status: ${moneyFlowResponse.statusCode}, retry $currentRetry/$maxRetries',
+                );
                 if (currentRetry < maxRetries) {
                   // Esperar antes de reintentar (backoff exponencial)
                   await Future.delayed(
@@ -231,6 +246,7 @@ class DashboardService {
               }
             } catch (retryError) {
               currentRetry++;
+              print('❌ Money flow request error: $retryError');
               if (currentRetry < maxRetries) {
                 // Esperar antes de reintentar (backoff exponencial)
                 await Future.delayed(
@@ -252,6 +268,7 @@ class DashboardService {
 
               // Update budget_overview with accurate money flow data
               if (data['budget_overview'] != null) {
+                print('🔄 Updating dashboard data with money flow information');
                 data['budget_overview']['remaining_amount'] =
                     moneyFlow['remaining_amount'];
                 data['budget_overview']['total_amount'] =
@@ -271,30 +288,40 @@ class DashboardService {
                 if (data['budget_overview']['money_flow'] != null) {
                   data['budget_overview']['money_flow']['from_previous'] =
                       moneyFlow['from_previous'];
+                  print(
+                    '💲 Updated from_previous: ${moneyFlow['from_previous']}',
+                  );
                 }
               }
             }
           } else {
             print(
-              'No se pudo obtener money flow data después de $maxRetries intentos',
+              '❌ No se pudo obtener money flow data después de $maxRetries intentos',
             );
           }
         } catch (e) {
-          print('Error fetching money flow data: $e');
+          print('❌ Error fetching money flow data: $e');
           // Continue with original data if money flow calculation fails
         }
 
         return DashboardModel.fromJson(data);
       } else {
+        print('❌ Dashboard API error: ${response.statusCode}');
+        print('Response body: ${response.body}');
         throw Exception(
           'Error fetching dashboard data: ${response.statusCode}',
         );
       }
     } catch (e) {
       // In case of error, return a model with default values
-      print('Error in fetchDashboardData: $e');
+      print('❌ Error in fetchDashboardData: $e');
       throw Exception('Error fetching dashboard data: $e');
     }
+  }
+
+  // Helper para mostrar fecha legible en logs
+  String _getReadableDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   // Change time period

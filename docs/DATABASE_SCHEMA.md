@@ -32,73 +32,227 @@ CREATE TABLE IF NOT EXISTS categories (
 - `created_at`: Fecha de creación
 - `updated_at`: Fecha de última actualización
 
-### Otras tablas inferidas del modelo de datos
-
-#### Tabla: expenses
+### Tabla: expenses
 Almacena los registros de gastos de los usuarios.
 
-**Campos inferidos del modelo:**
+```sql
+CREATE TABLE IF NOT EXISTS expenses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    date TEXT NOT NULL,
+    category TEXT NOT NULL,
+    payment_method TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Campos:**
 - `id`: Identificador único
 - `user_id`: Identificador del usuario
 - `amount`: Monto del gasto
-- `category_id`: Referencia a la categoría
 - `date`: Fecha del gasto
+- `category`: Categoría del gasto
+- `payment_method`: Método de pago utilizado
 - `description`: Descripción opcional
 - `created_at`: Fecha de creación
 - `updated_at`: Fecha de actualización
 
-#### Tabla: incomes
+### Tabla: incomes
 Almacena los registros de ingresos de los usuarios.
 
-**Campos inferidos del modelo:**
+```sql
+CREATE TABLE IF NOT EXISTS incomes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    date TEXT NOT NULL,
+    category TEXT NOT NULL,
+    payment_method TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Campos:**
 - `id`: Identificador único
 - `user_id`: Identificador del usuario
 - `amount`: Monto del ingreso
-- `category_id`: Referencia a la categoría
 - `date`: Fecha del ingreso
+- `category`: Categoría del ingreso
+- `payment_method`: Método de recepción del ingreso
 - `description`: Descripción opcional
 - `created_at`: Fecha de creación
 - `updated_at`: Fecha de actualización
 
-#### Tabla: users
+### Tabla: users
 Almacena la información de los usuarios registrados.
 
-**Campos inferidos del modelo:**
+```sql
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    google_id TEXT,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    given_name TEXT,
+    family_name TEXT,
+    picture TEXT,
+    display_image TEXT,
+    profile_image_blob TEXT,
+    locale TEXT NOT NULL DEFAULT 'en',
+    verified_email BOOLEAN NOT NULL DEFAULT 0,
+    password TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Campos:**
 - `id`: Identificador único
+- `google_id`: Identificador de Google (en caso de login con Google)
 - `email`: Correo electrónico (único)
-- `password_hash`: Hash de la contraseña
 - `name`: Nombre completo
-- `preferred_language`: Idioma preferido
-- `profile_image`: URL o ruta a la imagen de perfil
+- `given_name`: Nombre de pila (para integración con Google)
+- `family_name`: Apellido (para integración con Google)
+- `picture`: URL a imagen de perfil externa
+- `display_image`: URL o ruta a la imagen de perfil mostrada
+- `profile_image_blob`: Imagen de perfil almacenada como blob
+- `locale`: Idioma preferido
+- `verified_email`: Si el email ha sido verificado
+- `password`: Hash de la contraseña
 - `created_at`: Fecha de registro
 - `updated_at`: Fecha de actualización
 
-#### Tabla: recurring_bills
+### Tabla: recurring_bills
 Almacena información sobre gastos recurrentes (facturas, suscripciones).
 
-**Campos inferidos:**
+```sql
+CREATE TABLE IF NOT EXISTS bills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    amount REAL NOT NULL,
+    due_date TEXT NOT NULL,
+    paid BOOLEAN NOT NULL DEFAULT 0,
+    overdue BOOLEAN NOT NULL DEFAULT 0,
+    overdue_days INTEGER DEFAULT 0,
+    recurring BOOLEAN NOT NULL DEFAULT 0,
+    category TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Campos:**
 - `id`: Identificador único
 - `user_id`: Identificador del usuario
-- `name`: Nombre de la factura
+- `name`: Nombre de la factura o suscripción
 - `amount`: Monto
-- `frequency`: Frecuencia (mensual, anual, etc.)
 - `due_date`: Fecha de vencimiento
-- `category_id`: Referencia a la categoría
+- `paid`: Indica si la factura ha sido pagada
+- `overdue`: Indica si la factura está vencida
+- `overdue_days`: Días de retraso
+- `recurring`: Indica si es un gasto recurrente
+- `category`: Categoría de la factura
+- `icon`: Ícono representativo
 - `created_at`: Fecha de creación
 - `updated_at`: Fecha de actualización
 
-#### Tabla: savings
+### Tabla: savings
 Almacena información sobre los ahorros del usuario.
 
-**Campos inferidos:**
+```sql
+CREATE TABLE IF NOT EXISTS savings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    goal REAL NOT NULL DEFAULT 0,
+    available REAL NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Campos:**
 - `id`: Identificador único
 - `user_id`: Identificador del usuario
-- `name`: Nombre del objetivo de ahorro
-- `target_amount`: Monto objetivo
-- `current_amount`: Monto actual
-- `target_date`: Fecha objetivo
+- `goal`: Monto objetivo de ahorro
+- `available`: Monto actual ahorrado
 - `created_at`: Fecha de creación
 - `updated_at`: Fecha de actualización
+
+### Tabla: savings_transactions
+Almacena los movimientos relacionados con ahorros.
+
+```sql
+CREATE TABLE IF NOT EXISTS savings_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    type TEXT NOT NULL,
+    description TEXT,
+    date TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Campos:**
+- `id`: Identificador único
+- `user_id`: Identificador del usuario
+- `amount`: Monto de la transacción
+- `type`: Tipo (depósito o retiro)
+- `description`: Descripción de la transacción
+- `date`: Fecha de la transacción
+- `created_at`: Fecha de registro
+
+### Tabla: cash_bank_accounts
+Almacena información sobre el dinero en efectivo y bancario del usuario.
+
+```sql
+CREATE TABLE IF NOT EXISTS cash_bank_accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    cash_amount REAL NOT NULL DEFAULT 0,
+    bank_amount REAL NOT NULL DEFAULT 0,
+    month TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Campos:**
+- `id`: Identificador único
+- `user_id`: Identificador del usuario
+- `cash_amount`: Monto disponible en efectivo
+- `bank_amount`: Monto disponible en cuenta bancaria
+- `month`: Mes de registro
+- `created_at`: Fecha de creación
+- `updated_at`: Fecha de actualización
+
+### Tabla: bank_transfers
+Almacena información sobre transferencias entre efectivo y banco.
+
+```sql
+CREATE TABLE IF NOT EXISTS bank_transfers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    amount REAL NOT NULL,
+    direction TEXT NOT NULL,
+    date TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Campos:**
+- `id`: Identificador único
+- `user_id`: Identificador del usuario
+- `amount`: Monto de la transferencia
+- `direction`: Dirección (efectivo-a-banco o banco-a-efectivo)
+- `date`: Fecha de la transferencia
+- `created_at`: Fecha de registro
 
 ## Implementación en el Código
 
@@ -117,7 +271,12 @@ Representa un registro de ingreso y se corresponde con la tabla `incomes`.
 Representa la información de un usuario registrado y se corresponde con la tabla `users`.
 
 #### DashboardModel (`lib/models/dashboard_model.dart`)
-Modelo que integra datos de múltiples tablas para mostrar en el dashboard.
+Modelo que integra datos de múltiples tablas para mostrar en el dashboard. Contiene submodelos para:
+- BudgetOverview: Vista general del presupuesto
+- SavingsOverview: Vista general de ahorros
+- CashBankDistribution: Distribución entre efectivo y banco
+- FinanceMetrics: Métricas financieras generales
+- Bill: Facturas y pagos recurrentes
 
 ### Servicios de Acceso a Datos
 
@@ -129,6 +288,7 @@ Los siguientes servicios gestionan las operaciones CRUD en la base de datos:
 - `ProfileService` (`lib/services/profile_service.dart`): Gestiona las operaciones relacionadas con perfiles de usuario.
 - `SavingsService` (`lib/services/savings_service.dart`): Gestiona las operaciones relacionadas con ahorros.
 - `BillsService` (`lib/services/bills_service.dart`): Gestiona las operaciones relacionadas con facturas recurrentes.
+- `CashBankService` (`lib/services/cash_bank_service.dart`): Gestiona las operaciones relacionadas con efectivo y banco.
 - `DashboardService` (`lib/services/dashboard_service.dart`): Integra datos de múltiples servicios para el dashboard.
 
 ## Directrices para Desarrolladores
@@ -147,4 +307,4 @@ Este documento debe actualizarse cuando:
 4. Se agregan índices o restricciones
 
 ---
-Última actualización: [Fecha actual] 
+Última actualización: 2023-09-15 

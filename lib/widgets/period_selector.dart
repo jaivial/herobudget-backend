@@ -24,13 +24,50 @@ class _PeriodSelectorState extends State<PeriodSelector> {
   late String _currentPeriod;
   DateTime _currentDate = DateTime.now();
 
+  // Map to store dates by period type
+  final Map<String, DateTime> _datesByPeriodType = {};
+
   @override
   void initState() {
     super.initState();
     _currentPeriod = widget.initialPeriod;
+
+    // Initialize with the current date
+    final now = DateTime.now();
+
+    // Initialize the map with appropriate dates for each period type
+    _datesByPeriodType['daily'] = now;
+
+    // For weekly, start with Monday of this week
+    final daysToMonday = now.weekday - 1; // 0 for Monday, 1 for Tuesday, etc.
+    _datesByPeriodType['weekly'] = now.subtract(Duration(days: daysToMonday));
+
+    // For monthly, use the first day of the current month
+    _datesByPeriodType['monthly'] = DateTime(now.year, now.month, 1);
+
+    // For quarterly, use the first day of the current quarter
+    final currentQuarter = ((now.month - 1) ~/ 3);
+    _datesByPeriodType['quarterly'] = DateTime(
+      now.year,
+      currentQuarter * 3 + 1,
+      1,
+    );
+
+    // For semiannual, use the first day of the current half
+    final currentHalf = now.month <= 6 ? 1 : 7;
+    _datesByPeriodType['semiannual'] = DateTime(now.year, currentHalf, 1);
+
+    // For annual, use the first day of the current year
+    _datesByPeriodType['annual'] = DateTime(now.year, 1, 1);
+
+    // For custom, use the current date
+    _datesByPeriodType['custom'] = now;
+
+    // Set the current date based on the initial period
+    _currentDate = _datesByPeriodType[_currentPeriod] ?? now;
   }
 
-  // Obtener el título del periodo actual
+  // Get the title for the current period
   String get periodTitle {
     final DateFormat formatter = DateFormat.yMMM();
 
@@ -38,10 +75,9 @@ class _PeriodSelectorState extends State<PeriodSelector> {
       case 'daily':
         return DateFormat.yMd().format(_currentDate);
       case 'weekly':
-        final startOfWeek = _currentDate.subtract(
-          Duration(days: _currentDate.weekday - 1),
-        );
-        final endOfWeek = startOfWeek.add(const Duration(days: 6));
+        // Calculate the start and end of the week (Monday to Sunday)
+        final startOfWeek = getStartOfWeek(_currentDate);
+        final endOfWeek = getEndOfWeek(_currentDate);
         return '${DateFormat.MMMd().format(startOfWeek)} - ${DateFormat.MMMd().format(endOfWeek)}';
       case 'monthly':
         return formatter.format(_currentDate);
@@ -60,119 +96,248 @@ class _PeriodSelectorState extends State<PeriodSelector> {
     }
   }
 
-  // Navegar al periodo anterior
-  void _navigateToPreviousPeriod() {
-    setState(() {
-      switch (_currentPeriod) {
-        case 'daily':
-          _currentDate = _currentDate.subtract(const Duration(days: 1));
-          break;
-        case 'weekly':
-          _currentDate = _currentDate.subtract(const Duration(days: 7));
-          break;
-        case 'monthly':
-          _currentDate = DateTime(
-            _currentDate.year,
-            _currentDate.month - 1,
-            _currentDate.day,
-          );
-          break;
-        case 'quarterly':
-          _currentDate = DateTime(
-            _currentDate.year,
-            _currentDate.month - 3,
-            _currentDate.day,
-          );
-          break;
-        case 'semiannual':
-          _currentDate = DateTime(
-            _currentDate.year,
-            _currentDate.month - 6,
-            _currentDate.day,
-          );
-          break;
-        case 'annual':
-          _currentDate = DateTime(
-            _currentDate.year - 1,
-            _currentDate.month,
-            _currentDate.day,
-          );
-          break;
-      }
-    });
-    widget.onPeriodChanged(_currentPeriod);
-    if (widget.onDateChanged != null) {
-      widget.onDateChanged!(_currentDate);
-    }
+  // Get the start of the week (Monday) for a given date
+  DateTime getStartOfWeek(DateTime date) {
+    final daysToMonday = date.weekday - 1; // 0 for Monday, 1 for Tuesday, etc.
+    return date.subtract(Duration(days: daysToMonday));
   }
 
-  // Navegar al periodo siguiente
-  void _navigateToNextPeriod() {
-    DateTime nextDate;
+  // Get the end of the week (Sunday) for a given date
+  DateTime getEndOfWeek(DateTime date) {
+    final startOfWeek = getStartOfWeek(date);
+    return startOfWeek.add(const Duration(days: 6));
+  }
+
+  // Navigate to the previous period with date validation
+  void _navigateToPreviousPeriod() {
+    DateTime newDate;
+
+    debugPrint(
+      'Navigating back from: $_currentPeriod - ${_formatDebugDate(_currentDate)}',
+    );
 
     switch (_currentPeriod) {
       case 'daily':
-        nextDate = _currentDate.add(const Duration(days: 1));
+        newDate = _currentDate.subtract(const Duration(days: 1));
         break;
       case 'weekly':
-        nextDate = _currentDate.add(const Duration(days: 7));
+        newDate = _currentDate.subtract(const Duration(days: 7));
         break;
       case 'monthly':
-        nextDate = DateTime(
-          _currentDate.year,
-          _currentDate.month + 1,
-          _currentDate.day,
-        );
+        // Calculate the first day of the previous month to avoid issues with different month lengths
+        final year =
+            _currentDate.month > 1 ? _currentDate.year : _currentDate.year - 1;
+        final month = _currentDate.month > 1 ? _currentDate.month - 1 : 12;
+        newDate = DateTime(year, month, 1);
         break;
       case 'quarterly':
-        nextDate = DateTime(
-          _currentDate.year,
-          _currentDate.month + 3,
-          _currentDate.day,
-        );
+        // Go back 3 months but ensure we're on the first day of the month
+        final year =
+            _currentDate.month > 3 ? _currentDate.year : _currentDate.year - 1;
+        final month =
+            _currentDate.month > 3
+                ? _currentDate.month - 3
+                : _currentDate.month + 9;
+        newDate = DateTime(year, month, 1);
         break;
       case 'semiannual':
-        nextDate = DateTime(
-          _currentDate.year,
-          _currentDate.month + 6,
-          _currentDate.day,
-        );
+        // Go back 6 months but ensure we're on the first day of the month
+        final year =
+            _currentDate.month > 6 ? _currentDate.year : _currentDate.year - 1;
+        final month =
+            _currentDate.month > 6
+                ? _currentDate.month - 6
+                : _currentDate.month + 6;
+        newDate = DateTime(year, month, 1);
         break;
       case 'annual':
-        nextDate = DateTime(
-          _currentDate.year + 1,
-          _currentDate.month,
-          _currentDate.day,
-        );
+        newDate = DateTime(_currentDate.year - 1, 1, 1);
         break;
       default:
         return;
     }
 
-    setState(() {
-      _currentDate = nextDate;
-    });
-    widget.onPeriodChanged(_currentPeriod);
-    if (widget.onDateChanged != null) {
-      widget.onDateChanged!(_currentDate);
+    // Verify that the new date is valid before applying it
+    // Allow navigation up to 10 years back
+    final minAllowedDate = DateTime.now().subtract(
+      const Duration(days: 365 * 10),
+    );
+    if (newDate.isAfter(minAllowedDate) &&
+        newDate.isBefore(DateTime.now().add(const Duration(days: 365 * 5)))) {
+      debugPrint('Navigating to: ${_formatDebugDate(newDate)}');
+      setState(() {
+        _currentDate = newDate;
+        _datesByPeriodType[_currentPeriod] =
+            newDate; // Store the date for this period type
+      });
+
+      widget.onPeriodChanged(_currentPeriod);
+      if (widget.onDateChanged != null) {
+        widget.onDateChanged!(_currentDate);
+      }
+    } else {
+      debugPrint(
+        'Navigation blocked: ${_formatDebugDate(newDate)} is outside the allowed range',
+      );
     }
   }
 
-  // Cambiar el tipo de periodo
+  // Navigate to the next period with date validation
+  void _navigateToNextPeriod() {
+    // Allow navigation to future dates up to 5 years
+    final maxAllowedDate = DateTime.now().add(const Duration(days: 365 * 5));
+    DateTime newDate;
+
+    debugPrint(
+      'Navigating forward from: $_currentPeriod - ${_formatDebugDate(_currentDate)}',
+    );
+
+    switch (_currentPeriod) {
+      case 'daily':
+        newDate = _currentDate.add(const Duration(days: 1));
+        break;
+      case 'weekly':
+        newDate = _currentDate.add(const Duration(days: 7));
+        break;
+      case 'monthly':
+        // Calculate the first day of the next month to avoid issues with different month lengths
+        final year =
+            _currentDate.month < 12 ? _currentDate.year : _currentDate.year + 1;
+        final month = _currentDate.month < 12 ? _currentDate.month + 1 : 1;
+        newDate = DateTime(year, month, 1);
+        break;
+      case 'quarterly':
+        // Advance 3 months but ensure we're on the first day of the month
+        final year =
+            _currentDate.month < 10 ? _currentDate.year : _currentDate.year + 1;
+        final month =
+            _currentDate.month < 10
+                ? _currentDate.month + 3
+                : (_currentDate.month - 9);
+        newDate = DateTime(year, month, 1);
+        break;
+      case 'semiannual':
+        // Advance 6 months but ensure we're on the first day of the month
+        final year =
+            _currentDate.month <= 6 ? _currentDate.year : _currentDate.year + 1;
+        final month =
+            _currentDate.month <= 6
+                ? _currentDate.month + 6
+                : (_currentDate.month - 6);
+        newDate = DateTime(year, month, 1);
+        break;
+      case 'annual':
+        newDate = DateTime(_currentDate.year + 1, 1, 1);
+        break;
+      default:
+        return;
+    }
+
+    // Only allow dates until the established limit of 5 years
+    if (newDate.isBefore(maxAllowedDate)) {
+      debugPrint('Navigating to: ${_formatDebugDate(newDate)}');
+      setState(() {
+        _currentDate = newDate;
+        _datesByPeriodType[_currentPeriod] =
+            newDate; // Store the date for this period type
+      });
+
+      widget.onPeriodChanged(_currentPeriod);
+      if (widget.onDateChanged != null) {
+        widget.onDateChanged!(_currentDate);
+      }
+    } else {
+      debugPrint(
+        'Navigation blocked: ${_formatDebugDate(newDate)} is beyond the allowed limit',
+      );
+    }
+  }
+
+  // Helper for date debugging
+  String _formatDebugDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // Change the period type preserving the navigation context
   void _changePeriodType(String periodType) {
+    // Don't change if we're already on this period type
+    if (_currentPeriod == periodType) {
+      return;
+    }
+
+    // Preserve the navigation date if it already exists for this period type
+    final DateTime dateToUse =
+        _datesByPeriodType.containsKey(periodType)
+            ? _datesByPeriodType[periodType]!
+            : _convertCurrentDateToNewPeriodType(
+              _currentPeriod,
+              periodType,
+              _currentDate,
+            );
+
     setState(() {
       _currentPeriod = periodType;
-      _currentDate = DateTime.now(); // Resetear a la fecha actual
+      _currentDate = dateToUse;
+      // Update the date for this period type
+      _datesByPeriodType[_currentPeriod] = _currentDate;
     });
+
     widget.onPeriodChanged(_currentPeriod);
     if (widget.onDateChanged != null) {
       widget.onDateChanged!(_currentDate);
     }
   }
 
-  // Mostrar el selector de rango personalizado
+  // Function to convert a date when changing between period types
+  // maintaining the temporal context (same month/year when possible)
+  DateTime _convertCurrentDateToNewPeriodType(
+    String fromPeriod,
+    String toPeriod,
+    DateTime currentDate,
+  ) {
+    // If we don't have a saved date for the target period type,
+    // we try to preserve the same temporal context (month/year)
+    final int year = currentDate.year;
+    final int month = currentDate.month;
+
+    switch (toPeriod) {
+      case 'daily':
+        // For daily, use day 1 of the current month
+        // Consider using current day if within the same month
+        if (month == DateTime.now().month && year == DateTime.now().year) {
+          return DateTime(year, month, DateTime.now().day);
+        }
+        return DateTime(year, month, 1);
+      case 'weekly':
+        // For weekly, start with the Monday of the week containing day 1 of the month
+        final firstDayOfMonth = DateTime(year, month, 1);
+        int daysToSubtract = firstDayOfMonth.weekday - 1; // Monday as first day
+        return firstDayOfMonth.subtract(Duration(days: daysToSubtract));
+      case 'monthly':
+        // For monthly, use the first day of the month
+        return DateTime(year, month, 1);
+      case 'quarterly':
+        // For quarterly, use the first day of the quarter that contains the current month
+        final quarter = ((month - 1) ~/ 3);
+        return DateTime(year, quarter * 3 + 1, 1);
+      case 'semiannual':
+        // For semiannual, use the first day of the half that contains the current month
+        final half = month <= 6 ? 1 : 7;
+        return DateTime(year, half, 1);
+      case 'annual':
+        // For annual, use the first day of the year
+        return DateTime(year, 1, 1);
+      case 'custom':
+        // For custom, keep the current date
+        return currentDate;
+      default:
+        return DateTime(year, month, 1);
+    }
+  }
+
+  // Show the custom range selector
   void _showCustomRangeSelector() {
-    // Configurar fechas iniciales
+    // Set up initial dates
     DateTime startDate = DateTime.now().subtract(const Duration(days: 7));
     DateTime endDate = DateTime.now();
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -202,7 +367,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Selector de fecha de inicio
+                  // Start date selector
                   ListTile(
                     title: Text(
                       context.tr.translate('start_date'),
@@ -240,7 +405,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                     },
                   ),
 
-                  // Selector de fecha de fin
+                  // End date selector
                   ListTile(
                     title: Text(
                       context.tr.translate('end_date'),
@@ -268,7 +433,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                         context: context,
                         initialDate: endDate,
                         firstDate: startDate,
-                        // Permitir seleccionar fechas futuras para el rango personalizado
+                        // Allow selecting future dates for the custom range
                         lastDate: DateTime.now().add(
                           const Duration(days: 365 * 5),
                         ),
@@ -283,7 +448,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
 
                   const Spacer(),
 
-                  // Botones de acción
+                  // Action buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -332,18 +497,18 @@ class _PeriodSelectorState extends State<PeriodSelector> {
 
     return Column(
       children: [
-        // Controles de navegación de periodo
+        // Period navigation controls
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Botón de periodo anterior
+            // Previous period button
             IconButton(
               onPressed: _navigateToPreviousPeriod,
               icon: const Icon(Icons.chevron_left),
               tooltip: context.tr.translate('previous_period'),
             ),
 
-            // Título del periodo actual
+            // Current period title
             Expanded(
               child: GestureDetector(
                 onTap: () => _showCustomRangeSelector(),
@@ -351,7 +516,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                   periodTitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    // Mejorar contraste en modo oscuro
+                    // Improve contrast in dark mode
                     color: isDarkMode ? Colors.white : null,
                     fontWeight: FontWeight.bold,
                   ),
@@ -359,7 +524,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
               ),
             ),
 
-            // Botón de periodo siguiente
+            // Next period button
             IconButton(
               onPressed: _navigateToNextPeriod,
               icon: const Icon(Icons.chevron_right),
@@ -370,7 +535,7 @@ class _PeriodSelectorState extends State<PeriodSelector> {
 
         const SizedBox(height: 12),
 
-        // Selector de tipo de periodo
+        // Period type selector
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -436,7 +601,7 @@ class _PeriodTypeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    // Usar colores fijos que garanticen visibilidad en modo oscuro
+    // Use fixed colors that ensure visibility in dark mode
     final Color backgroundColor =
         isSelected
             ? (isDarkMode
@@ -446,7 +611,7 @@ class _PeriodTypeButton extends StatelessWidget {
                 ? const Color(0xFF2D2D2D)
                 : Theme.of(context).colorScheme.surface);
 
-    // Usar color de texto blanco para garantizar visibilidad en modo oscuro
+    // Use white text color to ensure visibility in dark mode
     final Color textColor =
         isSelected
             ? Colors.white

@@ -9,7 +9,7 @@ import '../../widgets/localized_text_example.dart';
 import '../../widgets/language_selector_widget.dart';
 import '../../widgets/app_header.dart';
 import '../../widgets/app_bottom_navigation.dart';
-import '../../widgets/budget_overview.dart';
+import '../../widgets/budget_overview.dart' as widget_budget;
 import '../../widgets/cash_bank_distribution.dart';
 import '../../widgets/finance_metrics.dart';
 import '../../widgets/period_selector.dart';
@@ -29,6 +29,7 @@ import '../../utils/currency_utils.dart';
 import '../income/add_income_screen.dart';
 import '../expense/add_expense_screen.dart';
 import '../category/categories_list_screen.dart';
+import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -71,6 +72,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   String? _dashboardErrorMessage;
   DashboardModel? _dashboardModel;
 
+  // Cache para almacenar datos por periodo y fecha
+  final Map<String, DashboardModel> _dashboardModelCache = {};
+
   @override
   void initState() {
     super.initState();
@@ -82,10 +86,20 @@ class _DashboardScreenState extends State<DashboardScreen>
     // Start with the passed userInfo
     _latestUserInfo = widget.userInfo;
 
-    // Then fetch latest user info and dashboard data
-    _fetchLatestUserInfo();
-    _loadUser();
-    _refreshDashboard();
+    // Inicializar con datos simulados en lugar de llamadas API
+    _user = UserModel(
+      id: widget.userId.isEmpty ? "user123" : widget.userId,
+      email: 'usuario@ejemplo.com',
+      name: 'Usuario Demo',
+      locale: 'es',
+      verifiedEmail: true,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    // Cargar datos simulados
+    _dashboardModel = _createMockDashboardData('monthly');
+    _isDashboardLoading = false;
   }
 
   @override
@@ -340,54 +354,72 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  void _refreshDashboard() {
+  void _refreshDashboard({bool useCache = false}) {
+    // Log para diagnóstico antes de refrescar
+    print(
+      '🔄 Refreshing dashboard - Period: $_currentPeriod, Date: ${_selectedDate?.toString() ?? "now"}',
+    );
+
     setState(() {
       _isDashboardLoading = true;
-      _dashboardFuture = _dashboardService.fetchDashboardData(
-        period: _currentPeriod,
-        selectedDate: _selectedDate,
-      );
 
-      // Cargar los datos de inmediato para tenerlos disponibles
-      _dashboardFuture
-          .then((data) {
-            if (mounted) {
-              setState(() {
-                _dashboardModel = data;
-                _isDashboardLoading = false;
-              });
-            }
-          })
-          .catchError((error) {
-            if (mounted) {
-              setState(() {
-                _dashboardErrorMessage = error.toString();
-                _isDashboardLoading = false;
-              });
-            }
-          });
+      // Usar datos locales simulados en lugar de hacer llamadas API
+      _dashboardModel = _createMockDashboardData(_currentPeriod);
+      _isDashboardLoading = false;
+
+      print('✅ Dashboard refrescado con datos simulados locales');
     });
   }
 
   void _onPeriodChanged(String period) {
+    // Log del cambio de periodo para diagnóstico
+    print('🕒 Period changed: $period (previous: $_currentPeriod)');
+
     setState(() {
       _currentPeriod = period;
     });
-    _refreshDashboard();
+
+    // Usar datos de ejemplo locales en lugar de hacer llamadas API
+    final mockData = _createMockDashboardData(period);
+    setState(() {
+      _dashboardModel = mockData;
+      _isDashboardLoading = false;
+    });
   }
 
   void _onDateChanged(DateTime date) {
+    // Log del cambio de fecha para diagnóstico
+    final oldDate =
+        _selectedDate != null
+            ? '${_selectedDate!.year}-${_selectedDate!.month}-${_selectedDate!.day}'
+            : 'null';
+    final newDate = '${date.year}-${date.month}-${date.day}';
+    print('📅 Date changed: $newDate (previous: $oldDate)');
+
     setState(() {
       _selectedDate = date;
     });
-    _refreshDashboard();
+
+    // Usar datos de ejemplo locales en lugar de hacer llamadas API
+    final mockData = _createMockDashboardData(_currentPeriod);
+    setState(() {
+      _dashboardModel = mockData;
+      _isDashboardLoading = false;
+    });
   }
 
   void _onCustomRangeSelected(DateTime startDate, DateTime endDate) {
     setState(() {
       _selectedDate = startDate;
+      _currentPeriod = 'custom';
     });
-    _refreshDashboard();
+
+    // Usar datos de ejemplo locales en lugar de hacer llamadas API
+    final mockData = _createMockDashboardData('custom');
+    setState(() {
+      _dashboardModel = mockData;
+      _isDashboardLoading = false;
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -396,6 +428,154 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
       ),
     );
+  }
+
+  // Método para crear datos simulados de dashboard
+  DashboardModel _createMockDashboardData(String period) {
+    // Datos simulados para BudgetOverview basados en el periodo
+    final now = DateTime.now();
+    final budgetOverview = _createMockBudgetOverview(period);
+
+    // Datos simulados para el resto de los componentes
+    return DashboardModel(
+      period: period,
+      date:
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
+      budgetOverview: budgetOverview,
+      savingsOverview: _mockSavingsOverview(),
+      cashDistribution: _mockCashBankDistribution(),
+      financeMetrics: _mockFinanceMetrics(),
+      upcomingBills: _mockUpcomingBills(),
+    );
+  }
+
+  // Crear datos simulados para BudgetOverview
+  BudgetOverview _createMockBudgetOverview(String period) {
+    // Adaptar los valores según el periodo
+    double factor = 1.0;
+    switch (period) {
+      case 'daily':
+        factor = 0.033;
+        break;
+      case 'weekly':
+        factor = 0.25;
+        break;
+      case 'monthly':
+        factor = 1.0;
+        break;
+      case 'quarterly':
+        factor = 3.0;
+        break;
+      case 'semiannual':
+        factor = 6.0;
+        break;
+      case 'annual':
+        factor = 12.0;
+        break;
+      case 'custom':
+        factor = 2.0;
+        break;
+    }
+
+    final spentAmount = 3500.00 * factor;
+    final upcomingAmount = 750.50 * factor;
+    final totalAmount = 5000.00 * factor;
+    final combinedExpense = spentAmount + upcomingAmount;
+    final expensePercent = (combinedExpense / totalAmount) * 100;
+    final totalIncome = totalAmount * 1.1; // 10% más de ingresos que gastos
+    final remainingAmount = totalIncome - combinedExpense;
+
+    return BudgetOverview(
+      moneyFlow: MoneyFlow(percent: 5.5, fromPrevious: 495.80 * factor),
+      remainingAmount: remainingAmount,
+      totalAmount: totalAmount,
+      spentAmount: spentAmount,
+      upcomingAmount: upcomingAmount,
+      combinedExpense: combinedExpense,
+      expensePercent: expensePercent,
+      dailyRate: combinedExpense / 30.0,
+      highSpending: expensePercent > 90,
+      totalIncome: totalIncome,
+    );
+  }
+
+  // Datos simulados para SavingsOverview
+  SavingsOverview _mockSavingsOverview() {
+    return SavingsOverview(
+      percent: 65.0,
+      available: 6500.0,
+      goal: 10000.0,
+      needToSave: 3500.0,
+      dailyTarget: 38.89,
+    );
+  }
+
+  // Datos simulados para CashBankDistribution
+  CashBankDistribution _mockCashBankDistribution() {
+    return CashBankDistribution(
+      month: DateFormat('MMMM yyyy').format(DateTime.now()),
+      cashAmount: 1200.0,
+      cashPercent: 20.0,
+      bankAmount: 4800.0,
+      bankPercent: 80.0,
+      monthlyTotal: 6000.0,
+    );
+  }
+
+  // Datos simulados para FinanceMetrics
+  FinanceMetrics _mockFinanceMetrics() {
+    return FinanceMetrics(income: 5500.0, expenses: 3500.0, bills: 750.0);
+  }
+
+  // Datos simulados para UpcomingBills
+  List<Bill> _mockUpcomingBills() {
+    final now = DateTime.now();
+    return [
+      Bill(
+        id: 1,
+        name: 'Alquiler',
+        amount: 850.0,
+        dueDate:
+            '${now.year}-${(now.month).toString().padLeft(2, '0')}-${(now.day + 5).toString().padLeft(2, '0')}',
+        paid: false,
+        overdue: false,
+        overdueDays: 0,
+        recurring: true,
+        category: 'Vivienda',
+        icon: 'home',
+      ),
+      Bill(
+        id: 2,
+        name: 'Internet',
+        amount: 59.90,
+        dueDate:
+            '${now.year}-${(now.month).toString().padLeft(2, '0')}-${(now.day + 12).toString().padLeft(2, '0')}',
+        paid: false,
+        overdue: false,
+        overdueDays: 0,
+        recurring: true,
+        category: 'Servicios',
+        icon: 'wifi',
+      ),
+      Bill(
+        id: 3,
+        name: 'Teléfono',
+        amount: 35.50,
+        dueDate:
+            '${now.year}-${(now.month).toString().padLeft(2, '0')}-${(now.day + 15).toString().padLeft(2, '0')}',
+        paid: false,
+        overdue: false,
+        overdueDays: 0,
+        recurring: true,
+        category: 'Servicios',
+        icon: 'phone',
+      ),
+    ];
+  }
+
+  // Formato consistente para las claves de caché
+  String _formatDateForCache(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -519,8 +699,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // Widget para construir el cuerpo principal del dashboard
   Widget _buildDashboardBody() {
+    // Si no hay datos, crear datos simulados por defecto
     if (_dashboardModel == null) {
-      return Center(child: Text(context.tr.translate('no_data_available')));
+      _dashboardModel = _createMockDashboardData(_currentPeriod);
     }
 
     return _buildDashboardMainContent(_dashboardModel!);
@@ -530,7 +711,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildDashboardMainContent(DashboardModel dashboardData) {
     return RefreshIndicator(
       onRefresh: () async {
-        _refreshDashboard();
+        // Recargar con datos simulados en lugar de API
+        setState(() {
+          _dashboardModel = _createMockDashboardData(_currentPeriod);
+          _isDashboardLoading = false;
+        });
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -554,8 +739,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             const SizedBox(height: 20),
 
-            // Budget overview
-            BudgetOverviewWidget(budgetOverview: dashboardData.budgetOverview),
+            // Budget overview - Usar el modelo local desvinculado del backend
+            widget_budget.BudgetOverviewWidget(
+              budgetOverview: _createLocalBudgetOverview(
+                dashboardData.budgetOverview,
+              ),
+            ),
 
             const SizedBox(height: 20),
 
@@ -1011,6 +1200,26 @@ class _DashboardScreenState extends State<DashboardScreen>
       SnackBar(
         content: Text('${context.tr.translate('action')}: ${label}'),
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // Método para convertir el BudgetOverview del backend al modelo local
+  widget_budget.BudgetOverview _createLocalBudgetOverview(
+    BudgetOverview backendModel,
+  ) {
+    return widget_budget.BudgetOverview(
+      remainingAmount: backendModel.remainingAmount,
+      expensePercent: backendModel.expensePercent,
+      spentAmount: backendModel.spentAmount,
+      upcomingAmount: backendModel.upcomingAmount,
+      totalAmount: backendModel.totalAmount,
+      combinedExpense: backendModel.combinedExpense,
+      totalIncome: backendModel.totalIncome,
+      dailyRate: backendModel.dailyRate,
+      highSpending: backendModel.highSpending,
+      moneyFlow: widget_budget.MoneyFlow(
+        fromPrevious: backendModel.moneyFlow.fromPrevious,
       ),
     );
   }

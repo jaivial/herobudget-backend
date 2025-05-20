@@ -1,7 +1,56 @@
 import 'package:flutter/material.dart';
-import '../models/dashboard_model.dart';
 import '../utils/app_localizations.dart';
 import '../theme/app_theme.dart';
+
+// Modelo local para desacoplar del backend
+class BudgetOverview {
+  final double remainingAmount;
+  final double expensePercent;
+  final double spentAmount;
+  final double upcomingAmount;
+  final double totalAmount;
+  final double combinedExpense;
+  final double totalIncome;
+  final double dailyRate;
+  final bool highSpending;
+  final MoneyFlow moneyFlow;
+
+  BudgetOverview({
+    required this.remainingAmount,
+    required this.expensePercent,
+    required this.spentAmount,
+    required this.upcomingAmount,
+    required this.totalAmount,
+    required this.combinedExpense,
+    required this.totalIncome,
+    required this.dailyRate,
+    required this.highSpending,
+    required this.moneyFlow,
+  });
+
+  // Factory para crear datos de ejemplo
+  factory BudgetOverview.example() {
+    return BudgetOverview(
+      remainingAmount: 1245.30,
+      expensePercent: 75.8,
+      spentAmount: 3500.00,
+      upcomingAmount: 750.50,
+      totalAmount: 5000.00,
+      combinedExpense: 4250.50,
+      totalIncome: 5495.80,
+      dailyRate: 141.68,
+      highSpending: false,
+      moneyFlow: MoneyFlow(fromPrevious: 495.80),
+    );
+  }
+}
+
+// Clase adicional para el modelo MoneyFlow
+class MoneyFlow {
+  final double fromPrevious;
+
+  MoneyFlow({required this.fromPrevious});
+}
 
 class BudgetOverviewWidget extends StatelessWidget {
   final BudgetOverview budgetOverview;
