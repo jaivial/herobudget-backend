@@ -12,6 +12,9 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.
 - Implementación del análisis predictivo de gastos mensuales.
 - Widget para mostrar consejos de ahorro basados en patrones de gasto.
 - Tasa diaria de gasto en el widget de flujo de dinero.
+- Posibilidad de navegar hacia fechas futuras en el selector de periodos para planificación financiera.
+- Compatibilidad del backend para procesar consultas con fechas futuras.
+- Adición de parámetro de fecha específica en las peticiones al backend para mostrar datos precisos según el periodo seleccionado.
 
 ### Cambiado
 - Reorganización completa del widget de flujo de dinero con mejor diseño visual.
@@ -20,8 +23,12 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.
 - Adición de indicador visual cuando se supera el 100% del presupuesto.
 - Implementación de tema oscuro en todos los componentes de la aplicación.
 - Actualizada la fórmula de cálculo de tasa diaria en la API backend.
+- Modificado el selector de periodos para mantener la coherencia de datos al navegar entre diferentes periodos.
 
 ### Corregido
+- Solución al problema donde los datos de budget overview no se actualizaban al cambiar de periodo.
+- Eliminada la restricción que impedía navegar a periodos futuros.
+- Corregido el cálculo de fechas en el backend para usar la fecha seleccionada por el usuario en lugar de siempre la fecha actual.
 - Solución al problema de visualización en dispositivos con pantalla pequeña.
 - Corrección de error en el cálculo del saldo heredado de periodos anteriores.
 
@@ -65,4 +72,4 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.
 - Visualización de estadísticas básicas.
 
 ---
-Última actualización: 2023-10-31 
+Última actualización: 2023-11-10 

@@ -107,6 +107,7 @@ func handleCalculateMoneyFlow(w http.ResponseWriter, r *http.Request) {
 	// Get user ID and period from request
 	userID := r.URL.Query().Get("user_id")
 	period := r.URL.Query().Get("period")
+	customDate := r.URL.Query().Get("date") // Obtener la fecha específica del query
 
 	if userID == "" {
 		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
@@ -118,7 +119,7 @@ func handleCalculateMoneyFlow(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calculate money flow
-	moneyFlowData, err := calculateMoneyFlow(userID, period)
+	moneyFlowData, err := calculateMoneyFlow(userID, period, customDate)
 	if err != nil {
 		log.Printf("Error calculating money flow: %v", err)
 		sendErrorResponse(w, "Error calculating money flow", http.StatusInternalServerError)
@@ -145,6 +146,7 @@ func handleGetMoneyFlowData(w http.ResponseWriter, r *http.Request) {
 	// Get user ID and period from request
 	userID := r.URL.Query().Get("user_id")
 	period := r.URL.Query().Get("period")
+	customDate := r.URL.Query().Get("date") // Obtener la fecha específica del query
 
 	if userID == "" {
 		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
@@ -155,8 +157,8 @@ func handleGetMoneyFlowData(w http.ResponseWriter, r *http.Request) {
 		period = "monthly" // Default period
 	}
 
-	// Calculate money flow
-	moneyFlowData, err := calculateMoneyFlow(userID, period)
+	// Calculate money flow with custom date if provided
+	moneyFlowData, err := calculateMoneyFlow(userID, period, customDate)
 	if err != nil {
 		log.Printf("Error calculating money flow: %v", err)
 		sendErrorResponse(w, "Error calculating money flow", http.StatusInternalServerError)
@@ -167,14 +169,21 @@ func handleGetMoneyFlowData(w http.ResponseWriter, r *http.Request) {
 	sendSuccessResponse(w, "Money flow data retrieved successfully", moneyFlowData)
 }
 
-func calculateMoneyFlow(userID, period string) (MoneyFlowData, error) {
+func calculateMoneyFlow(userID, period string, customDate ...string) (MoneyFlowData, error) {
 	var moneyFlowData MoneyFlowData
 	moneyFlowData.UserID = userID
 	moneyFlowData.Period = period
 	moneyFlowData.Date = time.Now().Format("2006-01-02")
 
-	// Obtener el rango de fechas para el período actual
-	startDate, endDate := getDateRangeForPeriod(period)
+	// Si se proporciona una fecha personalizada, usarla en la respuesta
+	if len(customDate) > 0 && customDate[0] != "" {
+		if _, err := time.Parse("2006-01-02", customDate[0]); err == nil {
+			moneyFlowData.Date = customDate[0]
+		}
+	}
+
+	// Obtener el rango de fechas para el período actual, usando la fecha personalizada si se proporciona
+	startDate, endDate := getDateRangeForPeriod(period, customDate...)
 
 	log.Printf("Calculating money flow for user %s in period %s (%s to %s)", userID, period, startDate, endDate)
 
@@ -390,39 +399,54 @@ func storeMoneyFlowData(data MoneyFlowData) error {
 	return err
 }
 
-func getDateRangeForPeriod(period string) (string, string) {
-	now := time.Now()
+func getDateRangeForPeriod(period string, customDate ...string) (string, string) {
+	// Usar la fecha customDate si se proporciona, de lo contrario usar la fecha actual
+	var targetDate time.Time
+	if len(customDate) > 0 && customDate[0] != "" {
+		// Parsear la fecha proporcionada (formato esperado: "YYYY-MM-DD")
+		parsedDate, err := time.Parse("2006-01-02", customDate[0])
+		if err == nil {
+			targetDate = parsedDate
+		} else {
+			// En caso de error de parseo, usar fecha actual
+			log.Printf("Error parsing provided date '%s': %v - using current date instead", customDate[0], err)
+			targetDate = time.Now()
+		}
+	} else {
+		targetDate = time.Now()
+	}
+
 	var startDate, endDate time.Time
 
 	switch period {
 	case "daily":
-		startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-		endDate = time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 0, now.Location())
+		startDate = time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 0, 0, 0, 0, targetDate.Location())
+		endDate = time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day(), 23, 59, 59, 0, targetDate.Location())
 	case "weekly":
 		// Calculate the start of the week (assuming Monday is the first day)
-		daysToMonday := int(now.Weekday())
+		daysToMonday := int(targetDate.Weekday())
 		if daysToMonday == 0 {
 			daysToMonday = 7 // Sunday is 0, so 7 days to the previous Monday
 		} else {
 			daysToMonday = daysToMonday - 1 // Monday is 1, so 0 days
 		}
-		startDate = time.Date(now.Year(), now.Month(), now.Day()-daysToMonday, 0, 0, 0, 0, now.Location())
+		startDate = time.Date(targetDate.Year(), targetDate.Month(), targetDate.Day()-daysToMonday, 0, 0, 0, 0, targetDate.Location())
 		endDate = startDate.AddDate(0, 0, 6)
 		endDate = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, endDate.Location())
 	case "monthly":
-		startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-		endDate = time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 0, now.Location())
+		startDate = time.Date(targetDate.Year(), targetDate.Month(), 1, 0, 0, 0, 0, targetDate.Location())
+		endDate = time.Date(targetDate.Year(), targetDate.Month()+1, 0, 23, 59, 59, 0, targetDate.Location())
 	case "quarterly":
-		quarter := (int(now.Month()) - 1) / 3
-		startDate = time.Date(now.Year(), time.Month(quarter*3+1), 1, 0, 0, 0, 0, now.Location())
-		endDate = time.Date(now.Year(), time.Month(quarter*3+4), 0, 23, 59, 59, 0, now.Location())
+		quarter := ((int(targetDate.Month()) - 1) / 3) + 1
+		startDate = time.Date(targetDate.Year(), time.Month(quarter*3-2), 1, 0, 0, 0, 0, targetDate.Location())
+		endDate = time.Date(targetDate.Year(), time.Month(quarter*3+1), 0, 23, 59, 59, 0, targetDate.Location())
 	case "yearly":
-		startDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
-		endDate = time.Date(now.Year(), 12, 31, 23, 59, 59, 0, now.Location())
+		startDate = time.Date(targetDate.Year(), 1, 1, 0, 0, 0, 0, targetDate.Location())
+		endDate = time.Date(targetDate.Year(), 12, 31, 23, 59, 59, 0, targetDate.Location())
 	default:
 		// Default to monthly
-		startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-		endDate = time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 0, now.Location())
+		startDate = time.Date(targetDate.Year(), targetDate.Month(), 1, 0, 0, 0, 0, targetDate.Location())
+		endDate = time.Date(targetDate.Year(), targetDate.Month()+1, 0, 23, 59, 59, 0, targetDate.Location())
 	}
 
 	return startDate.Format("2006-01-02"), endDate.Format("2006-01-02")

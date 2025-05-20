@@ -164,7 +164,10 @@ class DashboardService {
   }
 
   // Get dashboard data
-  Future<DashboardModel> fetchDashboardData({String period = 'monthly'}) async {
+  Future<DashboardModel> fetchDashboardData({
+    String period = 'monthly',
+    DateTime? selectedDate,
+  }) async {
     try {
       // Get user ID from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -174,10 +177,15 @@ class DashboardService {
         throw Exception('User not authenticated');
       }
 
-      // Make HTTP request using dashboard data service URL
+      // Usar la fecha seleccionada o la fecha actual si no se proporciona
+      final date = selectedDate ?? DateTime.now();
+      final dateString =
+          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+      // Make HTTP request using dashboard data service URL with additional date parameter
       final response = await http.get(
         Uri.parse(
-          '${dashboardDataUrl}/dashboard/data?user_id=$userId&period=$period',
+          '${dashboardDataUrl}/dashboard/data?user_id=$userId&period=$period&date=$dateString',
         ),
         headers: {'Content-Type': 'application/json'},
       );
@@ -200,7 +208,7 @@ class DashboardService {
               final moneyFlowResponse = await http
                   .get(
                     Uri.parse(
-                      '${moneyFlowCalculationUrl}/money-flow/data?user_id=$userId&period=$period',
+                      '${moneyFlowCalculationUrl}/money-flow/data?user_id=$userId&period=$period&date=$dateString',
                     ),
                     headers: {'Content-Type': 'application/json'},
                   )
@@ -290,8 +298,11 @@ class DashboardService {
   }
 
   // Change time period
-  Future<DashboardModel> changePeriod(String period) async {
-    return await fetchDashboardData(period: period);
+  Future<DashboardModel> changePeriod(
+    String period, {
+    DateTime? selectedDate,
+  }) async {
+    return await fetchDashboardData(period: period, selectedDate: selectedDate);
   }
 
   // Update savings goal

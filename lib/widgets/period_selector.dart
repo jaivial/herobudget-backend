@@ -6,12 +6,14 @@ class PeriodSelector extends StatefulWidget {
   final String initialPeriod;
   final Function(String) onPeriodChanged;
   final Function(DateTime, DateTime) onCustomRangeSelected;
+  final Function(DateTime)? onDateChanged;
 
   const PeriodSelector({
     super.key,
     this.initialPeriod = 'monthly',
     required this.onPeriodChanged,
     required this.onCustomRangeSelected,
+    this.onDateChanged,
   });
 
   @override
@@ -99,11 +101,13 @@ class _PeriodSelectorState extends State<PeriodSelector> {
       }
     });
     widget.onPeriodChanged(_currentPeriod);
+    if (widget.onDateChanged != null) {
+      widget.onDateChanged!(_currentDate);
+    }
   }
 
   // Navegar al periodo siguiente
   void _navigateToNextPeriod() {
-    final now = DateTime.now();
     DateTime nextDate;
 
     switch (_currentPeriod) {
@@ -145,15 +149,13 @@ class _PeriodSelectorState extends State<PeriodSelector> {
         return;
     }
 
-    // Solo permitir avanzar hasta la fecha actual
-    if (nextDate.isAfter(now)) {
-      return;
-    }
-
     setState(() {
       _currentDate = nextDate;
     });
     widget.onPeriodChanged(_currentPeriod);
+    if (widget.onDateChanged != null) {
+      widget.onDateChanged!(_currentDate);
+    }
   }
 
   // Cambiar el tipo de periodo
@@ -163,6 +165,9 @@ class _PeriodSelectorState extends State<PeriodSelector> {
       _currentDate = DateTime.now(); // Resetear a la fecha actual
     });
     widget.onPeriodChanged(_currentPeriod);
+    if (widget.onDateChanged != null) {
+      widget.onDateChanged!(_currentDate);
+    }
   }
 
   // Mostrar el selector de rango personalizado
@@ -263,7 +268,10 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                         context: context,
                         initialDate: endDate,
                         firstDate: startDate,
-                        lastDate: DateTime.now(),
+                        // Permitir seleccionar fechas futuras para el rango personalizado
+                        lastDate: DateTime.now().add(
+                          const Duration(days: 365 * 5),
+                        ),
                       );
                       if (pickedDate != null) {
                         setModalState(() {

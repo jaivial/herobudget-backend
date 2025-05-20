@@ -52,6 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   final BillsService _billsService = BillsService();
   late Future<DashboardModel> _dashboardFuture;
   String _currentPeriod = 'monthly';
+  DateTime _selectedDate = DateTime.now();
   UserModel? _user;
   int _currentNavigationIndex = 0;
   Map<String, dynamic> _latestUserInfo = {};
@@ -344,6 +345,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       _isDashboardLoading = true;
       _dashboardFuture = _dashboardService.fetchDashboardData(
         period: _currentPeriod,
+        selectedDate: _selectedDate,
       );
 
       // Cargar los datos de inmediato para tenerlos disponibles
@@ -374,8 +376,19 @@ class _DashboardScreenState extends State<DashboardScreen>
     _refreshDashboard();
   }
 
+  void _onDateChanged(DateTime date) {
+    setState(() {
+      _selectedDate = date;
+    });
+    _refreshDashboard();
+  }
+
   void _onCustomRangeSelected(DateTime startDate, DateTime endDate) {
-    // Lógica para manejar rango personalizado
+    setState(() {
+      _selectedDate = startDate;
+    });
+    _refreshDashboard();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -519,85 +532,90 @@ class _DashboardScreenState extends State<DashboardScreen>
       onRefresh: () async {
         _refreshDashboard();
       },
-      child: ListView(
-        // Add bottom padding to compensate for navigation bar
-        padding: const EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 16,
-          bottom: 100, // Increased space for navigation bar with bottom margin
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Selector de periodo con funciones de callback actualizadas
+            PeriodSelector(
+              initialPeriod: _currentPeriod,
+              onPeriodChanged: (period) {
+                _onPeriodChanged(period);
+              },
+              onCustomRangeSelected: (startDate, endDate) {
+                _onCustomRangeSelected(startDate, endDate);
+              },
+              onDateChanged: (date) {
+                _onDateChanged(date);
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Budget overview
+            BudgetOverviewWidget(budgetOverview: dashboardData.budgetOverview),
+
+            const SizedBox(height: 20),
+
+            // Savings overview
+            SavingsOverviewWidget(
+              savingsOverview: dashboardData.savingsOverview,
+              onEditGoal: () {
+                // Show dialog to edit goal
+                _showEditGoalDialog(dashboardData.savingsOverview.goal);
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Cash and bank distribution
+            CashBankDistributionWidget(
+              distribution: dashboardData.cashDistribution,
+              onTransferTap: () {
+                // Show dialog to transfer between cash and bank
+                _showTransferDialog(dashboardData.cashDistribution);
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Finance metrics
+            FinanceMetricsWidget(metrics: dashboardData.financeMetrics),
+
+            const SizedBox(height: 20),
+
+            // Upcoming bills
+            UpcomingBillsWidget(
+              bills: dashboardData.upcomingBills,
+              onAddBill: () {
+                // Show modal to add bill
+                _showAddBillDialog();
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // Quick actions
+            QuickActionsWidget(
+              onIncomePressed: () {
+                _showAddIncomeDialog();
+              },
+              onExpensePressed: () {
+                _showAddExpenseDialog();
+              },
+              onPayBillPressed: () {
+                _showPayBillDialog(dashboardData.upcomingBills);
+              },
+              onAddCategoryPressed: () {
+                _showAddCategoryDialog();
+              },
+            ),
+
+            const SizedBox(height: 20),
+          ],
         ),
-        children: [
-          // Period selector
-          PeriodSelector(
-            initialPeriod: _currentPeriod,
-            onPeriodChanged: _onPeriodChanged,
-            onCustomRangeSelected: _onCustomRangeSelected,
-          ),
-
-          const SizedBox(height: 20),
-
-          // Budget overview
-          BudgetOverviewWidget(budgetOverview: dashboardData.budgetOverview),
-
-          const SizedBox(height: 20),
-
-          // Savings overview
-          SavingsOverviewWidget(
-            savingsOverview: dashboardData.savingsOverview,
-            onEditGoal: () {
-              // Show dialog to edit goal
-              _showEditGoalDialog(dashboardData.savingsOverview.goal);
-            },
-          ),
-
-          const SizedBox(height: 20),
-
-          // Cash and bank distribution
-          CashBankDistributionWidget(
-            distribution: dashboardData.cashDistribution,
-            onTransferTap: () {
-              // Show dialog to transfer between cash and bank
-              _showTransferDialog(dashboardData.cashDistribution);
-            },
-          ),
-
-          const SizedBox(height: 20),
-
-          // Finance metrics
-          FinanceMetricsWidget(metrics: dashboardData.financeMetrics),
-
-          const SizedBox(height: 20),
-
-          // Upcoming bills
-          UpcomingBillsWidget(
-            bills: dashboardData.upcomingBills,
-            onAddBill: () {
-              // Show modal to add bill
-              _showAddBillDialog();
-            },
-          ),
-
-          const SizedBox(height: 20),
-
-          // Quick actions
-          QuickActionsWidget(
-            onIncomePressed: () {
-              _showAddIncomeDialog();
-            },
-            onExpensePressed: () {
-              _showAddExpenseDialog();
-            },
-            onPayBillPressed: () {
-              _showPayBillDialog(dashboardData.upcomingBills);
-            },
-            onAddCategoryPressed: () {
-              _showAddCategoryDialog();
-            },
-          ),
-
-          const SizedBox(height: 20),
-        ],
       ),
     );
   }

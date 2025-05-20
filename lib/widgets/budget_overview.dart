@@ -85,73 +85,36 @@ class BudgetOverviewWidget extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Dinero restante (en grande) y presupuesto total (más pequeño a la derecha)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                flex: 3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      localizations.translate('remaining_amount'),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatCurrencyEuroStyle(
-                        localizations.formatCurrency(
-                          budgetOverview.remainingAmount,
-                        ),
-                      ),
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color:
-                            budgetOverview.remainingAmount >= 0
-                                ? Colors.green
-                                : Colors.red,
-                      ),
-                    ),
-                  ],
+          // Dinero restante (centrado)
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  localizations.translate('remaining_amount'),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
                 ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      localizations.translate('total_income'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatCurrencyEuroStyle(
+                    localizations.formatCurrency(
+                      budgetOverview.remainingAmount,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatCurrencyEuroStyle(
-                        localizations.formatCurrency(
-                          budgetOverview.totalIncome,
-                        ),
-                      ),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ],
+                  ),
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        budgetOverview.remainingAmount >= 0
+                            ? Colors.green
+                            : Colors.red,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           const SizedBox(height: 12),
@@ -383,6 +346,66 @@ class BudgetOverviewWidget extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // Ingresos Totales (nuevo container)
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.trending_up,
+                        size: 16,
+                        color: Colors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          localizations.translate('total_income'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color:
+                                Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatCurrencyEuroStyle(
+                            localizations.formatCurrency(
+                              budgetOverview.totalIncome,
+                            ),
+                          ),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
           // Gastos combinados (Total expenses)
           Container(
             padding: const EdgeInsets.all(12),
@@ -406,13 +429,13 @@ class BudgetOverviewWidget extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
+                            color: Colors.red.withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.pie_chart,
                             size: 16,
-                            color: Colors.blue,
+                            color: Colors.red,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -437,12 +460,10 @@ class BudgetOverviewWidget extends StatelessWidget {
                                   budgetOverview.combinedExpense,
                                 ),
                               ),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: _getExpenseStatusColor(
-                                  budgetOverview.expensePercent,
-                                ),
+                                color: Colors.red,
                               ),
                             ),
                           ],
@@ -455,19 +476,15 @@ class BudgetOverviewWidget extends StatelessWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: _getExpenseStatusColor(
-                          budgetOverview.expensePercent,
-                        ).withOpacity(0.1),
+                        color: Colors.red.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '${budgetOverview.expensePercent.toStringAsFixed(1)}%',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: _getExpenseStatusColor(
-                            budgetOverview.expensePercent,
-                          ),
+                          color: Colors.red,
                         ),
                       ),
                     ),
