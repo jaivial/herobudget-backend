@@ -2,53 +2,147 @@
 
 ## Visión General
 
-Hero Budget es una aplicación de gestión financiera personal desarrollada con Flutter. Este documento describe la estructura de archivos del proyecto y define la funcionalidad y relación entre ellos.
+Hero Budget es una aplicación de gestión financiera personal desarrollada con Flutter para el frontend y Go para los microservicios backend. La aplicación está diseñada con una arquitectura modular que separa las diferentes funcionalidades en servicios independientes.
 
 ## Estructura de Directorios
 
 ```
 hero_budget/
-├── lib/                        # Código fuente principal de Dart/Flutter
-│   ├── config/                 # Configuraciones de la aplicación
-│   ├── examples/               # Ejemplos de código
-│   ├── models/                 # Modelos de datos
-│   ├── screens/                # Pantallas de la aplicación
-│   ├── services/               # Servicios para lógica de negocio y comunicación con API
-│   ├── theme/                  # Definición de temas y estilos
-│   ├── utils/                  # Utilidades y helpers
-│   ├── widgets/                # Widgets reutilizables
-│   └── main.dart               # Punto de entrada de la aplicación
-├── assets/                     # Recursos estáticos (imágenes, fuentes, etc.)
-│   ├── images/                 # Imágenes y gráficos
-│   ├── avatars/                # Imágenes de avatar para perfiles
-│   ├── lang/                   # Archivos de idioma
-│   └── l10n/                   # Localización
-├── backend/                    # Código backend (Go)
-│   ├── money_flow_sync/        # Sincronización de flujo de dinero
-│   ├── categories_management/  # Gestión de categorías
-│   ├── expense_management/     # Gestión de gastos
-│   ├── income_management/      # Gestión de ingresos
-│   ├── profile_management/     # Gestión de perfiles
-│   ├── ... (otros módulos backend)
-│   ├── schema.sql              # Definición del schema de base de datos
-│   ├── go.mod                  # Dependencias de Go
-│   └── main.go                 # Punto de entrada del backend
-├── screens/                    # Posible duplicado o estructura alternativa de pantallas
-├── ios/                        # Configuración específica de iOS
-├── android/                    # Configuración específica de Android
-├── macos/                      # Configuración específica de macOS
-├── linux/                      # Configuración específica de Linux
-├── windows/                    # Configuración específica de Windows
-├── web/                        # Configuración específica de web
-├── test/                       # Pruebas automatizadas
-├── docs/                       # Documentación del proyecto
-│   ├── UI_UX_GUIDE.md          # Guía de estilo UI/UX
-│   ├── DATABASE_SCHEMA.md      # Documentación de la base de datos
-│   ├── PROJECT_STRUCTURE.md    # Este documento
-│   └── CHANGELOG.md            # Registro de cambios
-├── pubspec.yaml                # Configuración y dependencias de Flutter
-└── pubspec.lock                # Versiones específicas de dependencias
+├── backend/                   # Servicios backend en Go
+│   ├── google_auth/           # Servicio de autenticación
+│   │   ├── main.go            # Punto de entrada del servicio
+│   │   └── users.db           # Base de datos SQLite
+│   ├── income_management/     # Servicio de gestión de ingresos
+│   │   └── main.go            # Lógica para manejar ingresos
+│   ├── expense_management/    # Servicio de gestión de gastos
+│   │   └── main.go            # Lógica para manejar gastos
+│   ├── bills_management/      # Servicio de gestión de facturas
+│   │   └── main.go            # Lógica para manejar facturas
+│   └── ...
+├── lib/                       # Código Flutter para el frontend
+│   ├── main.dart              # Punto de entrada de la aplicación
+│   ├── models/                # Modelos de datos
+│   ├── screens/               # Pantallas de la aplicación
+│   ├── widgets/               # Widgets reutilizables
+│   ├── services/              # Servicios de conexión con backend
+│   └── ...
+├── docs/                      # Documentación del proyecto
+│   ├── DATABASE_SCHEMA.md     # Esquema de la base de datos
+│   ├── CHANGELOG.md           # Registro de cambios
+│   └── PROJECT_STRUCTURE.md   # Este archivo
+└── ...
 ```
+
+## Componentes Backend
+
+### Servicio de Autenticación (`google_auth`)
+
+El servicio de autenticación maneja el registro y login de usuarios, principalmente a través de Google OAuth. También es responsable de mantener la base de datos SQLite `users.db` que contiene todas las tablas del sistema.
+
+### Servicio de Gestión de Ingresos (`income_management`)
+
+Maneja todo lo relacionado con los ingresos de los usuarios:
+
+- Registro de nuevos ingresos
+- Actualización de ingresos existentes
+- Eliminación de ingresos
+- Actualización de balances generales
+- **Actualización de balances por periodos**
+
+El servicio ahora incluye funciones para actualizar automáticamente los balances por diferentes periodos de tiempo cuando se registra un ingreso:
+
+- `updateTimeBalances`: Función principal que coordina la actualización en todos los periodos
+- `updateDailyBalance`: Actualiza el balance diario
+- `updateWeeklyBalance`: Actualiza el balance semanal
+- `updateMonthlyBalance`: Actualiza el balance mensual
+- `updateQuarterlyBalance`: Actualiza el balance trimestral
+- `updateSemiannualBalance`: Actualiza el balance semestral
+- `updateAnnualBalance`: Actualiza el balance anual
+
+### Servicio de Gestión de Gastos (`expense_management`)
+
+Similar al servicio de ingresos, pero especializado en gastos:
+
+- Registro de nuevos gastos
+- Actualización de gastos existentes
+- Eliminación de gastos
+- Actualización de balances generales
+- **Actualización de balances por periodos**
+
+La estructura de funciones para actualizar balances es idéntica a la del servicio de ingresos, pero adaptada para trabajar con gastos.
+
+### Servicio de Gestión de Facturas (`bills_management`)
+
+Maneja las facturas recurrentes y no recurrentes:
+
+- Creación de nuevas facturas
+- Actualización de facturas existentes
+- Marcar facturas como pagadas
+- Eliminación de facturas
+- **Actualización de balances por periodos**
+
+Las facturas pagadas también actualizan los balances por periodos, utilizando el mismo conjunto de funciones que los otros servicios.
+
+## Base de Datos
+
+La aplicación utiliza SQLite como motor de base de datos. El archivo `users.db` contiene todas las tablas necesarias para el funcionamiento de la aplicación.
+
+### Tablas de Balance por Periodo
+
+Las nuevas tablas para el seguimiento de balances por periodos son:
+
+1. `daily_balance`: Balance diario
+2. `weekly_balance`: Balance semanal
+3. `monthly_balance`: Balance mensual
+4. `quarterly_balance`: Balance trimestral
+5. `semiannual_balance`: Balance semestral
+6. `annual_balance`: Balance anual
+
+Cada tabla almacena la información de ingresos, gastos y facturas para su respectivo periodo, junto con el balance acumulado que incluye el saldo del periodo anterior.
+
+## Flujo de Datos
+
+El flujo de datos para la actualización de balances por periodos es el siguiente:
+
+1. El usuario realiza una acción (agregar ingreso, agregar gasto, pagar factura) desde la aplicación móvil.
+2. La aplicación envía la información al microservicio correspondiente.
+3. El microservicio procesa la solicitud y realiza las siguientes acciones:
+   - Registra la transacción en su tabla específica (incomes, expenses, bills)
+   - Actualiza el balance general del usuario (tabla balances)
+   - Actualiza la distribución efectivo-banco si corresponde (tabla cash_bank)
+   - Llama a la función `updateTimeBalances` para actualizar los balances por periodos
+4. La función `updateTimeBalances` identifica a qué periodos corresponde la transacción según su fecha y actualiza las tablas correspondientes.
+5. Para cada periodo, se calcula el nuevo balance sumando el balance del periodo anterior y las transacciones del periodo actual.
+6. La aplicación móvil puede consultar los balances de cualquier periodo y mostrarlos al usuario.
+
+## Cálculo de Balances
+
+Para cada periodo, el balance se calcula de la siguiente manera:
+
+```
+Balance = BalanceAnterior + Ingresos - Gastos - Facturas
+```
+
+Donde:
+- `BalanceAnterior` es el balance acumulado del periodo inmediatamente anterior
+- `Ingresos` es la suma de todos los ingresos del periodo actual
+- `Gastos` es la suma de todos los gastos del periodo actual
+- `Facturas` es la suma de todas las facturas pagadas del periodo actual
+
+## Consideraciones de Rendimiento
+
+- Las tablas cuentan con índices optimizados para mejorar el rendimiento de las consultas frecuentes.
+- Las actualizaciones de balances se realizan de forma incremental para evitar recalcular todos los datos cada vez.
+- Las operaciones de base de datos utilizan transacciones para garantizar la integridad de los datos.
+
+## Extensiones Futuras
+
+La estructura modular del proyecto permite agregar fácilmente nuevas funcionalidades o modificar las existentes. Algunas posibles extensiones incluyen:
+
+- Integración con servicios bancarios para sincronización automática
+- Exportación de informes financieros por periodos
+- Sistema de metas de ahorro por periodos
+- Análisis predictivo basado en tendencias históricas
 
 ## Componentes Principales
 

@@ -1,7 +1,307 @@
-# Documentación de la Base de Datos
+# Esquema de Base de Datos - Hero Budget
 
-## Introducción
-Este documento describe la estructura de la base de datos utilizada en la aplicación Hero Budget, detallando tablas, columnas, relaciones y su implementación en el código.
+## Descripción
+
+Este documento describe la estructura de la base de datos SQLite utilizada en Hero Budget, incluyendo tablas, columnas y sus relaciones.
+
+## Tablas
+
+### Usuarios (`users`)
+
+Almacena información de los usuarios.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| google_id | TEXT | ID de Google del usuario (único) |
+| email | TEXT | Correo electrónico del usuario (único) |
+| name | TEXT | Nombre completo |
+| given_name | TEXT | Nombre |
+| family_name | TEXT | Apellidos |
+| picture | TEXT | URL de la imagen de perfil |
+| locale | TEXT | Preferencia de idioma |
+| verified_email | BOOLEAN | Si el email está verificado |
+| password | TEXT | Contraseña (encriptada) |
+| profile_image_blob | TEXT | Imagen de perfil en formato blob |
+| verification_code | TEXT | Código de verificación |
+| reset_token | TEXT | Token para reseteo de contraseña |
+| reset_expires | DATETIME | Fecha de expiración del token |
+| created_at | DATETIME | Fecha de creación del registro |
+| updated_at | DATETIME | Fecha de última actualización |
+
+### Ingresos (`incomes`)
+
+Almacena los ingresos registrados por los usuarios.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario (FK) |
+| amount | REAL | Cantidad del ingreso |
+| date | TEXT | Fecha del ingreso (YYYY-MM-DD) |
+| category | TEXT | Categoría del ingreso |
+| payment_method | TEXT | Método de pago ("cash" o "bank") |
+| description | TEXT | Descripción del ingreso |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+### Gastos (`expenses`)
+
+Almacena los gastos registrados por los usuarios.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario (FK) |
+| amount | REAL | Cantidad del gasto |
+| date | TEXT | Fecha del gasto (YYYY-MM-DD) |
+| category | TEXT | Categoría del gasto |
+| payment_method | TEXT | Método de pago ("cash" o "bank") |
+| description | TEXT | Descripción del gasto |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+### Facturas (`bills`)
+
+Almacena las facturas recurrentes y no recurrentes de los usuarios.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario (FK) |
+| name | TEXT | Nombre de la factura |
+| amount | REAL | Importe de la factura |
+| due_date | TEXT | Fecha de vencimiento (YYYY-MM-DD) |
+| paid | BOOLEAN | Si está pagada o no |
+| overdue | BOOLEAN | Si está vencida |
+| overdue_days | INTEGER | Días de retraso |
+| recurring | BOOLEAN | Si es una factura recurrente |
+| category | TEXT | Categoría de la factura |
+| icon | TEXT | Icono representativo |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+### Balances (`balances`)
+
+Almacena el balance total del usuario entre efectivo y banco.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario (único) |
+| cash_balance | REAL | Balance en efectivo |
+| bank_balance | REAL | Balance en banco |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+### Distribución Efectivo-Banco (`cash_bank`)
+
+Almacena la distribución mensual de efectivo y banco.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| month | TEXT | Mes en formato YYYY-MM |
+| cash_amount | REAL | Cantidad en efectivo |
+| cash_percent | REAL | Porcentaje en efectivo |
+| bank_amount | REAL | Cantidad en banco |
+| bank_percent | REAL | Porcentaje en banco |
+| monthly_total | REAL | Total mensual |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+### Transacciones Efectivo-Banco (`cash_bank_transactions`)
+
+Almacena las transacciones que afectan a la distribución de efectivo y banco.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| transaction_type | TEXT | Tipo de transacción |
+| amount | REAL | Cantidad |
+| date | TEXT | Fecha (YYYY-MM-DD) |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+
+### Categorías (`categories`)
+
+Almacena las categorías personalizadas de los usuarios.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| name | TEXT | Nombre de la categoría |
+| type | TEXT | Tipo de categoría (expense, income, bill) |
+| emoji | TEXT | Emoji representativo |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+### Balance Diario (`daily_balance`)
+
+Almacena el balance diario de ingresos, gastos y facturas.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| date | TEXT | Fecha en formato YYYY-MM-DD |
+| income_amount | REAL | Suma de ingresos del día |
+| expense_amount | REAL | Suma de gastos del día |
+| bills_amount | REAL | Suma de facturas pagadas del día |
+| balance | REAL | Balance total (incluye balance anterior) |
+| previous_balance | REAL | Balance del día anterior |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+**Índices**:
+- `idx_daily_balance_user`: Índice en `user_id`
+- `idx_daily_balance_date`: Índice en `date`
+
+### Balance Semanal (`weekly_balance`)
+
+Almacena el balance semanal de ingresos, gastos y facturas.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| year_week | TEXT | Semana en formato YYYY-WXX |
+| start_date | TEXT | Fecha de inicio de semana (YYYY-MM-DD) |
+| end_date | TEXT | Fecha de fin de semana (YYYY-MM-DD) |
+| income_amount | REAL | Suma de ingresos de la semana |
+| expense_amount | REAL | Suma de gastos de la semana |
+| bills_amount | REAL | Suma de facturas pagadas de la semana |
+| balance | REAL | Balance total (incluye balance anterior) |
+| previous_balance | REAL | Balance de la semana anterior |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+**Índices**:
+- `idx_weekly_balance_user`: Índice en `user_id`
+- `idx_weekly_balance_week`: Índice en `year_week`
+
+### Balance Mensual (`monthly_balance`)
+
+Almacena el balance mensual de ingresos, gastos y facturas.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| year_month | TEXT | Mes en formato YYYY-MM |
+| income_amount | REAL | Suma de ingresos del mes |
+| expense_amount | REAL | Suma de gastos del mes |
+| bills_amount | REAL | Suma de facturas pagadas del mes |
+| balance | REAL | Balance total (incluye balance anterior) |
+| previous_balance | REAL | Balance del mes anterior |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+**Índices**:
+- `idx_monthly_balance_user`: Índice en `user_id`
+- `idx_monthly_balance_month`: Índice en `year_month`
+
+### Balance Trimestral (`quarterly_balance`)
+
+Almacena el balance trimestral de ingresos, gastos y facturas.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| year_quarter | TEXT | Trimestre en formato YYYY-QX |
+| start_date | TEXT | Fecha de inicio de trimestre (YYYY-MM-DD) |
+| end_date | TEXT | Fecha de fin de trimestre (YYYY-MM-DD) |
+| income_amount | REAL | Suma de ingresos del trimestre |
+| expense_amount | REAL | Suma de gastos del trimestre |
+| bills_amount | REAL | Suma de facturas pagadas del trimestre |
+| balance | REAL | Balance total (incluye balance anterior) |
+| previous_balance | REAL | Balance del trimestre anterior |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+**Índices**:
+- `idx_quarterly_balance_user`: Índice en `user_id`
+- `idx_quarterly_balance_quarter`: Índice en `year_quarter`
+
+### Balance Semestral (`semiannual_balance`)
+
+Almacena el balance semestral de ingresos, gastos y facturas.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| year_half | TEXT | Semestre en formato YYYY-HX |
+| start_date | TEXT | Fecha de inicio de semestre (YYYY-MM-DD) |
+| end_date | TEXT | Fecha de fin de semestre (YYYY-MM-DD) |
+| income_amount | REAL | Suma de ingresos del semestre |
+| expense_amount | REAL | Suma de gastos del semestre |
+| bills_amount | REAL | Suma de facturas pagadas del semestre |
+| balance | REAL | Balance total (incluye balance anterior) |
+| previous_balance | REAL | Balance del semestre anterior |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+**Índices**:
+- `idx_semiannual_balance_user`: Índice en `user_id`
+- `idx_semiannual_balance_half`: Índice en `year_half`
+
+### Balance Anual (`annual_balance`)
+
+Almacena el balance anual de ingresos, gastos y facturas.
+
+| Columna | Tipo | Descripción |
+| ------- | ---- | ----------- |
+| id | INTEGER | Identificador único (PK, autoincremento) |
+| user_id | TEXT | ID del usuario |
+| year | TEXT | Año en formato YYYY |
+| income_amount | REAL | Suma de ingresos del año |
+| expense_amount | REAL | Suma de gastos del año |
+| bills_amount | REAL | Suma de facturas pagadas del año |
+| balance | REAL | Balance total (incluye balance anterior) |
+| previous_balance | REAL | Balance del año anterior |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Fecha de última actualización |
+
+**Índices**:
+- `idx_annual_balance_user`: Índice en `user_id`
+- `idx_annual_balance_year`: Índice en `year`
+
+### Otras Tablas
+
+La base de datos también incluye otras tablas como `budget`, `savings`, `finance_metrics`, `balance_history` que complementan el sistema de gestión financiera.
+
+## Relaciones
+
+- Un usuario (`users`) puede tener múltiples registros en todas las demás tablas.
+- Los ingresos (`incomes`), gastos (`expenses`), facturas (`bills`) afectan directamente a los balances por periodo.
+- Cada transacción actualiza automáticamente los balances correspondientes según su fecha.
+
+## Funcionamiento
+
+1. Cuando se registra un ingreso, se actualiza:
+   - La tabla `balances` incrementando el balance correspondiente según el método de pago
+   - La tabla `cash_bank` para reflejar la distribución mensual
+   - Las tablas de balance por periodo (`daily_balance`, `weekly_balance`, etc.)
+   
+2. Cuando se registra un gasto, se actualiza:
+   - La tabla `balances` decrementando el balance correspondiente según el método de pago
+   - La tabla `cash_bank` para reflejar la distribución mensual
+   - Las tablas de balance por periodo (`daily_balance`, `weekly_balance`, etc.)
+   
+3. Cuando se paga una factura, se actualiza:
+   - Las tablas de balance por periodo (`daily_balance`, `weekly_balance`, etc.)
+   
+4. El cálculo del balance en cada periodo incluye:
+   - El balance del periodo anterior
+   - Los ingresos del periodo actual
+   - Los gastos del periodo actual
+   - Las facturas pagadas del periodo actual
+
+Esta estructura permite mantener un seguimiento detallado de los movimientos financieros de los usuarios en diferentes marcos temporales, facilitando el análisis y la visualización de tendencias.
 
 ## Tecnología
 Hero Budget utiliza SQLite como su sistema de gestión de base de datos, con soporte explícito para codificación UTF-8.
