@@ -173,6 +173,12 @@ Almacena el balance semanal de ingresos, gastos y facturas.
 | income_amount | REAL | Suma de ingresos de la semana |
 | expense_amount | REAL | Suma de gastos de la semana |
 | bills_amount | REAL | Suma de facturas pagadas de la semana |
+| cash_amount | REAL | Suma de movimientos en efectivo de la semana. Este valor refleja las transacciones de la semana actual. |
+| bank_amount | REAL | Suma de movimientos en banco de la semana. Este valor refleja las transacciones de la semana actual. |
+| previous_cash_amount | REAL | Saldo en efectivo al inicio de la semana (heredado de la semana anterior). |
+| previous_bank_amount | REAL | Saldo en banco al inicio de la semana (heredado de la semana anterior). |
+| balance_cash_amount | REAL | Saldo final en efectivo de la semana (`previous_cash_amount` + `cash_amount` de la semana). |
+| balance_bank_amount | REAL | Saldo final en banco de la semana (`previous_bank_amount` + `bank_amount` de la semana). |
 | balance | REAL | Balance total (incluye balance anterior) |
 | previous_balance | REAL | Balance de la semana anterior |
 | created_at | TIMESTAMP | Fecha de creación del registro |
@@ -194,6 +200,12 @@ Almacena el balance mensual de ingresos, gastos y facturas.
 | income_amount | REAL | Suma de ingresos del mes |
 | expense_amount | REAL | Suma de gastos del mes |
 | bills_amount | REAL | Suma de facturas pagadas del mes |
+| cash_amount | REAL | Suma de movimientos en efectivo del mes. Este valor refleja las transacciones del mes actual. |
+| bank_amount | REAL | Suma de movimientos en banco del mes. Este valor refleja las transacciones del mes actual. |
+| previous_cash_amount | REAL | Saldo en efectivo al inicio del mes (heredado del mes anterior). |
+| previous_bank_amount | REAL | Saldo en banco al inicio del mes (heredado del mes anterior). |
+| balance_cash_amount | REAL | Saldo final en efectivo del mes (`previous_cash_amount` + `cash_amount` del mes). |
+| balance_bank_amount | REAL | Saldo final en banco del mes (`previous_bank_amount` + `bank_amount` del mes). |
 | balance | REAL | Balance total (incluye balance anterior) |
 | previous_balance | REAL | Balance del mes anterior |
 | created_at | TIMESTAMP | Fecha de creación del registro |
