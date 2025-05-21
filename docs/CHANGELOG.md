@@ -43,4 +43,19 @@
 - Se mejoró la estructura de la base de datos con índices optimizados para consultas frecuentes
 
 ## [Versiones Anteriores]
-Historial de versiones anteriores no disponible. 
+Historial de versiones anteriores no disponible.
+
+## [Pendiente de versión] - YYYY-MM-DD
+
+### Añadido
+- Implementación de funcionalidad para convertir automáticamente facturas pagadas en gastos
+- Mejora en la actualización en cascada de tablas de balance para asegurar precisión en los datos
+- Transacción de base de datos para garantizar consistencia en actualizaciones de balance
+
+### Modificado
+- Actualización de la estructura de datos de `PayBillRequest` para soportar la descripción personalizada de gastos
+- Mejora en el manejo de errores durante el pago de facturas y actualización de balances
+
+### Documentación
+- Actualización del esquema de base de datos para incluir el flujo de pago de facturas
+- Documentación del proceso de actualización de balances en cascada 

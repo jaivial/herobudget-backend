@@ -78,6 +78,7 @@ Almacena las facturas recurrentes y no recurrentes de los usuarios.
 | recurring | BOOLEAN | Si es una factura recurrente |
 | category | TEXT | Categoría de la factura |
 | icon | TEXT | Icono representativo |
+| payment_method | TEXT | Método de pago ("cash" o "bank") |
 | created_at | TIMESTAMP | Fecha de creación del registro |
 | updated_at | TIMESTAMP | Fecha de última actualización |
 
@@ -617,6 +618,30 @@ Este documento debe actualizarse cuando:
 2. Se añaden o modifican campos
 3. Se cambian relaciones entre tablas
 4. Se agregan índices o restricciones
+
+### Flujo de Pago de Facturas
+
+Cuando una factura es pagada, se actualiza su estado en la tabla `bills` y se crea automáticamente un registro en la tabla `expenses`, siguiendo estos pasos:
+
+1. Se marca la factura como pagada (`paid = true`) en `bills`.
+2. Se crea un nuevo registro en `expenses` con:
+   - `amount`: El mismo importe de la factura
+   - `category`: La misma categoría de la factura
+   - `payment_method`: El método de pago especificado al pagar la factura
+   - `date`: La fecha actual en que se paga la factura (no la fecha de vencimiento)
+   - `description`: Descripción generada automáticamente incluyendo el nombre de la factura
+
+3. Se actualizan las tablas de balance para reflejar este movimiento:
+   - `daily_balance`
+   - `weekly_balance`
+   - `monthly_balance`
+   - `quarterly_balance`
+   - `semiannual_balance`
+   - `annual_balance`
+
+4. Se ejecuta un proceso de recálculo en cascada para actualizar todos los balances a partir de la fecha de pago.
+
+Este flujo asegura la consistencia entre las facturas pagadas y los gastos registrados, manteniendo actualizado el estado financiero del usuario en todos los periodos de tiempo.
 
 ---
 Última actualización: 2023-09-15 
