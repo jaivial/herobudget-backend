@@ -1201,6 +1201,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         builder:
             (context) => AddInvoiceScreen(
               onSuccess: () {
+                // Cuando se añade una factura correctamente, actualizamos los datos del dashboard
                 _refreshDashboard();
               },
             ),

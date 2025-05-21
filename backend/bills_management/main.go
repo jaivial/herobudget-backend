@@ -18,31 +18,33 @@ import (
 
 // Definición de estructuras de datos
 type Bill struct {
-	ID          int     `json:"id"`
-	UserID      string  `json:"user_id"`
-	Name        string  `json:"name"`
-	Amount      float64 `json:"amount"`
-	DueDate     string  `json:"due_date"`
-	Paid        bool    `json:"paid"`
-	Overdue     bool    `json:"overdue"`
-	OverdueDays int     `json:"overdue_days"`
-	Recurring   bool    `json:"recurring"`
-	Category    string  `json:"category"`
-	Icon        string  `json:"icon"`
-	CreatedAt   string  `json:"created_at,omitempty"`
-	UpdatedAt   string  `json:"updated_at,omitempty"`
+	ID            int     `json:"id"`
+	UserID        string  `json:"user_id"`
+	Name          string  `json:"name"`
+	Amount        float64 `json:"amount"`
+	DueDate       string  `json:"due_date"`
+	Paid          bool    `json:"paid"`
+	Overdue       bool    `json:"overdue"`
+	OverdueDays   int     `json:"overdue_days"`
+	Recurring     bool    `json:"recurring"`
+	Category      string  `json:"category"`
+	Icon          string  `json:"icon"`
+	PaymentMethod string  `json:"payment_method,omitempty"`
+	CreatedAt     string  `json:"created_at,omitempty"`
+	UpdatedAt     string  `json:"updated_at,omitempty"`
 }
 
 type AddBillRequest struct {
-	UserID    string  `json:"user_id"`
-	Name      string  `json:"name"`
-	Amount    float64 `json:"amount"`
-	DueDate   string  `json:"due_date"`
-	Paid      bool    `json:"paid"`
-	Overdue   bool    `json:"overdue"`
-	Recurring bool    `json:"recurring"`
-	Category  string  `json:"category"`
-	Icon      string  `json:"icon"`
+	UserID        string  `json:"user_id"`
+	Name          string  `json:"name"`
+	Amount        float64 `json:"amount"`
+	DueDate       string  `json:"due_date"`
+	Paid          bool    `json:"paid"`
+	Overdue       bool    `json:"overdue"`
+	Recurring     bool    `json:"recurring"`
+	Category      string  `json:"category"`
+	Icon          string  `json:"icon"`
+	PaymentMethod string  `json:"payment_method,omitempty"` // "cash" o "bank"
 }
 
 type UpdateBillRequest struct {
@@ -527,6 +529,11 @@ func handleAddBill(w http.ResponseWriter, r *http.Request) {
 		addRequest.Icon = "bill"
 	}
 
+	// Set default payment method if not provided
+	if addRequest.PaymentMethod == "" {
+		addRequest.PaymentMethod = "bank"
+	}
+
 	// Parse the due date
 	dueDate, err := time.Parse("2006-01-02", addRequest.DueDate)
 	if err != nil {
@@ -545,16 +552,17 @@ func handleAddBill(w http.ResponseWriter, r *http.Request) {
 
 	// Create a bill object
 	bill := Bill{
-		UserID:      addRequest.UserID,
-		Name:        addRequest.Name,
-		Amount:      addRequest.Amount,
-		DueDate:     addRequest.DueDate,
-		Paid:        addRequest.Paid,
-		Overdue:     isOverdue,
-		OverdueDays: overdueDays,
-		Recurring:   addRequest.Recurring,
-		Category:    addRequest.Category,
-		Icon:        addRequest.Icon,
+		UserID:        addRequest.UserID,
+		Name:          addRequest.Name,
+		Amount:        addRequest.Amount,
+		DueDate:       addRequest.DueDate,
+		Paid:          addRequest.Paid,
+		Overdue:       isOverdue,
+		OverdueDays:   overdueDays,
+		Recurring:     addRequest.Recurring,
+		Category:      addRequest.Category,
+		Icon:          addRequest.Icon,
+		PaymentMethod: addRequest.PaymentMethod,
 	}
 
 	// Add the bill to the database
@@ -568,20 +576,19 @@ func handleAddBill(w http.ResponseWriter, r *http.Request) {
 	// Set the ID of the newly added bill
 	bill.ID = billID
 
-	// Actualizar los balances por periodos si la factura ya está pagada
+	// Determinar los montos de cash y bank según el método de pago
+	var cashAmt, bankAmt float64
+	if bill.PaymentMethod == "cash" {
+		cashAmt = bill.Amount
+		bankAmt = 0
+	} else {
+		cashAmt = 0
+		bankAmt = bill.Amount
+	}
+
+	// Actualizar los balances por periodos siempre, independientemente de si está pagada o no
+	// Si la factura está pagada, afecta a los balances reales
 	if bill.Paid {
-		// Determinar los montos de cash y bank según el método de pago (asumimos bank por defecto)
-		var cashAmt, bankAmt float64
-		paymentMethod := "bank" // Valor por defecto
-
-		if paymentMethod == "cash" {
-			cashAmt = bill.Amount
-			bankAmt = 0
-		} else {
-			cashAmt = 0
-			bankAmt = bill.Amount
-		}
-
 		if err := updateTimeBalances(bill.UserID, 0, 0, bill.Amount, cashAmt, bankAmt, bill.DueDate); err != nil {
 			log.Printf("Error updating time balances: %v", err)
 			// Don't fail the entire request, just log the error
@@ -591,6 +598,117 @@ func handleAddBill(w http.ResponseWriter, r *http.Request) {
 		if err := recalculateAllBalances(bill.UserID, bill.DueDate); err != nil {
 			log.Printf("Error recalculating balances: %v", err)
 			// Continue despite the error
+		}
+	} else {
+		// Si no está pagada, actualizar específicamente las tablas *_cash_bank_balance
+		// para proyecciones futuras
+		yearMonth := dueDate.Format("2006-01")
+
+		// Actualizamos la tabla monthly_cash_bank_balance
+		var exists bool
+		err = db.QueryRow(`
+			SELECT 1 FROM monthly_cash_bank_balance
+			WHERE user_id = ? AND year_month = ?
+		`, bill.UserID, yearMonth).Scan(&exists)
+
+		if err != nil && err != sql.ErrNoRows {
+			log.Printf("Error checking monthly_cash_bank_balance: %v", err)
+		}
+
+		if err == sql.ErrNoRows {
+			// No existe registro, creamos uno nuevo
+			_, err = db.Exec(`
+				INSERT INTO monthly_cash_bank_balance (
+					user_id, year_month, 
+					income_cash_amount, income_bank_amount,
+					expense_cash_amount, expense_bank_amount,
+					bill_cash_amount, bill_bank_amount,
+					cash_amount, bank_amount,
+					previous_cash_amount, previous_bank_amount,
+					balance_cash_amount, balance_bank_amount
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			`, bill.UserID, yearMonth,
+				0, 0,
+				0, 0,
+				cashAmt, bankAmt,
+				0, 0,
+				0, 0,
+				-cashAmt, -bankAmt)
+
+			if err != nil {
+				log.Printf("Error inserting into monthly_cash_bank_balance: %v", err)
+			} else {
+				log.Printf("Added projection to monthly_cash_bank_balance for bill %d", bill.ID)
+			}
+		} else {
+			// Actualizar registro existente
+			_, err = db.Exec(`
+				UPDATE monthly_cash_bank_balance
+				SET bill_cash_amount = bill_cash_amount + ?,
+					bill_bank_amount = bill_bank_amount + ?,
+					balance_cash_amount = balance_cash_amount - ?,
+					balance_bank_amount = balance_bank_amount - ?
+				WHERE user_id = ? AND year_month = ?
+			`, cashAmt, bankAmt, cashAmt, bankAmt, bill.UserID, yearMonth)
+
+			if err != nil {
+				log.Printf("Error updating monthly_cash_bank_balance: %v", err)
+			} else {
+				log.Printf("Updated projection in monthly_cash_bank_balance for bill %d", bill.ID)
+			}
+		}
+
+		// También actualizar daily_cash_bank_balance para el día de vencimiento
+		err = db.QueryRow(`
+			SELECT 1 FROM daily_cash_bank_balance
+			WHERE user_id = ? AND date = ?
+		`, bill.UserID, bill.DueDate).Scan(&exists)
+
+		if err != nil && err != sql.ErrNoRows {
+			log.Printf("Error checking daily_cash_bank_balance: %v", err)
+		}
+
+		if err == sql.ErrNoRows {
+			// No existe registro, creamos uno nuevo
+			_, err = db.Exec(`
+				INSERT INTO daily_cash_bank_balance (
+					user_id, date, 
+					income_cash_amount, income_bank_amount,
+					expense_cash_amount, expense_bank_amount,
+					bill_cash_amount, bill_bank_amount,
+					cash_amount, bank_amount,
+					previous_cash_amount, previous_bank_amount,
+					balance_cash_amount, balance_bank_amount
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			`, bill.UserID, bill.DueDate,
+				0, 0,
+				0, 0,
+				cashAmt, bankAmt,
+				0, 0,
+				0, 0,
+				-cashAmt, -bankAmt)
+
+			if err != nil {
+				log.Printf("Error inserting into daily_cash_bank_balance: %v", err)
+			} else {
+				log.Printf("Added projection to daily_cash_bank_balance for bill %d", bill.ID)
+			}
+		} else {
+			// Actualizar registro existente
+			_, err = db.Exec(`
+				UPDATE daily_cash_bank_balance
+				SET bill_cash_amount = bill_cash_amount + ?,
+					bill_bank_amount = bill_bank_amount + ?,
+					balance_cash_amount = balance_cash_amount - ?,
+					balance_bank_amount = balance_bank_amount - ?
+				WHERE user_id = ? AND date = ?
+			`, cashAmt, bankAmt, cashAmt, bankAmt, bill.UserID, bill.DueDate)
+
+			if err != nil {
+				log.Printf("Error updating daily_cash_bank_balance: %v", err)
+			} else {
+				log.Printf("Updated projection in daily_cash_bank_balance for bill %d", bill.ID)
+			}
 		}
 	}
 
@@ -626,10 +744,10 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	// Get the bill details before updating
 	var bill Bill
 	err = db.QueryRow(`
-		SELECT id, user_id, name, amount, due_date, category, recurring, paid
+		SELECT id, user_id, name, amount, due_date, category, recurring, paid, payment_method
 		FROM bills WHERE id = ? AND user_id = ?
 	`, payRequest.BillID, payRequest.UserID).Scan(
-		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Category, &bill.Recurring, &bill.Paid,
+		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Category, &bill.Recurring, &bill.Paid, &bill.PaymentMethod,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -650,7 +768,25 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	// Default payment method to "bank" if not specified
 	paymentMethod := payRequest.PaymentMethod
 	if paymentMethod == "" {
-		paymentMethod = "bank"
+		// Usar el método de pago almacenado en la factura si no se proporciona uno nuevo
+		if bill.PaymentMethod != "" {
+			paymentMethod = bill.PaymentMethod
+		} else {
+			paymentMethod = "bank"
+		}
+	}
+
+	// Actualizar el método de pago en la factura si es diferente
+	if bill.PaymentMethod != paymentMethod {
+		_, err = db.Exec(`
+			UPDATE bills
+			SET payment_method = ?
+			WHERE id = ? AND user_id = ?
+		`, paymentMethod, payRequest.BillID, payRequest.UserID)
+		if err != nil {
+			log.Printf("Error updating payment method: %v", err)
+			// Continue despite the error
+		}
 	}
 
 	// Mark the bill as paid
@@ -984,31 +1120,16 @@ func fetchBills(userID string) ([]Bill, error) {
 
 func fetchBillByID(billID int, userID string) (*Bill, error) {
 	var bill Bill
-	var createdAt, updatedAt string
-
 	err := db.QueryRow(`
-		SELECT id, user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, created_at, updated_at
-		FROM bills
-		WHERE id = ? AND user_id = ?
+		SELECT id, user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, payment_method, created_at, updated_at
+		FROM bills WHERE id = ? AND user_id = ?
 	`, billID, userID).Scan(
-		&bill.ID,
-		&bill.UserID,
-		&bill.Name,
-		&bill.Amount,
-		&bill.DueDate,
-		&bill.Paid,
-		&bill.Overdue,
-		&bill.OverdueDays,
-		&bill.Recurring,
-		&bill.Category,
-		&bill.Icon,
-		&createdAt,
-		&updatedAt,
+		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Paid, &bill.Overdue, &bill.OverdueDays, &bill.Recurring, &bill.Category, &bill.Icon, &bill.PaymentMethod, &bill.CreatedAt, &bill.UpdatedAt,
 	)
-
-	if err == sql.ErrNoRows {
-		return nil, nil // Bill not found
-	} else if err != nil {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("bill not found: %w", err)
+		}
 		return nil, err
 	}
 
@@ -1021,8 +1142,8 @@ func fetchBillByID(billID int, userID string) (*Bill, error) {
 func addBill(bill Bill) (int, error) {
 	res, err := db.Exec(`
 		INSERT INTO bills (
-			user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, payment_method
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		bill.UserID,
 		bill.Name,
@@ -1034,6 +1155,7 @@ func addBill(bill Bill) (int, error) {
 		bill.Recurring,
 		bill.Category,
 		bill.Icon,
+		bill.PaymentMethod,
 	)
 	if err != nil {
 		return 0, err
@@ -1060,6 +1182,7 @@ func updateBill(bill Bill) error {
 			recurring = ?,
 			category = ?,
 			icon = ?,
+			payment_method = ?,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = ? AND user_id = ?
 	`,
@@ -1072,6 +1195,7 @@ func updateBill(bill Bill) error {
 		bill.Recurring,
 		bill.Category,
 		bill.Icon,
+		bill.PaymentMethod,
 		bill.ID,
 		bill.UserID,
 	)

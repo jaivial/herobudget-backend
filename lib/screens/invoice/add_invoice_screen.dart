@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/category_model.dart';
+import '../../models/invoice_model.dart';
 import '../../services/category_service.dart';
+import '../../services/invoice_service.dart';
 import '../../utils/app_localizations.dart';
 import '../../utils/currency_utils.dart';
 import '../category/add_category_screen.dart';
@@ -18,6 +20,7 @@ class AddInvoiceScreen extends StatefulWidget {
 class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
   final _formKey = GlobalKey<FormState>();
   final _categoryService = CategoryService();
+  final _invoiceService = InvoiceService();
 
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -118,28 +121,68 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
       });
 
       try {
-        // Por ahora solo simulamos el guardado
-        await Future.delayed(const Duration(seconds: 1));
+        // Parsear el importe
+        final amount = double.parse(
+          _amountController.text.replaceAll(',', '.'),
+        );
 
-        // Success
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                context.tr.translate('invoice_added_successfully') != ''
-                    ? context.tr.translate('invoice_added_successfully')
-                    : 'Factura agregada con éxito',
+        // Formatear las fechas
+        final startDateFormatted = DateFormat('yyyy-MM-dd').format(_startDate);
+        final paymentDueDate = DateFormat('yyyy-MM-dd').format(_paymentDate);
+
+        // Verificar que los campos obligatorios no estén vacíos
+        if (_selectedCategory.isEmpty) {
+          setState(() {
+            _errorMessage = context.tr.translate('select_category');
+            _isLoading = false;
+          });
+          return;
+        }
+
+        // Usar el servicio para añadir la factura
+        final success = await _invoiceService.addInvoice(
+          name: _selectedCategory.isNotEmpty ? _selectedCategory : 'Invoice',
+          amount: amount,
+          dueDate: paymentDueDate,
+          category: _selectedCategory,
+          paymentMethod: _selectedPaymentMethod,
+          recurring:
+              _selectedRegularity !=
+              'custom', // Si no es personalizado, es recurrente
+          description:
+              _descriptionController.text.isNotEmpty
+                  ? _descriptionController.text
+                  : null,
+          startDate: startDateFormatted,
+          regularity: _selectedRegularity,
+        );
+
+        if (success) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  context.tr.translate('invoice_added_successfully') != ''
+                      ? context.tr.translate('invoice_added_successfully')
+                      : 'Factura agregada con éxito',
+                ),
+                backgroundColor: Theme.of(context).colorScheme.primary,
               ),
-            ),
-          );
+            );
 
-          // Call the success callback if provided
-          if (widget.onSuccess != null) {
-            widget.onSuccess!();
+            // Call the success callback if provided
+            if (widget.onSuccess != null) {
+              widget.onSuccess!();
+            }
+
+            // Close the screen
+            Navigator.of(context).pop();
           }
-
-          // Close the screen
-          Navigator.of(context).pop();
+        } else {
+          setState(() {
+            _errorMessage = 'Error al guardar la factura';
+            _isLoading = false;
+          });
         }
       } catch (e) {
         setState(() {
