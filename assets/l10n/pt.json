@@ -158,5 +158,18 @@
     "edit_category": "Editar Categoria",
     "invoice_added_successfully": "Fatura adicionada com sucesso",
     "payment_day": "Dia de pagamento",
-    "payment_regularity": "Regularidade de pagamento"
+    "payment_regularity": "Regularidade de pagamento",
+    "no_pending_bills": "Nenhuma Fatura Pendente",
+    "add_bill_to_pay": "Adicione uma fatura para pagar",
+    "bill_details": "Detalhes da Fatura",
+    "pending": "Pendente",
+    "payment_method_info": "Selecione como você quer pagar esta fatura",
+    "payment_summary": "Resumo do Pagamento",
+    "bill": "Fatura",
+    "confirm_payment": "Confirmar Pagamento",
+    "processing": "Processando...",
+    "payment_successful": "Pagamento Bem-sucedido",
+    "payment_failed": "Falha no Pagamento",
+    "payment_error": "Erro no Pagamento",
+    "days_overdue": "dias de atraso"
 }

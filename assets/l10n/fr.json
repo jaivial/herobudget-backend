@@ -163,5 +163,18 @@
     "undo": "Annuler",
     "invoice_added_successfully": "Facture ajoutée avec succès",
     "payment_day": "Jour de paiement",
-    "payment_regularity": "Régularité de paiement"
+    "payment_regularity": "Régularité de paiement",
+    "no_pending_bills": "Pas de Factures en Attente",
+    "add_bill_to_pay": "Ajouter une facture à payer",
+    "bill_details": "Détails de la Facture",
+    "pending": "En Attente",
+    "payment_method_info": "Sélectionnez comment vous souhaitez payer cette facture",
+    "payment_summary": "Résumé du Paiement",
+    "bill": "Facture",
+    "confirm_payment": "Confirmer le Paiement",
+    "processing": "Traitement en cours...",
+    "payment_successful": "Paiement Réussi",
+    "payment_failed": "Échec du Paiement",
+    "payment_error": "Erreur de Paiement",
+    "days_overdue": "jours de retard"
 }

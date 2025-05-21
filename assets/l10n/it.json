@@ -172,5 +172,18 @@
     "undo": "Annulla",
     "invoice_added_successfully": "Fattura aggiunta con successo",
     "payment_day": "Giorno di pagamento",
-    "payment_regularity": "Regolarità di pagamento"
+    "payment_regularity": "Regolarità di pagamento",
+    "no_pending_bills": "Nessuna Fattura in Sospeso",
+    "add_bill_to_pay": "Aggiungi una fattura da pagare",
+    "bill_details": "Dettagli della Fattura",
+    "pending": "In Attesa",
+    "payment_method_info": "Seleziona come vuoi pagare questa fattura",
+    "payment_summary": "Riepilogo del Pagamento",
+    "bill": "Fattura",
+    "confirm_payment": "Conferma Pagamento",
+    "processing": "Elaborazione...",
+    "payment_successful": "Pagamento Riuscito",
+    "payment_failed": "Pagamento Fallito",
+    "payment_error": "Errore di Pagamento",
+    "days_overdue": "giorni di ritardo"
 }

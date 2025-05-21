@@ -163,5 +163,18 @@
     "undo": "Rückgängig",
     "invoice_added_successfully": "Rechnung erfolgreich hinzugefügt",
     "payment_day": "Zahlungstag",
-    "payment_regularity": "Zahlungsregelmäßigkeit"
+    "payment_regularity": "Zahlungsregelmäßigkeit",
+    "no_pending_bills": "Keine ausstehenden Rechnungen",
+    "add_bill_to_pay": "Rechnung zum Bezahlen hinzufügen",
+    "bill_details": "Rechnungsdetails",
+    "pending": "Ausstehend",
+    "payment_method_info": "Wählen Sie aus, wie Sie diese Rechnung bezahlen möchten",
+    "payment_summary": "Zahlungsübersicht",
+    "bill": "Rechnung",
+    "confirm_payment": "Zahlung bestätigen",
+    "processing": "Verarbeitung...",
+    "payment_successful": "Zahlung erfolgreich",
+    "payment_failed": "Zahlung fehlgeschlagen",
+    "payment_error": "Zahlungsfehler",
+    "days_overdue": "Tage überfällig"
 }

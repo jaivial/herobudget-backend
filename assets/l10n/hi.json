@@ -149,5 +149,18 @@
     "undo": "पूर्ववत करें",
     "invoice_added_successfully": "चालान सफलतापूर्वक जोड़ा गया",
     "payment_day": "भुगतान दिवस",
-    "payment_regularity": "भुगतान नियमितता"
+    "payment_regularity": "भुगतान नियमितता",
+    "no_pending_bills": "कोई लंबित बिल नहीं है",
+    "add_bill_to_pay": "भुगतान करने के लिए एक बिल जोड़ें",
+    "bill_details": "बिल विवरण",
+    "pending": "लंबित",
+    "payment_method_info": "चुनें कि आप इस बिल का भुगतान कैसे करना चाहते हैं",
+    "payment_summary": "भुगतान सारांश",
+    "bill": "बिल",
+    "confirm_payment": "भुगतान की पुष्टि करें",
+    "processing": "प्रोसेसिंग...",
+    "payment_successful": "भुगतान सफल",
+    "payment_failed": "भुगतान असफल",
+    "payment_error": "भुगतान त्रुटि",
+    "days_overdue": "दिन देरी से"
 }

@@ -166,5 +166,18 @@
     "undo": "元に戻す",
     "invoice_added_successfully": "請求書が正常に追加されました",
     "payment_day": "支払日",
-    "payment_regularity": "支払頻度"
+    "payment_regularity": "支払頻度",
+    "no_pending_bills": "保留中の請求書はありません",
+    "add_bill_to_pay": "支払う請求書を追加",
+    "bill_details": "請求書の詳細",
+    "pending": "保留中",
+    "payment_method_info": "この請求書の支払い方法を選択してください",
+    "payment_summary": "支払い概要",
+    "bill": "請求書",
+    "confirm_payment": "支払いを確認",
+    "processing": "処理中...",
+    "payment_successful": "支払い成功",
+    "payment_failed": "支払い失敗",
+    "payment_error": "支払いエラー",
+    "days_overdue": "日延滞"
 }

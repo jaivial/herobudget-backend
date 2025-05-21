@@ -32,6 +32,7 @@ import '../category/categories_list_screen.dart';
 import '../category/add_category_screen.dart';
 import 'package:intl/intl.dart';
 import '../invoice/add_invoice_screen.dart';
+import '../invoice/pay_bill_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -1187,10 +1188,16 @@ class _DashboardScreenState extends State<DashboardScreen>
       return;
     }
 
-    // Mostrar solo un mensaje
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.tr.translate('select_bill_to_pay'))),
-    );
+    // Navegar a la pantalla de pago de facturas
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PayBillScreen()),
+    ).then((result) {
+      // Si regresa con éxito (true), actualizar el dashboard
+      if (result == true) {
+        _refreshDashboard();
+      }
+    });
   }
 
   // Dialog to add invoice

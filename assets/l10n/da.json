@@ -155,5 +155,18 @@
     "undo": "Fortryd",
     "invoice_added_successfully": "Faktura tilføjet med succes",
     "payment_day": "Betalingsdag",
-    "payment_regularity": "Betalingsfrekvens"
+    "payment_regularity": "Betalingsfrekvens",
+    "no_pending_bills": "Ingen ventende regninger",
+    "add_bill_to_pay": "Tilføj en regning til betaling",
+    "bill_details": "Regningsdetaljer",
+    "pending": "Afventende",
+    "payment_method_info": "Vælg hvordan du vil betale denne regning",
+    "payment_summary": "Betalingsoversigt",
+    "bill": "Regning",
+    "confirm_payment": "Bekræft betaling",
+    "processing": "Behandler...",
+    "payment_successful": "Betaling gennemført",
+    "payment_failed": "Betaling mislykkedes",
+    "payment_error": "Betalingsfejl",
+    "days_overdue": "dage forsinket"
 }

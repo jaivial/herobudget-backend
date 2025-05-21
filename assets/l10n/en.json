@@ -221,5 +221,19 @@
     "date": "Date",
     "invoice_added_successfully": "Invoice added successfully",
     "payment_day": "Payment Day",
-    "payment_regularity": "Payment Regularity"
+    "payment_regularity": "Payment Regularity",
+    "no_pending_bills": "No Pending Bills",
+    "add_bill_to_pay": "Add a bill to pay",
+    "bill_details": "Bill Details",
+    "description": "Description",
+    "pending": "Pending",
+    "payment_method_info": "Select how you want to pay this bill",
+    "payment_summary": "Payment Summary",
+    "bill": "Bill",
+    "confirm_payment": "Confirm Payment",
+    "processing": "Processing...",
+    "payment_successful": "Payment Successful",
+    "payment_failed": "Payment Failed",
+    "payment_error": "Payment Error",
+    "days_overdue": "days overdue"
 }

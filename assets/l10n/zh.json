@@ -155,5 +155,18 @@
     "add_invoice": "添加发票",
     "invoice_added_successfully": "发票已成功添加",
     "payment_day": "付款日",
-    "payment_regularity": "付款周期"
+    "payment_regularity": "付款周期",
+    "no_pending_bills": "没有待处理的账单",
+    "add_bill_to_pay": "添加要支付的账单",
+    "bill_details": "账单详情",
+    "pending": "待处理",
+    "payment_method_info": "选择如何支付此账单",
+    "payment_summary": "支付摘要",
+    "bill": "账单",
+    "confirm_payment": "确认支付",
+    "processing": "处理中...",
+    "payment_successful": "支付成功",
+    "payment_failed": "支付失败",
+    "payment_error": "支付错误",
+    "days_overdue": "天逾期"
 }

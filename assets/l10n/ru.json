@@ -140,5 +140,18 @@
     "add_invoice": "Добавить счет-фактуру",
     "invoice_added_successfully": "Счет-фактура успешно добавлена",
     "payment_day": "День оплаты",
-    "payment_regularity": "Регулярность оплаты"
+    "payment_regularity": "Регулярность оплаты",
+    "no_pending_bills": "Нет ожидающих счетов",
+    "add_bill_to_pay": "Добавить счет для оплаты",
+    "bill_details": "Детали счета",
+    "pending": "В ожидании",
+    "payment_method_info": "Выберите способ оплаты этого счета",
+    "payment_summary": "Сводка платежа",
+    "bill": "Счет",
+    "confirm_payment": "Подтвердить платеж",
+    "processing": "Обработка...",
+    "payment_successful": "Платеж выполнен",
+    "payment_failed": "Платеж не выполнен",
+    "payment_error": "Ошибка платежа",
+    "days_overdue": "дней просрочки"
 }

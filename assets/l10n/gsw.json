@@ -149,5 +149,18 @@
     "undo": "Rückgängig mache",
     "invoice_added_successfully": "Rächnig erfolgriich hinzuegfüegt",
     "payment_day": "Zahlungstag",
-    "payment_regularity": "Zahlungsregelmässigkeit"
+    "payment_regularity": "Zahlungsregelmässigkeit",
+    "no_pending_bills": "Kei offeni Rächnige",
+    "add_bill_to_pay": "Füeg e Rächnig zum Zahle dezue",
+    "bill_details": "Rächnigsdetails",
+    "pending": "Usstehend",
+    "payment_method_info": "Wähl us, wie du die Rächnig zahle möchtisch",
+    "payment_summary": "Zahligs-Übersicht",
+    "bill": "Rächnig",
+    "confirm_payment": "Zahlig bestätige",
+    "processing": "Verarbeitig...",
+    "payment_successful": "Zahlig erfolgrich",
+    "payment_failed": "Zahlig nöd erfolgrich",
+    "payment_error": "Zahligsfehler",
+    "days_overdue": "Täg z'spat"
 }

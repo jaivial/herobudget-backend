@@ -149,5 +149,18 @@
     "undo": "Αναίρεση",
     "invoice_added_successfully": "Το τιμολόγιο προστέθηκε με επιτυχία",
     "payment_day": "Ημέρα πληρωμής",
-    "payment_regularity": "Συχνότητα πληρωμής"
+    "payment_regularity": "Συχνότητα πληρωμής",
+    "no_pending_bills": "Δεν υπάρχουν εκκρεμείς λογαριασμοί",
+    "add_bill_to_pay": "Προσθέστε έναν λογαριασμό για πληρωμή",
+    "bill_details": "Λεπτομέρειες λογαριασμού",
+    "pending": "Εκκρεμεί",
+    "payment_method_info": "Επιλέξτε πώς θέλετε να πληρώσετε αυτόν τον λογαριασμό",
+    "payment_summary": "Σύνοψη πληρωμής",
+    "bill": "Λογαριασμός",
+    "confirm_payment": "Επιβεβαίωση πληρωμής",
+    "processing": "Επεξεργασία...",
+    "payment_successful": "Επιτυχής πληρωμή",
+    "payment_failed": "Αποτυχία πληρωμής",
+    "payment_error": "Σφάλμα πληρωμής",
+    "days_overdue": "ημέρες καθυστέρησης"
 }

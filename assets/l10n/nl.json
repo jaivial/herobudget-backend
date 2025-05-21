@@ -158,5 +158,18 @@
     "edit_category": "Categorie Bewerken",
     "invoice_added_successfully": "Factuur succesvol toegevoegd",
     "payment_day": "Betaaldag",
-    "payment_regularity": "Betalingsfrequentie"
+    "payment_regularity": "Betalingsfrequentie",
+    "no_pending_bills": "Geen openstaande rekeningen",
+    "add_bill_to_pay": "Voeg een rekening toe om te betalen",
+    "bill_details": "Rekeningdetails",
+    "pending": "In behandeling",
+    "payment_method_info": "Selecteer hoe u deze rekening wilt betalen",
+    "payment_summary": "Betalingsoverzicht",
+    "bill": "Rekening",
+    "confirm_payment": "Bevestig betaling",
+    "processing": "Verwerken...",
+    "payment_successful": "Betaling geslaagd",
+    "payment_failed": "Betaling mislukt",
+    "payment_error": "Betalingsfout",
+    "days_overdue": "dagen te laat"
 }

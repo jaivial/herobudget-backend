@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/app_localizations.dart';
 import '../screens/category/categories_list_screen.dart';
+import '../screens/invoice/pay_bill_screen.dart';
 
 class QuickActionsWidget extends StatelessWidget {
   final VoidCallback? onIncomePressed;
@@ -71,7 +72,16 @@ class QuickActionsWidget extends StatelessWidget {
                 label: context.tr.translate('pay_bill'),
                 iconColor: Colors.blue,
                 backgroundColor: Colors.blue.withOpacity(0.1),
-                onPressed: onPayBillPressed,
+                onPressed:
+                    onPayBillPressed ??
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PayBillScreen(),
+                        ),
+                      );
+                    },
               ),
               ActionButton(
                 icon: Icons.receipt_long,
