@@ -107,6 +107,11 @@
     "high_spending_warning": "Warnung: Hohe Ausgabenrate",
     "dismiss": "Ausblenden",
     "quick_actions": "Schnellaktionen",
+    "add_income": "Einkommen hinzufügen",
+    "add_expense": "Ausgabe hinzufügen",
+    "pay_bill": "Rechnung bezahlen",
+    "add_category": "Kategorie hinzufügen",
+    "add_invoice": "Rechnung hinzufügen",
     "email_verified": "E-Mail bestätigt",
     "email_not_verified": "E-Mail nicht bestätigt",
     "edit_profile": "Profil bearbeiten",
@@ -155,5 +160,8 @@
     "search_categories": "Kategorien suchen",
     "select_emoji": "Emoji auswählen",
     "selected_emoji": "Ausgewähltes Emoji",
-    "undo": "Rückgängig"
+    "undo": "Rückgängig",
+    "invoice_added_successfully": "Rechnung erfolgreich hinzugefügt",
+    "payment_day": "Zahlungstag",
+    "payment_regularity": "Zahlungsregelmäßigkeit"
 }

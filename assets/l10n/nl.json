@@ -150,5 +150,13 @@
     "search_categories": "Zoek categorieën",
     "select_emoji": "Selecteer emoji",
     "selected_emoji": "Geselecteerde emoji",
-    "undo": "Ongedaan maken"
+    "undo": "Ongedaan maken",
+    "add_expense": "Uitgave Toevoegen",
+    "pay_bill": "Rekening Betalen",
+    "add_category": "Categorie Toevoegen",
+    "add_invoice": "Factuur Toevoegen",
+    "edit_category": "Categorie Bewerken",
+    "invoice_added_successfully": "Factuur succesvol toegevoegd",
+    "payment_day": "Betaaldag",
+    "payment_regularity": "Betalingsfrequentie"
 }

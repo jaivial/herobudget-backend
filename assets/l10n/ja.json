@@ -123,6 +123,8 @@
     "add_expense": "支出を追加",
     "pay_bill": "請求を支払う",
     "add_category": "カテゴリを追加",
+    "add_invoice": "請求書を追加",
+    "edit_category": "カテゴリを編集",
     "transactions": "取引",
     "statistics": "統計",
     "savings": "貯蓄",
@@ -161,5 +163,8 @@
     "search_categories": "カテゴリーを検索",
     "select_emoji": "絵文字を選択",
     "selected_emoji": "選択された絵文字",
-    "undo": "元に戻す"
+    "undo": "元に戻す",
+    "invoice_added_successfully": "請求書が正常に追加されました",
+    "payment_day": "支払日",
+    "payment_regularity": "支払頻度"
 }

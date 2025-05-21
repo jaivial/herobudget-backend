@@ -150,5 +150,13 @@
     "search_categories": "Pesquisar categorias",
     "select_emoji": "Selecionar emoji",
     "selected_emoji": "Emoji selecionado",
-    "undo": "Desfazer"
+    "undo": "Desfazer",
+    "add_expense": "Adicionar Despesa",
+    "pay_bill": "Pagar Conta",
+    "add_category": "Adicionar Categoria",
+    "add_invoice": "Adicionar Fatura",
+    "edit_category": "Editar Categoria",
+    "invoice_added_successfully": "Fatura adicionada com sucesso",
+    "payment_day": "Dia de pagamento",
+    "payment_regularity": "Regularidade de pagamento"
 }

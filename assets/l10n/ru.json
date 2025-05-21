@@ -132,5 +132,13 @@
     "search_categories": "Поиск категорий",
     "select_emoji": "Выберите эмодзи",
     "selected_emoji": "Выбранный эмодзи",
-    "undo": "Отменить"
+    "undo": "Отменить",
+    "add_income": "Добавить доход",
+    "add_expense": "Добавить расход",
+    "pay_bill": "Оплатить счет",
+    "add_category": "Добавить категорию",
+    "add_invoice": "Добавить счет-фактуру",
+    "invoice_added_successfully": "Счет-фактура успешно добавлена",
+    "payment_day": "День оплаты",
+    "payment_regularity": "Регулярность оплаты"
 }

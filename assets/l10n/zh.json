@@ -151,5 +151,9 @@
     "search_categories": "搜索类别",
     "select_emoji": "选择表情符号",
     "selected_emoji": "已选择的表情符号",
-    "undo": "撤销"
+    "undo": "撤销",
+    "add_invoice": "添加发票",
+    "invoice_added_successfully": "发票已成功添加",
+    "payment_day": "付款日",
+    "payment_regularity": "付款周期"
 }

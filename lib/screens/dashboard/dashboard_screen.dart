@@ -29,7 +29,9 @@ import '../../utils/currency_utils.dart';
 import '../income/add_income_screen.dart';
 import '../expense/add_expense_screen.dart';
 import '../category/categories_list_screen.dart';
+import '../category/add_category_screen.dart';
 import 'package:intl/intl.dart';
+import '../invoice/add_invoice_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -124,6 +126,11 @@ class _DashboardScreenState extends State<DashboardScreen>
         'icon': Icons.receipt,
         'label': context.tr.translate('pay_bill'),
         'color': Colors.blue,
+      },
+      {
+        'icon': Icons.receipt_long,
+        'label': context.tr.translate('add_invoice'),
+        'color': Colors.amber,
       },
       {
         'icon': Icons.category,
@@ -797,6 +804,9 @@ class _DashboardScreenState extends State<DashboardScreen>
               onPayBillPressed: () {
                 _showPayBillDialog(dashboardData.upcomingBills);
               },
+              onAddInvoicePressed: () {
+                _showAddInvoiceDialog();
+              },
               onAddCategoryPressed: () {
                 _showAddCategoryDialog();
               },
@@ -887,6 +897,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _showAddExpenseDialog();
               } else if (label == context.tr.translate('pay_bill')) {
                 _showPayBillDialog(_dashboardModel?.upcomingBills ?? []);
+              } else if (label == context.tr.translate('add_invoice')) {
+                _showAddInvoiceDialog();
               } else if (label == context.tr.translate('add_category')) {
                 _showAddCategoryDialog();
               }
@@ -1181,11 +1193,33 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  // Dialog to add invoice
+  void _showAddInvoiceDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddInvoiceScreen(
+              onSuccess: () {
+                _refreshDashboard();
+              },
+            ),
+      ),
+    );
+  }
+
   // Dialog to add category
   void _showAddCategoryDialog() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const CategoriesListScreen()),
+      MaterialPageRoute(
+        builder:
+            (context) => AddCategoryScreen(
+              onSuccess: () {
+                // No need to do anything special for now
+              },
+            ),
+      ),
     );
   }
 

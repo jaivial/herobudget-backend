@@ -118,6 +118,7 @@
     "add_expense": "Aggiungi Spesa",
     "pay_bill": "Paga Bolletta",
     "add_category": "Aggiungi Categoria",
+    "add_invoice": "Aggiungi Fattura",
     "money_flow": "Flusso di Denaro",
     "left": "Rimanente",
     "from_previous_month": "Dal Mese Precedente",
@@ -168,5 +169,8 @@
     "search_categories": "Cerca categorie",
     "select_emoji": "Seleziona emoji",
     "selected_emoji": "Emoji selezionata",
-    "undo": "Annulla"
+    "undo": "Annulla",
+    "invoice_added_successfully": "Fattura aggiunta con successo",
+    "payment_day": "Giorno di pagamento",
+    "payment_regularity": "Regolarità di pagamento"
 }

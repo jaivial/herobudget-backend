@@ -92,6 +92,7 @@
     "add_expense": "Add Expense",
     "pay_bill": "Pay Bill",
     "add_category": "Add Category",
+    "add_invoice": "Add Invoice",
     "edit_category": "Edit Category",
     "category_updated_successfully": "Category updated successfully",
     "custom_emoji": "Custom Emoji",
@@ -217,5 +218,8 @@
     "add_new": "Add New",
     "no_income_categories": "No income categories available",
     "no_expense_categories": "No expense categories available",
-    "date": "Date"
+    "date": "Date",
+    "invoice_added_successfully": "Invoice added successfully",
+    "payment_day": "Payment Day",
+    "payment_regularity": "Payment Regularity"
 }

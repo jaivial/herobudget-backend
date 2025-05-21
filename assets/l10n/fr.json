@@ -91,7 +91,7 @@
     "failed_to_send_reset_email": "Échec de l'envoi de l'e-mail de réinitialisation",
     "failed_to_update_password": "Échec de la mise à jour du mot de passe",
     "change_language": "Changer de langue",
-    "money_flow": "Flux d'Argent",
+    "money_flow": "Flux Monétaire",
     "total_budget": "Budget total",
     "remaining": "Restant",
     "budget_overview": "Aperçu du budget",
@@ -106,7 +106,12 @@
     "daily_rate": "Taux journalier",
     "high_spending_warning": "Attention: Taux de dépense élevé",
     "dismiss": "Ignorer",
-    "quick_actions": "Actions rapides",
+    "quick_actions": "Actions Rapides",
+    "add_income": "Ajouter un Revenu",
+    "add_expense": "Ajouter une Dépense",
+    "pay_bill": "Payer une Facture",
+    "add_category": "Ajouter une Catégorie",
+    "add_invoice": "Ajouter une Facture",
     "email_verified": "E-mail vérifié",
     "email_not_verified": "E-mail non vérifié",
     "edit_profile": "Modifier le profil",
@@ -155,5 +160,8 @@
     "search_categories": "Rechercher des catégories",
     "select_emoji": "Sélectionner un emoji",
     "selected_emoji": "Emoji sélectionné",
-    "undo": "Annuler"
+    "undo": "Annuler",
+    "invoice_added_successfully": "Facture ajoutée avec succès",
+    "payment_day": "Jour de paiement",
+    "payment_regularity": "Régularité de paiement"
 }

@@ -118,6 +118,7 @@
     "add_expense": "Προσθήκη Εξόδου",
     "pay_bill": "Πληρωμή Λογαριασμού",
     "add_category": "Προσθήκη Κατηγορίας",
+    "add_invoice": "Προσθήκη Τιμολογίου",
     "money_flow": "Ροή Χρημάτων",
     "left": "Απομένουν",
     "from_previous_month": "Από Προηγούμενο Μήνα",
@@ -145,5 +146,8 @@
     "search_categories": "Αναζήτηση κατηγοριών",
     "select_emoji": "Επιλέξτε emoji",
     "selected_emoji": "Επιλεγμένο emoji",
-    "undo": "Αναίρεση"
+    "undo": "Αναίρεση",
+    "invoice_added_successfully": "Το τιμολόγιο προστέθηκε με επιτυχία",
+    "payment_day": "Ημέρα πληρωμής",
+    "payment_regularity": "Συχνότητα πληρωμής"
 }

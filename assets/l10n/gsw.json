@@ -118,6 +118,7 @@
     "add_expense": "Usgab hinzuefüege",
     "pay_bill": "Rächnig zahle",
     "add_category": "Kategorie hinzuefüege",
+    "add_invoice": "Rächnig hinzuefüege",
     "money_flow": "Gäldfluss",
     "left": "Übrig",
     "from_previous_month": "Vom letschte Monet",
@@ -145,5 +146,8 @@
     "search_categories": "Kategorie sueche",
     "select_emoji": "Emoji uswähle",
     "selected_emoji": "Usgwählts Emoji",
-    "undo": "Rückgängig mache"
+    "undo": "Rückgängig mache",
+    "invoice_added_successfully": "Rächnig erfolgriich hinzuegfüegt",
+    "payment_day": "Zahlungstag",
+    "payment_regularity": "Zahlungsregelmässigkeit"
 }

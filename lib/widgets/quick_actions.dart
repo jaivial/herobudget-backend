@@ -7,6 +7,7 @@ class QuickActionsWidget extends StatelessWidget {
   final VoidCallback? onExpensePressed;
   final VoidCallback? onPayBillPressed;
   final VoidCallback? onAddCategoryPressed;
+  final VoidCallback? onAddInvoicePressed;
 
   const QuickActionsWidget({
     super.key,
@@ -14,6 +15,7 @@ class QuickActionsWidget extends StatelessWidget {
     this.onExpensePressed,
     this.onPayBillPressed,
     this.onAddCategoryPressed,
+    this.onAddInvoicePressed,
   });
 
   @override
@@ -70,6 +72,13 @@ class QuickActionsWidget extends StatelessWidget {
                 iconColor: Colors.blue,
                 backgroundColor: Colors.blue.withOpacity(0.1),
                 onPressed: onPayBillPressed,
+              ),
+              ActionButton(
+                icon: Icons.receipt_long,
+                label: context.tr.translate('add_invoice'),
+                iconColor: Colors.amber,
+                backgroundColor: Colors.amber.withOpacity(0.1),
+                onPressed: onAddInvoicePressed,
               ),
               ActionButton(
                 icon: Icons.category,

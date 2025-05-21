@@ -115,9 +115,11 @@
     "pay": "Betal",
     "quick_actions": "Hurtige handlinger",
     "add_income": "Tilføj indkomst",
-    "add_expense": "Tilføj udgift",
-    "pay_bill": "Betal regning",
-    "add_category": "Tilføj kategori",
+    "add_expense": "Tilføj Udgift",
+    "pay_bill": "Betal Regning",
+    "add_category": "Tilføj Kategori",
+    "add_invoice": "Tilføj Faktura",
+    "edit_category": "Rediger Kategori",
     "money_flow": "Pengestrøm",
     "left": "Tilbage",
     "from_previous_month": "Fra forrige måned",
@@ -150,5 +152,8 @@
     "search_categories": "Søg kategorier",
     "select_emoji": "Vælg emoji",
     "selected_emoji": "Valgt emoji",
-    "undo": "Fortryd"
+    "undo": "Fortryd",
+    "invoice_added_successfully": "Faktura tilføjet med succes",
+    "payment_day": "Betalingsdag",
+    "payment_regularity": "Betalingsfrekvens"
 }

@@ -39,7 +39,7 @@
     "notification": "सूचनाएं",
     "currency": "मुद्रा",
     "amount": "राशि",
-    "date": "तारीख",
+    "date": "दिनांक",
     "category": "श्रेणी",
     "description": "विवरण",
     "total": "कुल",
@@ -118,6 +118,7 @@
     "add_expense": "खर्च जोड़ें",
     "pay_bill": "बिल का भुगतान करें",
     "add_category": "श्रेणी जोड़ें",
+    "add_invoice": "चालान जोड़ें",
     "money_flow": "धन प्रवाह",
     "left": "बाकी",
     "from_previous_month": "पिछले महीने से",
@@ -145,5 +146,8 @@
     "search_categories": "श्रेणियाँ खोजें",
     "select_emoji": "इमोजी चुनें",
     "selected_emoji": "चयनित इमोजी",
-    "undo": "पूर्ववत करें"
+    "undo": "पूर्ववत करें",
+    "invoice_added_successfully": "चालान सफलतापूर्वक जोड़ा गया",
+    "payment_day": "भुगतान दिवस",
+    "payment_regularity": "भुगतान नियमितता"
 }

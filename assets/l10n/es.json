@@ -120,9 +120,10 @@
     "apply": "Aplicar",
     "quick_actions": "Acciones Rápidas",
     "add_income": "Ingreso",
-    "add_expense": "Gasto",
+    "add_expense": "Añadir Gasto",
     "pay_bill": "Pagar Factura",
     "add_category": "Añadir Categoría",
+    "add_invoice": "Añadir Factura",
     "edit_category": "Editar Categoría",
     "category_updated_successfully": "Categoría actualizada con éxito",
     "custom_emoji": "Emoji Personalizado",
@@ -272,5 +273,8 @@
     "undo": "Deshacer",
     "add_new": "Añadir Nuevo",
     "no_income_categories": "No hay categorías de ingreso disponibles",
-    "no_expense_categories": "No hay categorías de gasto disponibles"
+    "no_expense_categories": "No hay categorías de gasto disponibles",
+    "invoice_added_successfully": "Factura añadida con éxito",
+    "payment_day": "Día de pago",
+    "payment_regularity": "Regularidad de pago"
 }
