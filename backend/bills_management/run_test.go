@@ -5,10 +5,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"testing"
 	"time"
 )
 
-func main() {
+func TestRun(t *testing.T) {
 	log.Println("========= TESTING BILL PAYMENT FIXES =========")
 
 	// Get the current working directory

@@ -383,36 +383,48 @@ func createTablesIfNotExist() {
 	alterTableSafely("daily_balance", "bank_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("daily_balance", "previous_cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("daily_balance", "previous_bank_amount", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("daily_balance", "total_previous_balance", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("daily_balance", "total_balance", "REAL NOT NULL DEFAULT 0")
 
 	// For weekly_balance
 	alterTableSafely("weekly_balance", "cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("weekly_balance", "bank_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("weekly_balance", "previous_cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("weekly_balance", "previous_bank_amount", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("weekly_balance", "total_previous_balance", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("weekly_balance", "total_balance", "REAL NOT NULL DEFAULT 0")
 
 	// For monthly_balance
 	alterTableSafely("monthly_balance", "cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("monthly_balance", "bank_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("monthly_balance", "previous_cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("monthly_balance", "previous_bank_amount", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("monthly_balance", "total_previous_balance", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("monthly_balance", "total_balance", "REAL NOT NULL DEFAULT 0")
 
 	// For quarterly_balance
 	alterTableSafely("quarterly_balance", "cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("quarterly_balance", "bank_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("quarterly_balance", "previous_cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("quarterly_balance", "previous_bank_amount", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("quarterly_balance", "total_previous_balance", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("quarterly_balance", "total_balance", "REAL NOT NULL DEFAULT 0")
 
 	// For semiannual_balance
 	alterTableSafely("semiannual_balance", "cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("semiannual_balance", "bank_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("semiannual_balance", "previous_cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("semiannual_balance", "previous_bank_amount", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("semiannual_balance", "total_previous_balance", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("semiannual_balance", "total_balance", "REAL NOT NULL DEFAULT 0")
 
 	// For annual_balance
 	alterTableSafely("annual_balance", "cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("annual_balance", "bank_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("annual_balance", "previous_cash_amount", "REAL NOT NULL DEFAULT 0")
 	alterTableSafely("annual_balance", "previous_bank_amount", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("annual_balance", "total_previous_balance", "REAL NOT NULL DEFAULT 0")
+	alterTableSafely("annual_balance", "total_balance", "REAL NOT NULL DEFAULT 0")
 }
 
 // Helper function to safely alter a table by adding a column if it doesn't exist
@@ -1585,6 +1597,8 @@ func updateSubsequentWeeklyBalances(userID string, startDate time.Time) error {
                 previous_bank_amount = ?,
                 balance_cash_amount = ?,
                 balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_week = ?
 		`, previousBalance, balance, newCashAmount, newBankAmount, prevCashAmount, prevBankAmount, balanceCashAmount, balanceBankAmount, userID, currentYearWeek)
@@ -1699,6 +1713,8 @@ func updateMonthlyBalance(userID string, incomeAmount, expenseAmount, billsAmoun
 				previous_bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_month = ?
 		`, cashAmount, bankAmount,
@@ -2202,6 +2218,8 @@ func updateSubsequentQuarterlyBalances(userID string, startDate time.Time) error
 				    previous_bank_amount = ?,
 				    balance_cash_amount = ?,
 				    balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				    updated_at = CURRENT_TIMESTAMP
 				WHERE user_id = ? AND year_quarter = ?
 			`, currentCashAmount, currentBankAmount,
@@ -2442,6 +2460,8 @@ func updateSubsequentAnnualBalances(userID string, startDate time.Time) error {
 				previous_bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year = ?
 		`, previousBalance, balance, newCashAmount, newBankAmount, prevCashAmount, prevBankAmount, balanceCashAmount, balanceBankAmount, userID, currentYear)
@@ -2648,6 +2668,8 @@ func updateSubsequentMonthlyBalances(userID string, startDate time.Time) error {
 				    previous_bank_amount = ?,
 				    balance_cash_amount = ?,
 				    balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				    updated_at = CURRENT_TIMESTAMP
 				WHERE user_id = ? AND year_month = ?
 			`, currentCashAmount, currentBankAmount,

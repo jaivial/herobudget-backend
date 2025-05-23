@@ -161,6 +161,8 @@ func init() {
 			alterTableSafely(table, "previous_bank_amount", "REAL")
 			alterTableSafely(table, "balance_cash_amount", "REAL")
 			alterTableSafely(table, "balance_bank_amount", "REAL")
+			alterTableSafely(table, "total_previous_balance", "REAL")
+			alterTableSafely(table, "total_balance", "REAL")
 
 			// Columnas específicas para cada tabla
 			if table == "weekly_cash_bank_balance" {
@@ -292,6 +294,8 @@ func createTablesIfNotExist() {
 			previous_cash_amount REAL NOT NULL DEFAULT 0,
 			balance_cash_amount REAL NOT NULL DEFAULT 0,
 			balance_bank_amount REAL NOT NULL DEFAULT 0,
+			total_previous_balance REAL NOT NULL DEFAULT 0,
+			total_balance REAL NOT NULL DEFAULT 0,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			UNIQUE(user_id, date)
@@ -1391,6 +1395,10 @@ func updateDailyBalance(userID string, incomeAmount, expenseAmount, billsAmount 
 				previous_bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
+				total_balance = (balance_cash_amount + balance_bank_amount),
+				total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND date = ?
 		`, cashAmount, bankAmount,
@@ -1485,6 +1493,10 @@ func updateSubsequentDailyBalances(userID string, startDate time.Time) error {
 				bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
+				total_balance = (balance_cash_amount + balance_bank_amount),
+				total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND date = ?
 		`, prevCashAmount, newCashAmount, prevBankAmount, newBankAmount, newCashAmount, newBankAmount, userID, currentDateStr)
@@ -1609,6 +1621,10 @@ func updateWeeklyBalance(userID string, incomeAmount, expenseAmount, billsAmount
 				previous_bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
+				total_balance = (balance_cash_amount + balance_bank_amount),
+				total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_week = ?
 		`, cashAmount, bankAmount,
@@ -1709,6 +1725,10 @@ func updateSubsequentWeeklyBalances(userID string, startDate time.Time) error {
 				bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
+				total_balance = (balance_cash_amount + balance_bank_amount),
+				total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_week = ?
 		`, prevCashAmount, newCashAmount, prevBankAmount, newBankAmount, newCashAmount, newBankAmount, userID, currentYearWeek)
@@ -1821,6 +1841,8 @@ func updateMonthlyBalance(userID string, incomeAmount, expenseAmount, billsAmoun
 				previous_bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_month = ?
 		`, cashAmount, bankAmount,
@@ -1963,6 +1985,8 @@ func updateSubsequentMonthlyBalances(userID string, startDate time.Time) error {
 					bank_amount = ?,
 					balance_cash_amount = ?,
 					balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 					updated_at = CURRENT_TIMESTAMP
 				WHERE user_id = ? AND year_month = ?
 			`, prevCashAmount, currentCashAmount, prevBankAmount, currentBankAmount, currentCashAmount, currentBankAmount, userID, currentYearMonth)
@@ -2120,6 +2144,8 @@ func updateQuarterlyBalance(userID string, incomeAmount, expenseAmount, billsAmo
 				previous_bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_quarter = ?
 		`, cashAmount, bankAmount,
@@ -2224,6 +2250,8 @@ func updateSubsequentAnnualBalances(userID string, startDate time.Time) error {
 				bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year = ?
 		`, prevCashAmount, newCashAmount, prevBankAmount, newBankAmount, newCashAmount, newBankAmount, userID, currentYear)
@@ -2409,6 +2437,8 @@ func updateSubsequentQuarterlyBalances(userID string, startDate time.Time) error
 				bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_quarter = ?
 		`, prevCashAmount, newCashAmount, prevBankAmount, newBankAmount, newCashAmount, newBankAmount, userID, currentYearQuarter)
@@ -2536,6 +2566,8 @@ func updateSemiannualBalance(userID string, incomeAmount, expenseAmount, billsAm
 				previous_bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_half = ?
 		`, cashAmount, bankAmount,
@@ -2644,6 +2676,8 @@ func updateSubsequentSemiannualBalances(userID string, startDate time.Time) erro
 				bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year_half = ?
 		`, prevCashAmount, newCashAmount, prevBankAmount, newBankAmount, newCashAmount, newBankAmount, userID, currentYearHalf)
@@ -2755,6 +2789,8 @@ func updateAnnualBalance(userID string, incomeAmount, expenseAmount, billsAmount
 				previous_bank_amount = ?,
 				balance_cash_amount = ?,
 				balance_bank_amount = ?,
+			total_balance = (balance_cash_amount + balance_bank_amount),
+			total_previous_balance = (previous_cash_amount + previous_bank_amount),
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ? AND year = ?
 		`, cashAmount, bankAmount,
