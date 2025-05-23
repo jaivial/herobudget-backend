@@ -3,6 +3,7 @@ import '../models/dashboard_model.dart';
 import '../utils/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'budget_overview.dart'; // Import para usar PeriodSavingsData
+import '../screens/savings/set_savings_goal_screen.dart';
 
 class SavingsOverviewWidget extends StatelessWidget {
   final SavingsOverview savingsOverview;
@@ -584,17 +585,27 @@ class PeriodSavingsOverviewWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: Navigate to set savings goal screen
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            context.tr.translate(
-                              'set_goal_feature_coming_soon',
-                            ),
-                          ),
+                    onPressed: () async {
+                      // Navigate to set savings goal screen
+                      final result = await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SetSavingsGoalScreen(),
                         ),
                       );
+
+                      // If a goal was set, show success message
+                      if (result != null && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              context.tr.translate(
+                                'savings_goal_updated_successfully',
+                              ),
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
                     },
                     icon: const Icon(Icons.add),
                     label: Text(context.tr.translate('set_savings_goal')),

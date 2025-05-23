@@ -954,21 +954,50 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: Text(context.tr.translate('cancel')),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 try {
                   final double newGoal = double.parse(controller.text);
-                  _savingsService.updateSavingsGoal(newGoal).then((success) {
-                    if (success) {
-                      _refreshDashboard();
-                      Navigator.pop(context);
-                    }
-                  });
+
+                  // Get user ID from shared preferences or use widget.userId
+                  String? userId =
+                      widget.userId.isEmpty
+                          ? await DashboardService.getCurrentUserId()
+                          : widget.userId;
+
+                  if (userId == null || userId.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          context.tr.translate('user_not_authenticated'),
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final updatedSavingsData = await _savingsService
+                      .setSavingsGoal(userId, newGoal);
+                  _refreshDashboard();
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        context.tr.translate(
+                          'savings_goal_updated_successfully',
+                        ),
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
                         context.tr.translate('please_enter_valid_amount'),
                       ),
+                      backgroundColor: Colors.red,
                     ),
                   );
                 }

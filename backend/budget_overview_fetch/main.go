@@ -14,13 +14,14 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// BudgetOverview represents the budget overview data structure
+// BudgetOverview represents the complete budget overview response
 type BudgetOverview struct {
 	RemainingAmount      float64              `json:"remaining_amount"`
 	ExpensePercent       float64              `json:"expense_percent"`
 	SpentAmount          float64              `json:"spent_amount"`
 	UpcomingAmount       float64              `json:"upcoming_amount"`
 	TotalAmount          float64              `json:"total_amount"`
+	TotalBalance         float64              `json:"total_balance"`
 	CombinedExpense      float64              `json:"combined_expense"`
 	TotalIncome          float64              `json:"total_income"`
 	DailyRate            float64              `json:"daily_rate"`
@@ -358,6 +359,7 @@ func calculateBudgetOverview(data *BalanceData, period string) *BudgetOverview {
 		SpentAmount:          spentAmount,
 		UpcomingAmount:       upcomingAmount,
 		TotalAmount:          totalAmount,
+		TotalBalance:         data.TotalBalance,
 		CombinedExpense:      combinedExpense,
 		TotalIncome:          totalIncome,
 		DailyRate:            dailyRate,

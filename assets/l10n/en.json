@@ -242,5 +242,18 @@
     "payment_successful": "Payment Successful",
     "payment_failed": "Payment Failed",
     "payment_error": "Payment Error",
-    "days_overdue": "days overdue"
+    "days_overdue": "days overdue",
+    "user_not_authenticated": "User not authenticated",
+    "please_enter_goal_amount": "Please enter a goal amount",
+    "savings_goal_updated_successfully": "Savings goal updated successfully",
+    "error_updating_savings_goal": "Error updating savings goal",
+    "savings_goal": "Savings Goal",
+    "set_your_financial_target": "Set your financial target",
+    "current_savings_info": "Current Savings Information",
+    "current_goal": "Current Goal",
+    "available_savings": "Available Savings",
+    "progress": "Progress",
+    "new_savings_goal": "New Savings Goal",
+    "enter_target_amount": "Enter your target amount to save",
+    "save_goal": "Save Goal"
 }

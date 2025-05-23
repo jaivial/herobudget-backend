@@ -296,5 +296,19 @@
     "payment_successful": "Pago Exitoso",
     "payment_failed": "Pago Fallido",
     "payment_error": "Error en el Pago",
-    "days_overdue": "días de retraso"
+    "days_overdue": "días de retraso",
+    "user_not_authenticated": "Usuario no autenticado",
+    "please_enter_goal_amount": "Por favor ingresa una cantidad objetivo",
+    "savings_goal_updated_successfully": "Objetivo de ahorros actualizado exitosamente",
+    "error_updating_savings_goal": "Error al actualizar el objetivo de ahorros",
+    "savings_goal": "Objetivo de Ahorros",
+    "set_your_financial_target": "Establece tu meta financiera",
+    "current_savings_info": "Información de Ahorros Actuales",
+    "current_goal": "Objetivo Actual",
+    "available_savings": "Ahorros Disponibles",
+    "progress": "Progreso",
+    "new_savings_goal": "Nuevo Objetivo de Ahorros",
+    "enter_target_amount": "Ingresa la cantidad que deseas ahorrar",
+    "goal_amount": "Cantidad Objetivo",
+    "save_goal": "Guardar Objetivo"
 }

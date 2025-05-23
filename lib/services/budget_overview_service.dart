@@ -105,7 +105,7 @@ class BudgetOverviewService {
               goal: (data['savings_data']?['goal'] as num?)?.toDouble() ?? 0.0,
               percent:
                   (data['savings_data']?['percent'] as num?)?.toDouble() ?? 0.0,
-              totalBalance: (data['total_amount'] as num?)?.toDouble() ?? 0.0,
+              totalBalance: (data['total_balance'] as num?)?.toDouble() ?? 0.0,
             ),
           );
         } else {
