@@ -160,7 +160,17 @@
     "confirm_payment": "Подтвердить платеж",
     "processing": "Обработка...",
     "payment_successful": "Платеж выполнен",
-    "payment_failed": "Платеж не выполнен",
+    "payment_failed": "Платеж не прошел",
     "payment_error": "Ошибка платежа",
-    "days_overdue": "дней просрочки"
+    "days_overdue": "дней просрочки",
+    "savings_period": "Период сбережений",
+    "select_savings_period": "Выберите, как часто вы хотите достигать свою цель сбережений",
+    "period": "Период",
+    "current_savings_info": "Текущая информация о сбережениях",
+    "enter_target_amount": "Введите сумму, которую хотите сберечь",
+    "please_enter_goal_amount": "Пожалуйста, введите целевую сумму",
+    "save_goal": "Сохранить цель",
+    "user_not_authenticated": "Пользователь не аутентифицирован",
+    "set_your_financial_target": "Установите свою финансовую цель",
+    "select_period": "Выбрать период"
 }

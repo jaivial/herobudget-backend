@@ -178,7 +178,17 @@
     "confirm_payment": "Confirmar Pagamento",
     "processing": "Processando...",
     "payment_successful": "Pagamento Bem-sucedido",
-    "payment_failed": "Falha no Pagamento",
-    "payment_error": "Erro no Pagamento",
-    "days_overdue": "dias de atraso"
+    "payment_failed": "Pagamento falhado",
+    "payment_error": "Erro de pagamento",
+    "days_overdue": "dias em atraso",
+    "savings_period": "Período de Poupança",
+    "select_savings_period": "Selecione com que frequência você quer alcançar sua meta de poupança",
+    "period": "Período",
+    "current_savings_info": "Informações de Poupança Atuais",
+    "enter_target_amount": "Digite o valor que você quer poupar",
+    "please_enter_goal_amount": "Por favor, digite um valor meta",
+    "save_goal": "Salvar Meta",
+    "user_not_authenticated": "Usuário não autenticado",
+    "set_your_financial_target": "Defina seu objetivo financeiro",
+    "select_period": "Selecionar Período"
 }

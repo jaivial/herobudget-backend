@@ -46,6 +46,7 @@ type SavingsOverview struct {
 	Percent     float64 `json:"percent"`
 	Available   float64 `json:"available"`
 	Goal        float64 `json:"goal"`
+	Period      string  `json:"period"`
 	NeedToSave  float64 `json:"need_to_save"`
 	DailyTarget float64 `json:"daily_target"`
 }
@@ -117,7 +118,7 @@ func createTablesIfNotExist() {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS budget (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL,
+			user_id TEXT NOT NULL,
 			period TEXT NOT NULL,
 			date TEXT NOT NULL,
 			total_amount REAL NOT NULL,
@@ -138,9 +139,10 @@ func createTablesIfNotExist() {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS savings (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL,
+			user_id TEXT NOT NULL,
 			available REAL NOT NULL,
 			goal REAL NOT NULL,
+			period TEXT NOT NULL DEFAULT 'monthly',
 			percent REAL NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -150,11 +152,20 @@ func createTablesIfNotExist() {
 		log.Fatalf("Failed to create savings table: %v", err)
 	}
 
+	// Add period column if it doesn't exist (for existing tables)
+	_, err = db.Exec(`
+		ALTER TABLE savings ADD COLUMN period TEXT NOT NULL DEFAULT 'monthly'
+	`)
+	if err != nil {
+		// Column might already exist, which is fine
+		log.Printf("Note: period column might already exist: %v", err)
+	}
+
 	// Create cash_bank table
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS cash_bank (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL,
+			user_id TEXT NOT NULL,
 			month TEXT NOT NULL,
 			cash_amount REAL NOT NULL,
 			cash_percent REAL NOT NULL,
@@ -173,7 +184,7 @@ func createTablesIfNotExist() {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS finance_metrics (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL,
+			user_id TEXT NOT NULL,
 			period TEXT NOT NULL,
 			income REAL NOT NULL,
 			expenses REAL NOT NULL,
@@ -190,7 +201,7 @@ func createTablesIfNotExist() {
 	_, err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS bills (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			user_id INTEGER NOT NULL,
+			user_id TEXT NOT NULL,
 			name TEXT NOT NULL,
 			amount REAL NOT NULL,
 			due_date TEXT NOT NULL,
@@ -231,7 +242,7 @@ func insertMockData() {
 	// Insert mock budget data
 	_, err := db.Exec(`
 		INSERT INTO budget (user_id, period, date, total_amount, remaining_amount, spent_amount, upcoming_amount, from_previous, percent)
-		VALUES (1, 'monthly', '2025-05-01', 975.00, 875.00, 0.00, 100.00, 975.00, 10.0)
+		VALUES ('1', 'monthly', '2025-05-01', 975.00, 875.00, 0.00, 100.00, 975.00, 10.0)
 	`)
 	if err != nil {
 		log.Printf("Error inserting mock budget data: %v", err)
@@ -240,7 +251,7 @@ func insertMockData() {
 	// Insert mock savings data
 	_, err = db.Exec(`
 		INSERT INTO savings (user_id, available, goal, percent)
-		VALUES (1, 875.00, 1000.00, 88.0)
+		VALUES ('1', 875.00, 1000.00, 88.0)
 	`)
 	if err != nil {
 		log.Printf("Error inserting mock savings data: %v", err)
@@ -249,7 +260,7 @@ func insertMockData() {
 	// Insert mock cash_bank data
 	_, err = db.Exec(`
 		INSERT INTO cash_bank (user_id, month, cash_amount, cash_percent, bank_amount, bank_percent, monthly_total)
-		VALUES (1, 'mayo de 2025', 200.00, 100.0, 0.00, 0.0, 200.00)
+		VALUES ('1', 'mayo de 2025', 200.00, 100.0, 0.00, 0.0, 200.00)
 	`)
 	if err != nil {
 		log.Printf("Error inserting mock cash_bank data: %v", err)
@@ -258,7 +269,7 @@ func insertMockData() {
 	// Insert mock finance_metrics data
 	_, err = db.Exec(`
 		INSERT INTO finance_metrics (user_id, period, income, expenses, bills)
-		VALUES (1, 'monthly', 0.00, 0.00, 100.00)
+		VALUES ('1', 'monthly', 0.00, 0.00, 100.00)
 	`)
 	if err != nil {
 		log.Printf("Error inserting mock finance_metrics data: %v", err)
@@ -267,7 +278,7 @@ func insertMockData() {
 	// Insert mock bills data
 	_, err = db.Exec(`
 		INSERT INTO bills (user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon)
-		VALUES (1, 'Cash', 100.00, '2025-05-28', false, true, 8751, true, 'Rent', '🏠')
+		VALUES ('1', 'Cash', 100.00, '2025-05-28', false, true, 8751, true, 'Rent', '🏠')
 	`)
 	if err != nil {
 		log.Printf("Error inserting mock bills data: %v", err)
@@ -414,7 +425,7 @@ func fetchBudgetOverview(userID, period string) (BudgetOverview, error) {
 	// Fetch total income from incomes table for the specified period
 	var startDate, endDate string
 	now := time.Now()
-	
+
 	switch period {
 	case "daily":
 		startDate = now.Format("2006-01-02")
@@ -506,7 +517,7 @@ func fetchSavingsOverview(userID string) (SavingsOverview, error) {
 
 	// Query savings data from database
 	err := db.QueryRow(`
-		SELECT available, goal, percent
+		SELECT available, goal, period, percent
 		FROM savings
 		WHERE user_id = ?
 		ORDER BY created_at DESC
@@ -514,6 +525,7 @@ func fetchSavingsOverview(userID string) (SavingsOverview, error) {
 	`, userID).Scan(
 		&savingsOverview.Available,
 		&savingsOverview.Goal,
+		&savingsOverview.Period,
 		&savingsOverview.Percent,
 	)
 
@@ -521,6 +533,7 @@ func fetchSavingsOverview(userID string) (SavingsOverview, error) {
 		// Return default values if no data found
 		savingsOverview.Available = 0
 		savingsOverview.Goal = 0
+		savingsOverview.Period = "monthly" // Default period
 		savingsOverview.Percent = 0
 		return savingsOverview, nil
 	} else if err != nil {

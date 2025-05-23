@@ -190,7 +190,17 @@
     "confirm_payment": "Conferma Pagamento",
     "processing": "Elaborazione...",
     "payment_successful": "Pagamento Riuscito",
-    "payment_failed": "Pagamento Fallito",
-    "payment_error": "Errore di Pagamento",
-    "days_overdue": "giorni di ritardo"
+    "payment_failed": "Pagamento fallito",
+    "payment_error": "Errore di pagamento",
+    "days_overdue": "Giorni di ritardo",
+    "savings_period": "Periodo di Risparmio",
+    "select_savings_period": "Seleziona quanto spesso vuoi raggiungere il tuo obiettivo di risparmio",
+    "period": "Periodo",
+    "current_savings_info": "Informazioni sui Risparmi Attuali",
+    "enter_target_amount": "Inserisci l'importo che vuoi risparmiare",
+    "please_enter_goal_amount": "Inserisci un importo obiettivo",
+    "save_goal": "Salva Obiettivo",
+    "user_not_authenticated": "Utente non autenticato",
+    "set_your_financial_target": "Imposta il tuo obiettivo finanziario",
+    "select_period": "Seleziona Periodo"
 }

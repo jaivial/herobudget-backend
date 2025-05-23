@@ -126,6 +126,7 @@ class SavingsOverview {
   final double percent;
   final double available;
   final double goal;
+  final String period;
   final double needToSave;
   final double dailyTarget;
 
@@ -133,6 +134,7 @@ class SavingsOverview {
     required this.percent,
     required this.available,
     required this.goal,
+    required this.period,
     required this.needToSave,
     required this.dailyTarget,
   });
@@ -142,6 +144,7 @@ class SavingsOverview {
       percent: json['percent']?.toDouble() ?? 0.0,
       available: json['available']?.toDouble() ?? 0.0,
       goal: json['goal']?.toDouble() ?? 0.0,
+      period: json['period'] ?? 'monthly',
       needToSave: json['need_to_save']?.toDouble() ?? 0.0,
       dailyTarget: json['daily_target']?.toDouble() ?? 0.0,
     );
@@ -152,6 +155,7 @@ class SavingsOverview {
       'percent': percent,
       'available': available,
       'goal': goal,
+      'period': period,
       'need_to_save': needToSave,
       'daily_target': dailyTarget,
     };

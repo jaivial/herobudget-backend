@@ -451,7 +451,14 @@ class _DashboardScreenState extends State<DashboardScreen>
       date:
           '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
       budgetOverview: budgetOverview,
-      savingsOverview: _mockSavingsOverview(),
+      savingsOverview: SavingsOverview(
+        percent: 0.0,
+        available: 0.0,
+        goal: 0.0, // No goal set
+        period: 'monthly',
+        needToSave: 0.0,
+        dailyTarget: 0.0,
+      ),
       cashDistribution: _mockCashBankDistribution(),
       financeMetrics: _mockFinanceMetrics(),
       upcomingBills: _mockUpcomingBills(),
@@ -505,17 +512,6 @@ class _DashboardScreenState extends State<DashboardScreen>
       dailyRate: combinedExpense / 30.0,
       highSpending: expensePercent > 90,
       totalIncome: totalIncome,
-    );
-  }
-
-  // Datos simulados para SavingsOverview
-  SavingsOverview _mockSavingsOverview() {
-    return SavingsOverview(
-      percent: 65.0,
-      available: 6500.0,
-      goal: 10000.0,
-      needToSave: 3500.0,
-      dailyTarget: 38.89,
     );
   }
 
@@ -737,17 +733,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             const SizedBox(height: 20),
 
-            // Savings overview
-            SavingsOverviewWidget(
-              savingsOverview: dashboardData.savingsOverview,
-              onEditGoal: () {
-                // Show dialog to edit goal
-                _showEditGoalDialog(dashboardData.savingsOverview.goal);
-              },
-            ),
-
-            const SizedBox(height: 20),
-
             // Cash and bank distribution
             CashBankDistributionWidget(
               distribution: dashboardData.cashDistribution,
@@ -924,89 +909,143 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // Dialog to edit savings goal
-  void _showEditGoalDialog(double currentGoal) {
-    final TextEditingController controller = TextEditingController(
-      text: currentGoal.toString(),
-    );
+  // Dialog to add bill
+  void _showAddBillDialog() {
+    // Implementación simplificada, mostrar solo un mensaje
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.tr.translate('add_bill'))));
+  }
 
+  // Dialog to add income
+  void _showAddIncomeDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddIncomeScreen(
+              onSuccess: () {
+                // Refresh dashboard data when a new income is added
+                _refreshDashboard();
+              },
+            ),
+      ),
+    );
+  }
+
+  // Dialog to add expense
+  void _showAddExpenseDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddExpenseScreen(
+              onSuccess: () {
+                // Refresh dashboard data when a new expense is added
+                _refreshDashboard();
+              },
+            ),
+      ),
+    );
+  }
+
+  // Dialog to pay bill
+  void _showPayBillDialog(List<Bill> bills) {
+    if (bills.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.tr.translate('no_bills'))));
+      return;
+    }
+
+    // Navegar a la pantalla de pago de facturas
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PayBillScreen()),
+    ).then((result) {
+      // Si regresa con éxito (true), actualizar el dashboard
+      if (result == true) {
+        _refreshDashboard();
+      }
+    });
+  }
+
+  // Dialog to add invoice
+  void _showAddInvoiceDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddInvoiceScreen(
+              onSuccess: () {
+                // Cuando se añade una factura correctamente, actualizamos los datos del dashboard
+                _refreshDashboard();
+              },
+            ),
+      ),
+    );
+  }
+
+  // Dialog to add category
+  void _showAddCategoryDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => AddCategoryScreen(
+              onSuccess: () {
+                // No need to do anything special for now
+              },
+            ),
+      ),
+    );
+  }
+
+  // Show a snackbar with the action label
+  void _showActionSnackbar(String label) {
     // Get currency symbol for current locale
     final String currencySymbol = CurrencyUtils.getCurrencySymbolForLocale(
       Localizations.localeOf(context),
     );
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(context.tr.translate('edit_goal')),
-          content: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: context.tr.translate('goal_amount'),
-              prefixText: currencySymbol,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(context.tr.translate('cancel')),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  final double newGoal = double.parse(controller.text);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${context.tr.translate('action')}: ${label}'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
-                  // Get user ID from shared preferences or use widget.userId
-                  String? userId =
-                      widget.userId.isEmpty
-                          ? await DashboardService.getCurrentUserId()
-                          : widget.userId;
-
-                  if (userId == null || userId.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          context.tr.translate('user_not_authenticated'),
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  final updatedSavingsData = await _savingsService
-                      .setSavingsGoal(userId, newGoal);
-                  _refreshDashboard();
-                  Navigator.pop(context);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        context.tr.translate(
-                          'savings_goal_updated_successfully',
-                        ),
-                      ),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        context.tr.translate('please_enter_valid_amount'),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              child: Text(context.tr.translate('save')),
-            ),
-          ],
-        );
-      },
+  // Método para convertir el BudgetOverview del backend al modelo local
+  widget_budget.BudgetOverview _createLocalBudgetOverview(
+    BudgetOverview backendModel,
+  ) {
+    return widget_budget.BudgetOverview(
+      remainingAmount: backendModel.remainingAmount,
+      expensePercent: backendModel.expensePercent,
+      spentAmount: backendModel.spentAmount,
+      upcomingAmount: backendModel.upcomingAmount,
+      totalAmount: backendModel.totalAmount,
+      combinedExpense: backendModel.combinedExpense,
+      totalIncome: backendModel.totalIncome,
+      dailyRate: backendModel.dailyRate,
+      highSpending: backendModel.highSpending,
+      moneyFlow: widget_budget.MoneyFlow(
+        fromPrevious: backendModel.moneyFlow.fromPrevious,
+      ),
+      cashBankDistribution: widget_budget.PeriodCashBankDistribution(
+        cashAmount: _dashboardModel?.cashDistribution.cashAmount ?? 0.0,
+        cashPercent: _dashboardModel?.cashDistribution.cashPercent ?? 0.0,
+        bankAmount: _dashboardModel?.cashDistribution.bankAmount ?? 0.0,
+        bankPercent: _dashboardModel?.cashDistribution.bankPercent ?? 0.0,
+        totalAmount: _dashboardModel?.cashDistribution.monthlyTotal ?? 0.0,
+      ),
+      savingsData: widget_budget.PeriodSavingsData(
+        available: _dashboardModel?.savingsOverview.available ?? 0.0,
+        goal: _dashboardModel?.savingsOverview.goal ?? 0.0,
+        percent: _dashboardModel?.savingsOverview.percent ?? 0.0,
+        totalBalance: backendModel.totalAmount,
+      ),
     );
   }
 
@@ -1146,146 +1185,6 @@ class _DashboardScreenState extends State<DashboardScreen>
           },
         );
       },
-    );
-  }
-
-  // Dialog to add bill
-  void _showAddBillDialog() {
-    // Implementación simplificada, mostrar solo un mensaje
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.tr.translate('add_bill'))));
-  }
-
-  // Dialog to add income
-  void _showAddIncomeDialog() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => AddIncomeScreen(
-              onSuccess: () {
-                // Refresh dashboard data when a new income is added
-                _refreshDashboard();
-              },
-            ),
-      ),
-    );
-  }
-
-  // Dialog to add expense
-  void _showAddExpenseDialog() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => AddExpenseScreen(
-              onSuccess: () {
-                // Refresh dashboard data when a new expense is added
-                _refreshDashboard();
-              },
-            ),
-      ),
-    );
-  }
-
-  // Dialog to pay bill
-  void _showPayBillDialog(List<Bill> bills) {
-    if (bills.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.tr.translate('no_bills'))));
-      return;
-    }
-
-    // Navegar a la pantalla de pago de facturas
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const PayBillScreen()),
-    ).then((result) {
-      // Si regresa con éxito (true), actualizar el dashboard
-      if (result == true) {
-        _refreshDashboard();
-      }
-    });
-  }
-
-  // Dialog to add invoice
-  void _showAddInvoiceDialog() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => AddInvoiceScreen(
-              onSuccess: () {
-                // Cuando se añade una factura correctamente, actualizamos los datos del dashboard
-                _refreshDashboard();
-              },
-            ),
-      ),
-    );
-  }
-
-  // Dialog to add category
-  void _showAddCategoryDialog() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => AddCategoryScreen(
-              onSuccess: () {
-                // No need to do anything special for now
-              },
-            ),
-      ),
-    );
-  }
-
-  // Show a snackbar with the action label
-  void _showActionSnackbar(String label) {
-    // Get currency symbol for current locale
-    final String currencySymbol = CurrencyUtils.getCurrencySymbolForLocale(
-      Localizations.localeOf(context),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${context.tr.translate('action')}: ${label}'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  // Método para convertir el BudgetOverview del backend al modelo local
-  widget_budget.BudgetOverview _createLocalBudgetOverview(
-    BudgetOverview backendModel,
-  ) {
-    return widget_budget.BudgetOverview(
-      remainingAmount: backendModel.remainingAmount,
-      expensePercent: backendModel.expensePercent,
-      spentAmount: backendModel.spentAmount,
-      upcomingAmount: backendModel.upcomingAmount,
-      totalAmount: backendModel.totalAmount,
-      combinedExpense: backendModel.combinedExpense,
-      totalIncome: backendModel.totalIncome,
-      dailyRate: backendModel.dailyRate,
-      highSpending: backendModel.highSpending,
-      moneyFlow: widget_budget.MoneyFlow(
-        fromPrevious: backendModel.moneyFlow.fromPrevious,
-      ),
-      cashBankDistribution: widget_budget.PeriodCashBankDistribution(
-        cashAmount: _dashboardModel?.cashDistribution.cashAmount ?? 0.0,
-        cashPercent: _dashboardModel?.cashDistribution.cashPercent ?? 0.0,
-        bankAmount: _dashboardModel?.cashDistribution.bankAmount ?? 0.0,
-        bankPercent: _dashboardModel?.cashDistribution.bankPercent ?? 0.0,
-        totalAmount: _dashboardModel?.cashDistribution.monthlyTotal ?? 0.0,
-      ),
-      savingsData: widget_budget.PeriodSavingsData(
-        available: _dashboardModel?.savingsOverview.available ?? 0.0,
-        goal: _dashboardModel?.savingsOverview.goal ?? 0.0,
-        percent: _dashboardModel?.savingsOverview.percent ?? 0.0,
-        totalBalance: backendModel.totalAmount,
-      ),
     );
   }
 }

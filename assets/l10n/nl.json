@@ -179,6 +179,16 @@
     "processing": "Verwerken...",
     "payment_successful": "Betaling geslaagd",
     "payment_failed": "Betaling mislukt",
-    "payment_error": "Betalingsfout",
-    "days_overdue": "dagen te laat"
+    "payment_error": "Betaalfout",
+    "days_overdue": "dagen te laat",
+    "savings_period": "Spaarperiode",
+    "select_savings_period": "Selecteer hoe vaak je je spaardoel wilt bereiken",
+    "period": "Periode",
+    "current_savings_info": "Huidige Spaarinformatie",
+    "enter_target_amount": "Voer het bedrag in dat je wilt sparen",
+    "please_enter_goal_amount": "Voer een doelbedrag in",
+    "save_goal": "Doel Opslaan",
+    "user_not_authenticated": "Gebruiker niet geauthenticeerd",
+    "set_your_financial_target": "Stel je financiële doel in",
+    "select_period": "Periode Selecteren"
 }

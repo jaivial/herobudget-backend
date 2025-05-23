@@ -17,6 +17,7 @@ type SavingsData struct {
 	UserID      string  `json:"user_id"`
 	Available   float64 `json:"available"`
 	Goal        float64 `json:"goal"`
+	Period      string  `json:"period"` // New field for period type
 	Percent     float64 `json:"percent"`
 	NeedToSave  float64 `json:"need_to_save"`
 	DailyTarget float64 `json:"daily_target"`
@@ -26,6 +27,7 @@ type SavingsUpdateRequest struct {
 	UserID    string  `json:"user_id"`
 	Available float64 `json:"available,omitempty"`
 	Goal      float64 `json:"goal,omitempty"`
+	Period    string  `json:"period,omitempty"` // New field for period type
 }
 
 type ApiResponse struct {
@@ -76,6 +78,7 @@ func createTablesIfNotExist() {
 			user_id TEXT NOT NULL,
 			available REAL NOT NULL,
 			goal REAL NOT NULL,
+			period TEXT NOT NULL DEFAULT 'monthly',
 			percent REAL NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -83,6 +86,15 @@ func createTablesIfNotExist() {
 	`)
 	if err != nil {
 		log.Fatalf("Failed to create savings table: %v", err)
+	}
+
+	// Add period column if it doesn't exist (for existing tables)
+	_, err = db.Exec(`
+		ALTER TABLE savings ADD COLUMN period TEXT NOT NULL DEFAULT 'monthly'
+	`)
+	if err != nil {
+		// Column might already exist, which is fine
+		log.Printf("Note: period column might already exist: %v", err)
 	}
 }
 
@@ -174,6 +186,9 @@ func handleUpdateSavings(w http.ResponseWriter, r *http.Request) {
 	if updateRequest.Goal > 0 {
 		currentSavings.Goal = updateRequest.Goal
 	}
+	if updateRequest.Period != "" {
+		currentSavings.Period = updateRequest.Period
+	}
 
 	// Calculate the percentage
 	if currentSavings.Goal > 0 {
@@ -207,7 +222,7 @@ func fetchSavingsData(userID string) (SavingsData, error) {
 
 	// Query savings data from database
 	err := db.QueryRow(`
-		SELECT user_id, available, goal, percent
+		SELECT user_id, available, goal, period, percent
 		FROM savings
 		WHERE user_id = ?
 		ORDER BY created_at DESC
@@ -216,6 +231,7 @@ func fetchSavingsData(userID string) (SavingsData, error) {
 		&savings.UserID,
 		&savings.Available,
 		&savings.Goal,
+		&savings.Period,
 		&savings.Percent,
 	)
 
@@ -224,6 +240,7 @@ func fetchSavingsData(userID string) (SavingsData, error) {
 		savings.UserID = userID
 		savings.Available = 0
 		savings.Goal = 0
+		savings.Period = "monthly" // Default period
 		savings.Percent = 0
 		savings.NeedToSave = 0
 		savings.DailyTarget = 0
@@ -261,12 +278,14 @@ func updateSavingsData(savings SavingsData) error {
 			UPDATE savings
 			SET available = ?,
 				goal = ?,
+				period = ?,
 				percent = ?,
 				updated_at = CURRENT_TIMESTAMP
 			WHERE user_id = ?
 		`,
 			savings.Available,
 			savings.Goal,
+			savings.Period,
 			savings.Percent,
 			savings.UserID,
 		)
@@ -274,12 +293,13 @@ func updateSavingsData(savings SavingsData) error {
 		// Insert new savings entry
 		_, err = db.Exec(`
 			INSERT INTO savings (
-				user_id, available, goal, percent
-			) VALUES (?, ?, ?, ?)
+				user_id, available, goal, period, percent
+			) VALUES (?, ?, ?, ?, ?)
 		`,
 			savings.UserID,
 			savings.Available,
 			savings.Goal,
+			savings.Period,
 			savings.Percent,
 		)
 	}

@@ -186,5 +186,15 @@
     "payment_successful": "支払い成功",
     "payment_failed": "支払い失敗",
     "payment_error": "支払いエラー",
-    "days_overdue": "日延滞"
+    "days_overdue": "日遅延",
+    "savings_period": "貯蓄期間",
+    "select_savings_period": "貯蓄目標を達成する頻度を選択してください",
+    "period": "期間",
+    "current_savings_info": "現在の貯蓄情報",
+    "enter_target_amount": "貯蓄したい金額を入力してください",
+    "please_enter_goal_amount": "目標金額を入力してください",
+    "save_goal": "目標を保存",
+    "user_not_authenticated": "ユーザーが認証されていません",
+    "set_your_financial_target": "財務目標を設定してください",
+    "select_period": "期間を選択"
 }

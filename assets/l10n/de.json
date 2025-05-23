@@ -186,5 +186,17 @@
     "payment_successful": "Zahlung erfolgreich",
     "payment_failed": "Zahlung fehlgeschlagen",
     "payment_error": "Zahlungsfehler",
-    "days_overdue": "Tage überfällig"
+    "days_overdue": "Tage überfällig",
+    "tip_automate_savings": "Automatisiere deine Ersparnisse durch die Einrichtung automatischer Überweisungen",
+    "tip_track_progress_regularly": "Überprüfe regelmäßig deinen Fortschritt und passe Ziele bei Bedarf an",
+    "savings_period": "Sparzeitraum",
+    "select_savings_period": "Wähle aus, wie oft du dein Sparziel erreichen möchtest",
+    "period": "Zeitraum",
+    "current_savings_info": "Aktuelle Sparinformationen",
+    "enter_target_amount": "Gib den Betrag ein, den du sparen möchtest",
+    "please_enter_goal_amount": "Bitte gib einen Zielbetrag ein",
+    "save_goal": "Ziel Speichern",
+    "user_not_authenticated": "Benutzer nicht authentifiziert",
+    "set_your_financial_target": "Setze dein finanzielles Ziel",
+    "select_period": "Zeitraum Auswählen"
 }

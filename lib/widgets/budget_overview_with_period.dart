@@ -360,10 +360,10 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
                   position: _slideAnimation,
                   child: FadeTransition(
                     opacity: _fadeAnimation,
-                    child: PeriodSavingsOverviewWidget(
-                      savingsData: _budgetOverview!.savingsData,
-                      period: _currentPeriod,
-                      date: _currentDate,
+                    child: ProportionalSavingsOverviewWidget(
+                      currentPeriod: _currentPeriod,
+                      totalBalance: _budgetOverview!.savingsData.totalBalance,
+                      onGoalUpdated: () => _fetchBudgetData(),
                     ),
                   ),
                 );

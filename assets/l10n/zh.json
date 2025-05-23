@@ -172,8 +172,18 @@
     "bill": "账单",
     "confirm_payment": "确认支付",
     "processing": "处理中...",
-    "payment_successful": "支付成功",
-    "payment_failed": "支付失败",
-    "payment_error": "支付错误",
-    "days_overdue": "天逾期"
+    "payment_successful": "付款成功",
+    "payment_failed": "付款失败",
+    "payment_error": "付款错误",
+    "days_overdue": "逾期天数",
+    "savings_period": "储蓄周期",
+    "select_savings_period": "选择您想要达到储蓄目标的频率",
+    "period": "周期",
+    "current_savings_info": "当前储蓄信息",
+    "enter_target_amount": "输入您想储蓄的金额",
+    "please_enter_goal_amount": "请输入目标金额",
+    "save_goal": "保存目标",
+    "user_not_authenticated": "用户未认证",
+    "set_your_financial_target": "设定您的财务目标",
+    "select_period": "选择周期"
 }

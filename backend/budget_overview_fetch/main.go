@@ -81,9 +81,12 @@ type CashBankDistribution struct {
 
 // SavingsData represents savings information
 type SavingsData struct {
-	Available float64 `json:"available"`
-	Goal      float64 `json:"goal"`
-	Percent   float64 `json:"percent"`
+	Available   float64 `json:"available"`
+	Goal        float64 `json:"goal"`
+	Period      string  `json:"period"` // New field for period type
+	Percent     float64 `json:"percent"`
+	NeedToSave  float64 `json:"need_to_save"`
+	DailyTarget float64 `json:"daily_target"`
 }
 
 var (
@@ -210,7 +213,7 @@ func fetchBudgetOverview(request BudgetOverviewRequest) (*BudgetOverview, error)
 	}
 
 	// Calculate budget overview from balance data
-	overview := calculateBudgetOverview(balanceData, request.Period)
+	overview := calculateBudgetOverview(balanceData, request.Period, request.UserID)
 
 	return overview, nil
 }
@@ -290,7 +293,7 @@ func fetchBalanceData(tableName, userID, condition string) (*BalanceData, error)
 }
 
 // calculateBudgetOverview calculates the budget overview from balance data
-func calculateBudgetOverview(data *BalanceData, period string) *BudgetOverview {
+func calculateBudgetOverview(data *BalanceData, period, userID string) *BudgetOverview {
 	// Calculate basic amounts
 	totalIncome := data.IncomeBankAmount + data.IncomeCashAmount
 	spentAmount := data.ExpenseBankAmount + data.ExpenseCashAmount
@@ -339,19 +342,8 @@ func calculateBudgetOverview(data *BalanceData, period string) *BudgetOverview {
 		TotalAmount: totalCashBank,
 	}
 
-	// Calculate Savings Data (remaining amount is considered as available savings)
-	// For now, we use a basic goal calculation (could be made configurable)
-	savingsGoal := totalIncome * 0.2 // 20% of income as goal
-	var savingsPercent float64
-	if savingsGoal > 0 {
-		savingsPercent = (remainingAmount / savingsGoal) * 100
-	}
-
-	savingsData := SavingsData{
-		Available: remainingAmount,
-		Goal:      savingsGoal,
-		Percent:   savingsPercent,
-	}
+	// First, try to get savings data from the database
+	savingsData := getSavingsDataFromDB(userID, remainingAmount, period)
 
 	return &BudgetOverview{
 		RemainingAmount:      remainingAmount,
@@ -449,4 +441,77 @@ func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+// getSavingsDataFromDB retrieves savings data from the database
+func getSavingsDataFromDB(userID string, remainingAmount float64, period string) SavingsData {
+	// First try to get existing savings goal from database
+	var goal float64
+	var goalPeriod string
+
+	query := `SELECT goal, period FROM savings WHERE user_id = ? LIMIT 1`
+	row := db.QueryRow(query, userID)
+
+	err := row.Scan(&goal, &goalPeriod)
+	if err != nil {
+		// No savings goal found in database, return zero values
+		fmt.Printf("No savings goal found for user %s: %v\n", userID, err)
+		return SavingsData{
+			Available:   remainingAmount,
+			Goal:        0,
+			Period:      period,
+			Percent:     0,
+			NeedToSave:  0,
+			DailyTarget: 0,
+		}
+	}
+
+	// Calculate percentage of goal achieved
+	var savingsPercent float64
+	if goal > 0 {
+		savingsPercent = (remainingAmount / goal) * 100
+		if savingsPercent > 100 {
+			savingsPercent = 100
+		}
+	}
+
+	// Calculate need to save and daily target
+	needToSave := goal - remainingAmount
+	if needToSave < 0 {
+		needToSave = 0
+	}
+
+	// Calculate daily target based on period
+	var dailyTarget float64
+	var periodDays float64
+
+	switch period {
+	case "daily":
+		periodDays = 1
+	case "weekly":
+		periodDays = 7
+	case "monthly":
+		periodDays = 30 // Average month
+	case "quarterly":
+		periodDays = 90 // 3 months
+	case "semiannual":
+		periodDays = 180 // 6 months
+	case "annual":
+		periodDays = 365
+	default:
+		periodDays = 30 // Default to monthly
+	}
+
+	if periodDays > 0 && needToSave > 0 {
+		dailyTarget = needToSave / periodDays
+	}
+
+	return SavingsData{
+		Available:   remainingAmount,
+		Goal:        goal,
+		Period:      goalPeriod, // Use the period from the database
+		Percent:     savingsPercent,
+		NeedToSave:  needToSave,
+		DailyTarget: dailyTarget,
+	}
 }

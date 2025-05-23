@@ -35,9 +35,17 @@ class SavingsService {
   }
 
   /// Update savings goal for a user
-  Future<SavingsData> setSavingsGoal(String userId, double goal) async {
+  Future<SavingsData> setSavingsGoal(
+    String userId,
+    double goal, {
+    String? period,
+  }) async {
     try {
-      final requestBody = {'user_id': userId, 'goal': goal};
+      final requestBody = {
+        'user_id': userId,
+        'goal': goal,
+        if (period != null) 'period': period,
+      };
 
       final response = await http.post(
         Uri.parse('$baseUrl/savings/update'),
@@ -62,6 +70,15 @@ class SavingsService {
       print('❌ Error in setSavingsGoal: $e');
       throw Exception('Error updating savings goal: $e');
     }
+  }
+
+  /// Update savings goal and period for a user
+  Future<SavingsData> setSavingsGoalWithPeriod(
+    String userId,
+    double goal,
+    String period,
+  ) async {
+    return setSavingsGoal(userId, goal, period: period);
   }
 
   /// Update available savings amount for a user
@@ -124,6 +141,7 @@ class SavingsData {
   final String userId;
   final double available;
   final double goal;
+  final String period;
   final double percent;
   final double needToSave;
   final double dailyTarget;
@@ -132,6 +150,7 @@ class SavingsData {
     required this.userId,
     required this.available,
     required this.goal,
+    required this.period,
     required this.percent,
     required this.needToSave,
     required this.dailyTarget,
@@ -142,6 +161,7 @@ class SavingsData {
       userId: json['user_id'] ?? '',
       available: (json['available'] as num?)?.toDouble() ?? 0.0,
       goal: (json['goal'] as num?)?.toDouble() ?? 0.0,
+      period: json['period'] ?? 'monthly',
       percent: (json['percent'] as num?)?.toDouble() ?? 0.0,
       needToSave: (json['need_to_save'] as num?)?.toDouble() ?? 0.0,
       dailyTarget: (json['daily_target'] as num?)?.toDouble() ?? 0.0,
@@ -153,6 +173,7 @@ class SavingsData {
       'user_id': userId,
       'available': available,
       'goal': goal,
+      'period': period,
       'percent': percent,
       'need_to_save': needToSave,
       'daily_target': dailyTarget,
