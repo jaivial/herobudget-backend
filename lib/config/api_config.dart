@@ -35,6 +35,7 @@ class ApiConfig {
   static const int incomeManagementServicePort = 8093;
   static const int expenseManagementServicePort = 8094;
   static const int categoriesManagementServicePort = 8095;
+  static const int budgetOverviewFetchServicePort = 8097;
 
   // Service endpoints
   static String get signupServiceUrl => '$baseApiUrl:$signupServicePort';
@@ -66,6 +67,7 @@ class ApiConfig {
   // Money Flow Sync Service (8096)
   static String get moneyFlowSyncServiceUrl => '$baseApiUrl:8096';
 
-  // Money Flow Calculation Service (8097)
-  static String get moneyFlowCalculationServiceUrl => '$baseApiUrl:8097';
+  // Budget Overview Fetch Service (8097) - Updated from Money Flow Calculation
+  static String get budgetOverviewFetchServiceUrl =>
+      '$baseApiUrl:$budgetOverviewFetchServicePort';
 }

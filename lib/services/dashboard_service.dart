@@ -9,7 +9,7 @@ class DashboardService {
   static String get baseUrl => ApiConfig.fetchDashboardServiceUrl;
   static String get dashboardDataUrl => ApiConfig.dashboardDataServiceUrl;
   static String get moneyFlowCalculationUrl =>
-      ApiConfig.moneyFlowCalculationServiceUrl;
+      ApiConfig.budgetOverviewFetchServiceUrl;
 
   // Constants for localStorage keys - consistent across the app
   static const String userIdKey = 'user_id';

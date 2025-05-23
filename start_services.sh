@@ -23,7 +23,7 @@ INCOME_MANAGEMENT_PORT=8093
 EXPENSE_MANAGEMENT_PORT=8094
 CATEGORIES_MANAGEMENT_PORT=8095
 MONEY_FLOW_SYNC_PORT=8096
-MONEY_FLOW_CALCULATION_PORT=8097
+BUDGET_OVERVIEW_FETCH_PORT=8097
 
 # Function to get service port by name
 get_port() {
@@ -44,7 +44,7 @@ get_port() {
     "expense_management") echo $EXPENSE_MANAGEMENT_PORT ;;
     "categories_management") echo $CATEGORIES_MANAGEMENT_PORT ;;
     "money_flow_sync") echo $MONEY_FLOW_SYNC_PORT ;;
-    "money_flow_calculation") echo $MONEY_FLOW_CALCULATION_PORT ;;
+    "budget_overview_fetch") echo $BUDGET_OVERVIEW_FETCH_PORT ;;
     *) echo "" ;;
   esac
 }
@@ -67,7 +67,7 @@ services=(
   "expense_management"
   "categories_management"
   "money_flow_sync"
-  "money_flow_calculation"
+  "budget_overview_fetch"
 )
 
 # Check for selected services

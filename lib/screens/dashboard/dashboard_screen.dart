@@ -33,6 +33,7 @@ import '../category/add_category_screen.dart';
 import 'package:intl/intl.dart';
 import '../invoice/add_invoice_screen.dart';
 import '../invoice/pay_bill_screen.dart';
+import '../../widgets/budget_overview_with_period.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -731,28 +732,8 @@ class _DashboardScreenState extends State<DashboardScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Selector de periodo con funciones de callback actualizadas
-            PeriodSelector(
-              initialPeriod: _currentPeriod,
-              onPeriodChanged: (period) {
-                _onPeriodChanged(period);
-              },
-              onCustomRangeSelected: (startDate, endDate) {
-                _onCustomRangeSelected(startDate, endDate);
-              },
-              onDateChanged: (date) {
-                _onDateChanged(date);
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            // Budget overview - Usar el modelo local desvinculado del backend
-            widget_budget.BudgetOverviewWidget(
-              budgetOverview: _createLocalBudgetOverview(
-                dashboardData.budgetOverview,
-              ),
-            ),
+            // Budget overview integrado con period selector y fetch automático
+            const BudgetOverviewWithPeriod(),
 
             const SizedBox(height: 20),
 
