@@ -226,13 +226,11 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
 
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(
-        horizontal: 8,
-      ), // Minimal margin for full width
+      padding: const EdgeInsets.only(top: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Period Selector with improved styling
+          // Period Selector with improved styling - Full width
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -241,9 +239,9 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -302,7 +300,7 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
             ),
 
           // Budget Overview with Animations
-          SizedBox(
+          Container(
             width: double.infinity,
             height: _budgetOverview != null || _isLoading ? null : 400,
             child: Stack(
@@ -337,11 +335,8 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
                         position: _slideAnimation,
                         child: FadeTransition(
                           opacity: _fadeAnimation,
-                          child: Container(
-                            width: double.infinity,
-                            child: BudgetOverviewWidget(
-                              budgetOverview: _budgetOverview!,
-                            ),
+                          child: BudgetOverviewWidget(
+                            budgetOverview: _budgetOverview!,
                           ),
                         ),
                       );

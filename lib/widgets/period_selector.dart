@@ -535,46 +535,106 @@ class _PeriodSelectorState extends State<PeriodSelector> {
 
         const SizedBox(height: 12),
 
-        // Period type selector
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+        // Period type selector with improved carousel
+        SizedBox(
+          height: 50, // Fixed height for the carousel
+          child: Stack(
             children: [
-              _PeriodTypeButton(
-                label: context.tr.translate('daily_period'),
-                isSelected: _currentPeriod == 'daily',
-                onTap: () => _changePeriodType('daily'),
+              // Main scrollable content
+              ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: 7, // Number of period types
+                itemBuilder: (context, index) {
+                  final periods = [
+                    {
+                      'key': 'daily',
+                      'label': context.tr.translate('daily_period'),
+                    },
+                    {
+                      'key': 'weekly',
+                      'label': context.tr.translate('weekly_period'),
+                    },
+                    {
+                      'key': 'monthly',
+                      'label': context.tr.translate('monthly_period'),
+                    },
+                    {
+                      'key': 'quarterly',
+                      'label': context.tr.translate('quarterly_period'),
+                    },
+                    {
+                      'key': 'semiannual',
+                      'label': context.tr.translate('semiannual_period'),
+                    },
+                    {
+                      'key': 'annual',
+                      'label': context.tr.translate('annual_period'),
+                    },
+                    {
+                      'key': 'custom',
+                      'label': context.tr.translate('custom_period'),
+                    },
+                  ];
+
+                  final period = periods[index];
+                  final isCustom = period['key'] == 'custom';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: _PeriodTypeButton(
+                      label: period['label']!,
+                      isSelected: _currentPeriod == period['key'],
+                      onTap:
+                          isCustom
+                              ? _showCustomRangeSelector
+                              : () => _changePeriodType(period['key']!),
+                      icon: isCustom ? Icons.calendar_today : null,
+                    ),
+                  );
+                },
               ),
-              _PeriodTypeButton(
-                label: context.tr.translate('weekly_period'),
-                isSelected: _currentPeriod == 'weekly',
-                onTap: () => _changePeriodType('weekly'),
+
+              // Left fade gradient
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 20,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        (isDarkMode ? const Color(0xFF1E1E1E) : Colors.white),
+                        (isDarkMode ? const Color(0xFF1E1E1E) : Colors.white)
+                            .withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              _PeriodTypeButton(
-                label: context.tr.translate('monthly_period'),
-                isSelected: _currentPeriod == 'monthly',
-                onTap: () => _changePeriodType('monthly'),
-              ),
-              _PeriodTypeButton(
-                label: context.tr.translate('quarterly_period'),
-                isSelected: _currentPeriod == 'quarterly',
-                onTap: () => _changePeriodType('quarterly'),
-              ),
-              _PeriodTypeButton(
-                label: context.tr.translate('semiannual_period'),
-                isSelected: _currentPeriod == 'semiannual',
-                onTap: () => _changePeriodType('semiannual'),
-              ),
-              _PeriodTypeButton(
-                label: context.tr.translate('annual_period'),
-                isSelected: _currentPeriod == 'annual',
-                onTap: () => _changePeriodType('annual'),
-              ),
-              _PeriodTypeButton(
-                label: context.tr.translate('custom_period'),
-                isSelected: _currentPeriod == 'custom',
-                onTap: _showCustomRangeSelector,
-                icon: Icons.calendar_today,
+
+              // Right fade gradient
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 20,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                      colors: [
+                        (isDarkMode ? const Color(0xFF1E1E1E) : Colors.white),
+                        (isDarkMode ? const Color(0xFF1E1E1E) : Colors.white)
+                            .withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
