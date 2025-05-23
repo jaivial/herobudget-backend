@@ -130,6 +130,7 @@ void main() {
           expensePercent: 25.0,
           dailyRate: 8.33,
           highSpending: false,
+          totalIncome: 2000.0,
         ),
         savingsOverview: SavingsOverview(
           percent: 80.0,

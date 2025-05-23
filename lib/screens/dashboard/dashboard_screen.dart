@@ -1244,6 +1244,19 @@ class _DashboardScreenState extends State<DashboardScreen>
       moneyFlow: widget_budget.MoneyFlow(
         fromPrevious: backendModel.moneyFlow.fromPrevious,
       ),
+      cashBankDistribution: widget_budget.PeriodCashBankDistribution(
+        cashAmount: _dashboardModel?.cashDistribution.cashAmount ?? 0.0,
+        cashPercent: _dashboardModel?.cashDistribution.cashPercent ?? 0.0,
+        bankAmount: _dashboardModel?.cashDistribution.bankAmount ?? 0.0,
+        bankPercent: _dashboardModel?.cashDistribution.bankPercent ?? 0.0,
+        totalAmount: _dashboardModel?.cashDistribution.monthlyTotal ?? 0.0,
+      ),
+      savingsData: widget_budget.PeriodSavingsData(
+        available: _dashboardModel?.savingsOverview.available ?? 0.0,
+        goal: _dashboardModel?.savingsOverview.goal ?? 0.0,
+        percent: _dashboardModel?.savingsOverview.percent ?? 0.0,
+        totalBalance: backendModel.totalAmount,
+      ),
     );
   }
 }

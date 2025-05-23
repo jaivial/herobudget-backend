@@ -16,16 +16,18 @@ import (
 
 // BudgetOverview represents the budget overview data structure
 type BudgetOverview struct {
-	RemainingAmount float64   `json:"remaining_amount"`
-	ExpensePercent  float64   `json:"expense_percent"`
-	SpentAmount     float64   `json:"spent_amount"`
-	UpcomingAmount  float64   `json:"upcoming_amount"`
-	TotalAmount     float64   `json:"total_amount"`
-	CombinedExpense float64   `json:"combined_expense"`
-	TotalIncome     float64   `json:"total_income"`
-	DailyRate       float64   `json:"daily_rate"`
-	HighSpending    bool      `json:"high_spending"`
-	MoneyFlow       MoneyFlow `json:"money_flow"`
+	RemainingAmount      float64              `json:"remaining_amount"`
+	ExpensePercent       float64              `json:"expense_percent"`
+	SpentAmount          float64              `json:"spent_amount"`
+	UpcomingAmount       float64              `json:"upcoming_amount"`
+	TotalAmount          float64              `json:"total_amount"`
+	CombinedExpense      float64              `json:"combined_expense"`
+	TotalIncome          float64              `json:"total_income"`
+	DailyRate            float64              `json:"daily_rate"`
+	HighSpending         bool                 `json:"high_spending"`
+	MoneyFlow            MoneyFlow            `json:"money_flow"`
+	CashBankDistribution CashBankDistribution `json:"cash_bank_distribution"`
+	SavingsData          SavingsData          `json:"savings_data"`
 }
 
 // MoneyFlow represents money flow from previous period
@@ -65,6 +67,22 @@ type BalanceData struct {
 	BalanceBankAmount    float64 `json:"balance_bank_amount"`
 	TotalPreviousBalance float64 `json:"total_previous_balance"`
 	TotalBalance         float64 `json:"total_balance"`
+}
+
+// CashBankDistribution represents the cash and bank distribution
+type CashBankDistribution struct {
+	CashAmount  float64 `json:"cash_amount"`
+	CashPercent float64 `json:"cash_percent"`
+	BankAmount  float64 `json:"bank_amount"`
+	BankPercent float64 `json:"bank_percent"`
+	TotalAmount float64 `json:"total_amount"`
+}
+
+// SavingsData represents savings information
+type SavingsData struct {
+	Available float64 `json:"available"`
+	Goal      float64 `json:"goal"`
+	Percent   float64 `json:"percent"`
 }
 
 var (
@@ -301,17 +319,52 @@ func calculateBudgetOverview(data *BalanceData, period string) *BudgetOverview {
 		FromPrevious: data.TotalPreviousBalance,
 	}
 
+	// Calculate Cash/Bank Distribution
+	cashAmount := data.CashAmount
+	bankAmount := data.BankAmount
+	totalCashBank := cashAmount + bankAmount
+
+	var cashPercent, bankPercent float64
+	if totalCashBank > 0 {
+		cashPercent = (cashAmount / totalCashBank) * 100
+		bankPercent = (bankAmount / totalCashBank) * 100
+	}
+
+	cashBankDistribution := CashBankDistribution{
+		CashAmount:  cashAmount,
+		CashPercent: cashPercent,
+		BankAmount:  bankAmount,
+		BankPercent: bankPercent,
+		TotalAmount: totalCashBank,
+	}
+
+	// Calculate Savings Data (remaining amount is considered as available savings)
+	// For now, we use a basic goal calculation (could be made configurable)
+	savingsGoal := totalIncome * 0.2 // 20% of income as goal
+	var savingsPercent float64
+	if savingsGoal > 0 {
+		savingsPercent = (remainingAmount / savingsGoal) * 100
+	}
+
+	savingsData := SavingsData{
+		Available: remainingAmount,
+		Goal:      savingsGoal,
+		Percent:   savingsPercent,
+	}
+
 	return &BudgetOverview{
-		RemainingAmount: remainingAmount,
-		ExpensePercent:  expensePercent,
-		SpentAmount:     spentAmount,
-		UpcomingAmount:  upcomingAmount,
-		TotalAmount:     totalAmount,
-		CombinedExpense: combinedExpense,
-		TotalIncome:     totalIncome,
-		DailyRate:       dailyRate,
-		HighSpending:    highSpending,
-		MoneyFlow:       moneyFlow,
+		RemainingAmount:      remainingAmount,
+		ExpensePercent:       expensePercent,
+		SpentAmount:          spentAmount,
+		UpcomingAmount:       upcomingAmount,
+		TotalAmount:          totalAmount,
+		CombinedExpense:      combinedExpense,
+		TotalIncome:          totalIncome,
+		DailyRate:            dailyRate,
+		HighSpending:         highSpending,
+		MoneyFlow:            moneyFlow,
+		CashBankDistribution: cashBankDistribution,
+		SavingsData:          savingsData,
 	}
 }
 

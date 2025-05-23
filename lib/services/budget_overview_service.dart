@@ -76,6 +76,37 @@ class BudgetOverviewService {
                   (data['money_flow']?['from_previous'] as num?)?.toDouble() ??
                   0.0,
             ),
+            cashBankDistribution: PeriodCashBankDistribution(
+              cashAmount:
+                  (data['cash_bank_distribution']?['cash_amount'] as num?)
+                      ?.toDouble() ??
+                  0.0,
+              cashPercent:
+                  (data['cash_bank_distribution']?['cash_percent'] as num?)
+                      ?.toDouble() ??
+                  0.0,
+              bankAmount:
+                  (data['cash_bank_distribution']?['bank_amount'] as num?)
+                      ?.toDouble() ??
+                  0.0,
+              bankPercent:
+                  (data['cash_bank_distribution']?['bank_percent'] as num?)
+                      ?.toDouble() ??
+                  0.0,
+              totalAmount:
+                  (data['cash_bank_distribution']?['total_amount'] as num?)
+                      ?.toDouble() ??
+                  0.0,
+            ),
+            savingsData: PeriodSavingsData(
+              available:
+                  (data['savings_data']?['available'] as num?)?.toDouble() ??
+                  0.0,
+              goal: (data['savings_data']?['goal'] as num?)?.toDouble() ?? 0.0,
+              percent:
+                  (data['savings_data']?['percent'] as num?)?.toDouble() ?? 0.0,
+              totalBalance: (data['total_amount'] as num?)?.toDouble() ?? 0.0,
+            ),
           );
         } else {
           throw Exception(

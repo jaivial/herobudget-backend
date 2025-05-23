@@ -3,6 +3,8 @@ import '../utils/app_localizations.dart';
 import '../services/budget_overview_service.dart';
 import 'budget_overview.dart';
 import 'period_selector.dart';
+import 'savings_overview.dart';
+import 'cash_bank_distribution.dart';
 
 class BudgetOverviewWithPeriod extends StatefulWidget {
   const BudgetOverviewWithPeriod({super.key});
@@ -345,6 +347,49 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
               ],
             ),
           ),
+
+          // Spacing between main overview and additional sections
+          const SizedBox(height: 16),
+
+          // Period-aware Savings Overview Section
+          if (_budgetOverview != null && !_isLoading)
+            AnimatedBuilder(
+              animation: _slideController,
+              builder: (context, child) {
+                return SlideTransition(
+                  position: _slideAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: PeriodSavingsOverviewWidget(
+                      savingsData: _budgetOverview!.savingsData,
+                      period: _currentPeriod,
+                      date: _currentDate,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+          const SizedBox(height: 16),
+
+          // Period-aware Cash/Bank Distribution Section
+          if (_budgetOverview != null && !_isLoading)
+            AnimatedBuilder(
+              animation: _slideController,
+              builder: (context, child) {
+                return SlideTransition(
+                  position: _slideAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: PeriodCashBankDistributionWidget(
+                      distribution: _budgetOverview!.cashBankDistribution,
+                      period: _currentPeriod,
+                      date: _currentDate,
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );

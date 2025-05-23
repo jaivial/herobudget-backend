@@ -14,6 +14,8 @@ class BudgetOverview {
   final double dailyRate;
   final bool highSpending;
   final MoneyFlow moneyFlow;
+  final PeriodCashBankDistribution cashBankDistribution;
+  final PeriodSavingsData savingsData;
 
   BudgetOverview({
     required this.remainingAmount,
@@ -26,6 +28,8 @@ class BudgetOverview {
     required this.dailyRate,
     required this.highSpending,
     required this.moneyFlow,
+    required this.cashBankDistribution,
+    required this.savingsData,
   });
 
   // Factory para crear datos de ejemplo
@@ -41,6 +45,19 @@ class BudgetOverview {
       dailyRate: 141.68,
       highSpending: false,
       moneyFlow: MoneyFlow(fromPrevious: 495.80),
+      cashBankDistribution: PeriodCashBankDistribution(
+        cashAmount: 300.0,
+        cashPercent: 30.0,
+        bankAmount: 700.0,
+        bankPercent: 70.0,
+        totalAmount: 1000.0,
+      ),
+      savingsData: PeriodSavingsData(
+        available: 1245.30,
+        goal: 1099.16,
+        percent: 113.3,
+        totalBalance: 1245.30,
+      ),
     );
   }
 }
@@ -50,6 +67,38 @@ class MoneyFlow {
   final double fromPrevious;
 
   MoneyFlow({required this.fromPrevious});
+}
+
+// Clase para distribución de efectivo/banco por período
+class PeriodCashBankDistribution {
+  final double cashAmount;
+  final double cashPercent;
+  final double bankAmount;
+  final double bankPercent;
+  final double totalAmount;
+
+  PeriodCashBankDistribution({
+    required this.cashAmount,
+    required this.cashPercent,
+    required this.bankAmount,
+    required this.bankPercent,
+    required this.totalAmount,
+  });
+}
+
+// Clase para datos de ahorros por período
+class PeriodSavingsData {
+  final double available;
+  final double goal;
+  final double percent;
+  final double totalBalance;
+
+  PeriodSavingsData({
+    required this.available,
+    required this.goal,
+    required this.percent,
+    required this.totalBalance,
+  });
 }
 
 class BudgetOverviewWidget extends StatelessWidget {
