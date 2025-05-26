@@ -196,5 +196,10 @@
     "save_goal": "目標を保存",
     "user_not_authenticated": "ユーザーが認証されていません",
     "set_your_financial_target": "財務目標を設定してください",
-    "select_period": "期間を選択"
+    "select_period": "期間を選択",
+    "delete_savings_goal": "貯蓄目標を削除",
+    "delete_savings_goal_confirmation": "貯蓄目標を削除してもよろしいですか？この操作は元に戻すことができません。",
+    "delete": "削除",
+    "savings_goal_deleted_successfully": "貯蓄目標が正常に削除されました",
+    "error_deleting_savings_goal": "貯蓄目標の削除中にエラーが発生しました"
 }

@@ -162,5 +162,10 @@
     "payment_successful": "Επιτυχής πληρωμή",
     "payment_failed": "Αποτυχία πληρωμής",
     "payment_error": "Σφάλμα πληρωμής",
-    "days_overdue": "ημέρες καθυστέρησης"
+    "days_overdue": "ημέρες καθυστέρησης",
+    "delete_savings_goal": "Διαγραφή Στόχου Αποταμίευσης",
+    "delete_savings_goal_confirmation": "Είστε βέβαιοι ότι θέλετε να διαγράψετε τον στόχο αποταμίευσής σας; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
+    "delete": "Διαγραφή",
+    "savings_goal_deleted_successfully": "Ο στόχος αποταμίευσης διαγράφηκε με επιτυχία",
+    "error_deleting_savings_goal": "Σφάλμα κατά τη διαγραφή του στόχου αποταμίευσης"
 }

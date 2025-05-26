@@ -330,5 +330,10 @@
     "tip_set_realistic_goals": "Establece metas realistas y alcanzables basadas en tus ingresos",
     "tip_automate_savings": "Automatiza tus ahorros configurando transferencias automáticas",
     "tip_track_progress_regularly": "Revisa tu progreso regularmente y ajusta las metas según sea necesario",
-    "select_period": "Seleccionar Período"
+    "select_period": "Seleccionar Período",
+    "delete_savings_goal": "Eliminar Objetivo de Ahorros",
+    "delete_savings_goal_confirmation": "¿Estás seguro de que quieres eliminar tu objetivo de ahorros? Esta acción no se puede deshacer.",
+    "delete": "Eliminar",
+    "savings_goal_deleted_successfully": "Objetivo de ahorros eliminado exitosamente",
+    "error_deleting_savings_goal": "Error al eliminar el objetivo de ahorros"
 }

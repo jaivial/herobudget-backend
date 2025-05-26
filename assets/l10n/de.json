@@ -198,5 +198,10 @@
     "save_goal": "Ziel Speichern",
     "user_not_authenticated": "Benutzer nicht authentifiziert",
     "set_your_financial_target": "Setze dein finanzielles Ziel",
-    "select_period": "Zeitraum Auswählen"
+    "select_period": "Zeitraum Auswählen",
+    "delete_savings_goal": "Sparziel Löschen",
+    "delete_savings_goal_confirmation": "Bist du sicher, dass du dein Sparziel löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "delete": "Löschen",
+    "savings_goal_deleted_successfully": "Sparziel erfolgreich gelöscht",
+    "error_deleting_savings_goal": "Fehler beim Löschen des Sparziels"
 }

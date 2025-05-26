@@ -190,5 +190,10 @@
     "save_goal": "Salvar Meta",
     "user_not_authenticated": "Usuário não autenticado",
     "set_your_financial_target": "Defina seu objetivo financeiro",
-    "select_period": "Selecionar Período"
+    "select_period": "Selecionar Período",
+    "delete_savings_goal": "Excluir Meta de Poupança",
+    "delete_savings_goal_confirmation": "Tem certeza de que deseja excluir sua meta de poupança? Esta ação não pode ser desfeita.",
+    "delete": "Excluir",
+    "savings_goal_deleted_successfully": "Meta de poupança excluída com sucesso",
+    "error_deleting_savings_goal": "Erro ao excluir meta de poupança"
 }

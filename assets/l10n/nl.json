@@ -190,5 +190,10 @@
     "save_goal": "Doel Opslaan",
     "user_not_authenticated": "Gebruiker niet geauthenticeerd",
     "set_your_financial_target": "Stel je financiële doel in",
-    "select_period": "Periode Selecteren"
+    "select_period": "Periode Selecteren",
+    "delete_savings_goal": "Spaardoel Verwijderen",
+    "delete_savings_goal_confirmation": "Weet je zeker dat je je spaardoel wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+    "delete": "Verwijderen",
+    "savings_goal_deleted_successfully": "Spaardoel succesvol verwijderd",
+    "error_deleting_savings_goal": "Fout bij het verwijderen van het spaardoel"
 }

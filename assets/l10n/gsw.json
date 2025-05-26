@@ -162,5 +162,10 @@
     "payment_successful": "Zahlig erfolgrich",
     "payment_failed": "Zahlig nöd erfolgrich",
     "payment_error": "Zahligsfehler",
-    "days_overdue": "Täg z'spat"
+    "days_overdue": "Täg z'spat",
+    "delete_savings_goal": "Sparziil Lösche",
+    "delete_savings_goal_confirmation": "Bisch sicher, dass du diis Sparziil lösche möchtisch? Die Aktion cha nöd rückgängig gmacht werde.",
+    "delete": "Lösche",
+    "savings_goal_deleted_successfully": "Sparziil erfolgriich glöscht",
+    "error_deleting_savings_goal": "Fehler bim Lösche vom Sparziil"
 }

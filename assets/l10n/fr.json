@@ -213,5 +213,10 @@
     "save_goal": "Enregistrer l'Objectif",
     "user_not_authenticated": "Utilisateur non authentifié",
     "set_your_financial_target": "Définissez votre objectif financier",
-    "select_period": "Sélectionner la Période"
+    "select_period": "Sélectionner la Période",
+    "delete_savings_goal": "Supprimer l'Objectif d'Épargne",
+    "delete_savings_goal_confirmation": "Êtes-vous sûr de vouloir supprimer votre objectif d'épargne ? Cette action ne peut pas être annulée.",
+    "delete": "Supprimer",
+    "savings_goal_deleted_successfully": "Objectif d'épargne supprimé avec succès",
+    "error_deleting_savings_goal": "Erreur lors de la suppression de l'objectif d'épargne"
 }

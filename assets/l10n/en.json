@@ -277,5 +277,10 @@
     "tip_track_progress_regularly": "Review your progress regularly and adjust goals as needed",
     "password_requirements": "Password must be at least 6 characters",
     "invalid_current_password": "Invalid current password",
-    "select_period": "Select Period"
+    "select_period": "Select Period",
+    "delete_savings_goal": "Delete Savings Goal",
+    "delete_savings_goal_confirmation": "Are you sure you want to delete your savings goal? This action cannot be undone.",
+    "delete": "Delete",
+    "savings_goal_deleted_successfully": "Savings goal deleted successfully",
+    "error_deleting_savings_goal": "Error deleting savings goal"
 }

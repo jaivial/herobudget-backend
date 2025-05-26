@@ -168,5 +168,10 @@
     "payment_successful": "Betaling gennemført",
     "payment_failed": "Betaling mislykkedes",
     "payment_error": "Betalingsfejl",
-    "days_overdue": "dage forsinket"
+    "days_overdue": "dage forsinket",
+    "delete_savings_goal": "Slet Opsparingsmål",
+    "delete_savings_goal_confirmation": "Er du sikker på, at du vil slette dit opsparingsmål? Denne handling kan ikke fortrydes.",
+    "delete": "Slet",
+    "savings_goal_deleted_successfully": "Opsparingsmål slettet med succes",
+    "error_deleting_savings_goal": "Fejl ved sletning af opsparingsmål"
 }

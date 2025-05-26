@@ -202,5 +202,10 @@
     "save_goal": "Salva Obiettivo",
     "user_not_authenticated": "Utente non autenticato",
     "set_your_financial_target": "Imposta il tuo obiettivo finanziario",
-    "select_period": "Seleziona Periodo"
+    "select_period": "Seleziona Periodo",
+    "delete_savings_goal": "Elimina Obiettivo di Risparmio",
+    "delete_savings_goal_confirmation": "Sei sicuro di voler eliminare il tuo obiettivo di risparmio? Questa azione non può essere annullata.",
+    "delete": "Elimina",
+    "savings_goal_deleted_successfully": "Obiettivo di risparmio eliminato con successo",
+    "error_deleting_savings_goal": "Errore durante l'eliminazione dell'obiettivo di risparmio"
 }

@@ -185,5 +185,10 @@
     "save_goal": "保存目标",
     "user_not_authenticated": "用户未认证",
     "set_your_financial_target": "设定您的财务目标",
-    "select_period": "选择周期"
+    "select_period": "选择周期",
+    "delete_savings_goal": "删除储蓄目标",
+    "delete_savings_goal_confirmation": "您确定要删除您的储蓄目标吗？此操作无法撤销。",
+    "delete": "删除",
+    "savings_goal_deleted_successfully": "储蓄目标删除成功",
+    "error_deleting_savings_goal": "删除储蓄目标时出错"
 }
