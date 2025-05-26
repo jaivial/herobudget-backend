@@ -79,6 +79,9 @@ class _DashboardScreenState extends State<DashboardScreen>
   // Cache para almacenar datos por periodo y fecha
   final Map<String, DashboardModel> _dashboardModelCache = {};
 
+  // Key para refrescar el BudgetOverviewWithPeriod
+  final GlobalKey _budgetOverviewKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -378,6 +381,19 @@ class _DashboardScreenState extends State<DashboardScreen>
 
       print('✅ Dashboard refrescado con datos simulados locales');
     });
+  }
+
+  // Método para refrescar el BudgetOverviewWithPeriod
+  Future<void> _refreshBudgetOverview() async {
+    final budgetOverviewState = _budgetOverviewKey.currentState;
+    if (budgetOverviewState != null) {
+      // Usar dynamic para acceder al método público
+      try {
+        await (budgetOverviewState as dynamic).refreshBudgetData();
+      } catch (e) {
+        print('Error refreshing budget overview: $e');
+      }
+    }
   }
 
   void _onPeriodChanged(String period) {
@@ -729,7 +745,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Budget overview integrado con period selector y fetch automático
-            const BudgetOverviewWithPeriod(),
+            BudgetOverviewWithPeriod(key: _budgetOverviewKey),
 
             const SizedBox(height: 20),
 

@@ -1446,6 +1446,24 @@ class _ProportionalSavingsOverviewWidgetState
     }
   }
 
+  // Método público para refrescar los datos desde el exterior
+  Future<void> refreshSavingsData() async {
+    await _loadSavingsData();
+  }
+
+  // Método para forzar una actualización completa del estado
+  Future<void> forceRefresh() async {
+    if (mounted) {
+      setState(() {
+        _originalSavingsData = null;
+        _proportionalSavingsData = null;
+        _isLoading = true;
+        _errorMessage = null;
+      });
+      await _loadSavingsData();
+    }
+  }
+
   Future<void> _loadSavingsData() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();

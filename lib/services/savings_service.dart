@@ -7,6 +7,9 @@ import '../models/dashboard_model.dart';
 class SavingsService {
   static const String baseUrl = 'http://localhost:8089';
 
+  // Cache interno para datos de ahorros
+  static final Map<String, SavingsData> _cache = {};
+
   /// Fetch current savings data for a user
   Future<SavingsData> getSavingsData(String userId) async {
     try {
@@ -130,6 +133,9 @@ class SavingsService {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         if (responseData['success'] == true) {
+          // Limpiar cache después de eliminar exitosamente
+          _cache.remove(userId);
+          print('🗑️ Cache cleared for user $userId after deletion');
           return true;
         } else {
           throw Exception(
@@ -143,6 +149,18 @@ class SavingsService {
       print('❌ Error in deleteSavingsGoal: $e');
       throw Exception('Error deleting savings goal: $e');
     }
+  }
+
+  /// Clear cache for a specific user
+  static void clearCacheForUser(String userId) {
+    _cache.remove(userId);
+    print('🗑️ Cache cleared for user $userId');
+  }
+
+  /// Clear all cache
+  static void clearAllCache() {
+    _cache.clear();
+    print('🗑️ All cache cleared');
   }
 
   /// Check service health

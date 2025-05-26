@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../utils/app_localizations.dart';
 import '../services/budget_overview_service.dart';
 import 'budget_overview.dart';
@@ -33,6 +34,9 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
 
   // Direction tracking for slide animations
   bool _isNavigatingForward = true;
+
+  // Counter para forzar la reconstrucción del widget de ahorros
+  int _savingsRefreshCounter = 0;
 
   @override
   void initState() {
@@ -222,6 +226,11 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
     await _fetchBudgetData(useTransition: true);
   }
 
+  /// Public method to refresh data from external widgets
+  Future<void> refreshBudgetData() async {
+    await _fetchBudgetData(useTransition: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
@@ -361,9 +370,22 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: ProportionalSavingsOverviewWidget(
+                      key: ValueKey('savings_$_savingsRefreshCounter'),
                       currentPeriod: _currentPeriod,
                       totalBalance: _budgetOverview!.savingsData.totalBalance,
-                      onGoalUpdated: () => _fetchBudgetData(),
+                      onGoalUpdated: () async {
+                        print('🔄 Savings goal updated, refreshing data...');
+
+                        // Primero refrescar los datos del budget
+                        await _fetchBudgetData();
+
+                        // Luego forzar la reconstrucción del widget de ahorros
+                        setState(() {
+                          _savingsRefreshCounter++;
+                        });
+
+                        print('✅ Savings widget refreshed');
+                      },
                     ),
                   ),
                 );

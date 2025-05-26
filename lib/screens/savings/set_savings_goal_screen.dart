@@ -338,6 +338,9 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
             duration: const Duration(seconds: 3),
           ),
         );
+
+        // Return to previous screen with success indicator
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
