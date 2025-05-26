@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../utils/app_localizations.dart';
 import '../services/budget_overview_service.dart';
+import '../models/dashboard_model.dart' show CashBankDistribution;
 import 'budget_overview.dart';
 import 'period_selector.dart';
 import 'savings_overview.dart';
@@ -403,10 +404,52 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
                   position: _slideAnimation,
                   child: FadeTransition(
                     opacity: _fadeAnimation,
-                    child: PeriodCashBankDistributionWidget(
-                      distribution: _budgetOverview!.cashBankDistribution,
-                      period: _currentPeriod,
-                      date: _currentDate,
+                    child: CashBankDistributionWidget(
+                      distribution: CashBankDistribution(
+                        month: DateTime.now().toString().substring(0, 7),
+                        cashAmount:
+                            _budgetOverview!.cashBankDistribution.cashAmount,
+                        cashPercent:
+                            _budgetOverview!.cashBankDistribution.cashPercent,
+                        bankAmount:
+                            _budgetOverview!.cashBankDistribution.bankAmount,
+                        bankPercent:
+                            _budgetOverview!.cashBankDistribution.bankPercent,
+                        monthlyTotal:
+                            _budgetOverview!.cashBankDistribution.totalAmount,
+                      ),
+                      onTransferTap: () {
+                        showTransferModal(
+                          context,
+                          CashBankDistribution(
+                            month: DateTime.now().toString().substring(0, 7),
+                            cashAmount:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .cashAmount,
+                            cashPercent:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .cashPercent,
+                            bankAmount:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .bankAmount,
+                            bankPercent:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .bankPercent,
+                            monthlyTotal:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .totalAmount,
+                          ),
+                          () async {
+                            // Refresh data after transfer
+                            await _fetchBudgetData(useTransition: true);
+                          },
+                        );
+                      },
                     ),
                   ),
                 );

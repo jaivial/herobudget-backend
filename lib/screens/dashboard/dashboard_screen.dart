@@ -749,17 +749,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             const SizedBox(height: 20),
 
-            // Cash and bank distribution
-            CashBankDistributionWidget(
-              distribution: dashboardData.cashDistribution,
-              onTransferTap: () {
-                // Show dialog to transfer between cash and bank
-                _showTransferDialog(dashboardData.cashDistribution);
-              },
-            ),
-
-            const SizedBox(height: 20),
-
             // Finance metrics
             FinanceMetricsWidget(metrics: dashboardData.financeMetrics),
 
@@ -1171,19 +1160,40 @@ class _DashboardScreenState extends State<DashboardScreen>
                               ? _cashBankService.transferCashToBank(amount)
                               : _cashBankService.transferBankToCash(amount);
 
-                      transferFuture.then((success) {
-                        if (success) {
-                          _refreshDashboard();
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                '${context.tr.translate('transfer_successful')} ${currencySymbol}${amount.toStringAsFixed(2)}',
+                      transferFuture
+                          .then((success) {
+                            if (success) {
+                              _refreshDashboard();
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${context.tr.translate('transfer_successful')} ${currencySymbol}${amount.toStringAsFixed(2)}',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    context.tr.translate('transfer_failed'),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          })
+                          .catchError((error) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '${context.tr.translate('transfer_failed')}: ${error.toString()}',
+                                ),
+                                backgroundColor: Colors.red,
                               ),
-                            ),
-                          );
-                        }
-                      });
+                            );
+                          });
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(

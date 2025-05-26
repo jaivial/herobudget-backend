@@ -438,85 +438,244 @@ func fetchCashBankDistribution(userID string) (CashBankDistribution, error) {
 	var distribution CashBankDistribution
 	distribution.UserID = userID
 
-	// Query cash_bank data from database
+	// Get current month in format YYYY-MM
+	currentMonth := time.Now().Format("2006-01")
+
+	// Query monthly_cash_bank_balance data from database for current month
 	err := db.QueryRow(`
-		SELECT month, cash_amount, cash_percent, bank_amount, bank_percent, monthly_total
-		FROM cash_bank
-		WHERE user_id = ?
-		ORDER BY created_at DESC
+		SELECT year_month, balance_cash_amount, balance_bank_amount, total_balance
+		FROM monthly_cash_bank_balance
+		WHERE user_id = ? AND year_month = ?
+		ORDER BY updated_at DESC
 		LIMIT 1
-	`, userID).Scan(
+	`, userID, currentMonth).Scan(
 		&distribution.Month,
 		&distribution.CashAmount,
-		&distribution.CashPercent,
 		&distribution.BankAmount,
-		&distribution.BankPercent,
 		&distribution.MonthlyTotal,
 	)
 
 	if err == sql.ErrNoRows {
-		// Return default values if no data found
-		now := time.Now()
-		distribution.Month = now.Format("January 2006")
-		distribution.CashAmount = 0
-		distribution.CashPercent = 0
-		distribution.BankAmount = 0
-		distribution.BankPercent = 0
-		distribution.MonthlyTotal = 0
-		return distribution, nil
+		// If no data for current month, try to get the most recent month
+		err = db.QueryRow(`
+			SELECT year_month, balance_cash_amount, balance_bank_amount, total_balance
+			FROM monthly_cash_bank_balance
+			WHERE user_id = ?
+			ORDER BY year_month DESC, updated_at DESC
+			LIMIT 1
+		`, userID).Scan(
+			&distribution.Month,
+			&distribution.CashAmount,
+			&distribution.BankAmount,
+			&distribution.MonthlyTotal,
+		)
+
+		if err == sql.ErrNoRows {
+			// Return default values if no data found
+			now := time.Now()
+			distribution.Month = now.Format("January 2006")
+			distribution.CashAmount = 0
+			distribution.CashPercent = 0
+			distribution.BankAmount = 0
+			distribution.BankPercent = 0
+			distribution.MonthlyTotal = 0
+			return distribution, nil
+		} else if err != nil {
+			return distribution, err
+		}
 	} else if err != nil {
 		return distribution, err
+	}
+
+	// Calculate percentages
+	if distribution.MonthlyTotal > 0 {
+		distribution.CashPercent = (distribution.CashAmount / distribution.MonthlyTotal) * 100
+		distribution.BankPercent = (distribution.BankAmount / distribution.MonthlyTotal) * 100
+	} else {
+		distribution.CashPercent = 0
+		distribution.BankPercent = 0
 	}
 
 	return distribution, nil
 }
 
 func updateCashBankDistribution(distribution CashBankDistribution) error {
-	// Check if a cash_bank entry already exists for this user
-	var count int
-	err := db.QueryRow(`
+	// Get current date and time periods
+	now := time.Now()
+	currentDate := now.Format("2006-01-02")
+	currentMonth := now.Format("2006-01")
+	currentWeek := getWeekPeriod(now)
+	currentQuarter := getQuarterPeriod(now)
+	currentSemiannual := getSemiannualPeriod(now)
+	currentYear := now.Format("2006")
+
+	// Update all period tables
+	err := updateAllPeriodTables(distribution, currentDate, currentMonth, currentWeek, currentQuarter, currentSemiannual, currentYear)
+	if err != nil {
+		return err
+	}
+
+	// Also update the legacy cash_bank table for backward compatibility
+	var legacyCount int
+	err2 := db.QueryRow(`
 		SELECT COUNT(*) 
 		FROM cash_bank 
 		WHERE user_id = ?
-	`, distribution.UserID).Scan(&count)
+	`, distribution.UserID).Scan(&legacyCount)
+
+	if err2 == nil {
+		if legacyCount > 0 {
+			// Update existing cash_bank entry
+			db.Exec(`
+				UPDATE cash_bank
+				SET month = ?,
+					cash_amount = ?,
+					cash_percent = ?,
+					bank_amount = ?,
+					bank_percent = ?,
+					monthly_total = ?,
+					updated_at = CURRENT_TIMESTAMP
+				WHERE user_id = ?
+			`,
+				distribution.Month,
+				distribution.CashAmount,
+				distribution.CashPercent,
+				distribution.BankAmount,
+				distribution.BankPercent,
+				distribution.MonthlyTotal,
+				distribution.UserID,
+			)
+		} else {
+			// Insert new cash_bank entry
+			db.Exec(`
+				INSERT INTO cash_bank (
+					user_id, month, cash_amount, cash_percent, bank_amount, bank_percent, monthly_total
+				) VALUES (?, ?, ?, ?, ?, ?, ?)
+			`,
+				distribution.UserID,
+				distribution.Month,
+				distribution.CashAmount,
+				distribution.CashPercent,
+				distribution.BankAmount,
+				distribution.BankPercent,
+				distribution.MonthlyTotal,
+			)
+		}
+	}
+
+	return err
+}
+
+// Helper functions for period calculations
+func getWeekPeriod(t time.Time) string {
+	year, week := t.ISOWeek()
+	return fmt.Sprintf("%d-%02d", year, week)
+}
+
+func getQuarterPeriod(t time.Time) string {
+	quarter := (int(t.Month())-1)/3 + 1
+	return fmt.Sprintf("%d-%d", t.Year(), quarter)
+}
+
+func getSemiannualPeriod(t time.Time) string {
+	semiannual := (int(t.Month())-1)/6 + 1
+	return fmt.Sprintf("%d-%d", t.Year(), semiannual)
+}
+
+// Update all period tables with the new cash/bank distribution
+func updateAllPeriodTables(distribution CashBankDistribution, currentDate, currentMonth, currentWeek, currentQuarter, currentSemiannual, currentYear string) error {
+	// Update daily_cash_bank_balance
+	err := updatePeriodTable("daily_cash_bank_balance", "date", currentDate, distribution)
+	if err != nil {
+		log.Printf("Error updating daily_cash_bank_balance: %v", err)
+		return err
+	}
+
+	// Update weekly_cash_bank_balance
+	err = updatePeriodTable("weekly_cash_bank_balance", "year_week", currentWeek, distribution)
+	if err != nil {
+		log.Printf("Error updating weekly_cash_bank_balance: %v", err)
+		return err
+	}
+
+	// Update monthly_cash_bank_balance
+	err = updatePeriodTable("monthly_cash_bank_balance", "year_month", currentMonth, distribution)
+	if err != nil {
+		log.Printf("Error updating monthly_cash_bank_balance: %v", err)
+		return err
+	}
+
+	// Update quarterly_cash_bank_balance
+	err = updatePeriodTable("quarterly_cash_bank_balance", "year_quarter", currentQuarter, distribution)
+	if err != nil {
+		log.Printf("Error updating quarterly_cash_bank_balance: %v", err)
+		return err
+	}
+
+	// Update semiannual_cash_bank_balance
+	err = updatePeriodTable("semiannual_cash_bank_balance", "year_half", currentSemiannual, distribution)
+	if err != nil {
+		log.Printf("Error updating semiannual_cash_bank_balance: %v", err)
+		return err
+	}
+
+	// Update annual_cash_bank_balance
+	err = updatePeriodTable("annual_cash_bank_balance", "year", currentYear, distribution)
+	if err != nil {
+		log.Printf("Error updating annual_cash_bank_balance: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// Generic function to update any period table
+func updatePeriodTable(tableName, periodColumn, periodValue string, distribution CashBankDistribution) error {
+	// Check if entry exists
+	var count int
+	query := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE user_id = ? AND %s = ?`, tableName, periodColumn)
+	err := db.QueryRow(query, distribution.UserID, periodValue).Scan(&count)
 	if err != nil {
 		return err
 	}
 
 	if count > 0 {
-		// Update existing cash_bank entry
-		_, err = db.Exec(`
-			UPDATE cash_bank
-			SET month = ?,
-				cash_amount = ?,
-				cash_percent = ?,
+		// Update existing entry
+		updateQuery := fmt.Sprintf(`
+			UPDATE %s
+			SET cash_amount = ?,
 				bank_amount = ?,
-				bank_percent = ?,
-				monthly_total = ?,
+				balance_cash_amount = ?,
+				balance_bank_amount = ?,
+				total_balance = ?,
 				updated_at = CURRENT_TIMESTAMP
-			WHERE user_id = ?
-		`,
-			distribution.Month,
+			WHERE user_id = ? AND %s = ?
+		`, tableName, periodColumn)
+
+		_, err = db.Exec(updateQuery,
 			distribution.CashAmount,
-			distribution.CashPercent,
 			distribution.BankAmount,
-			distribution.BankPercent,
+			distribution.CashAmount,
+			distribution.BankAmount,
 			distribution.MonthlyTotal,
 			distribution.UserID,
+			periodValue,
 		)
 	} else {
-		// Insert new cash_bank entry
-		_, err = db.Exec(`
-			INSERT INTO cash_bank (
-				user_id, month, cash_amount, cash_percent, bank_amount, bank_percent, monthly_total
+		// Insert new entry
+		insertQuery := fmt.Sprintf(`
+			INSERT INTO %s (
+				user_id, %s, cash_amount, bank_amount, balance_cash_amount, balance_bank_amount, total_balance
 			) VALUES (?, ?, ?, ?, ?, ?, ?)
-		`,
+		`, tableName, periodColumn)
+
+		_, err = db.Exec(insertQuery,
 			distribution.UserID,
-			distribution.Month,
+			periodValue,
 			distribution.CashAmount,
-			distribution.CashPercent,
 			distribution.BankAmount,
-			distribution.BankPercent,
+			distribution.CashAmount,
+			distribution.BankAmount,
 			distribution.MonthlyTotal,
 		)
 	}

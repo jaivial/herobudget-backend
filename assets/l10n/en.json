@@ -135,6 +135,8 @@
     "quarterly_period": "Quarterly",
     "semiannual_period": "Semi-Annual",
     "annual_period": "Annual",
+    "total_available": "Total Available",
+    "period": "Period",
     "select_date_range": "Select Date Range",
     "start_date": "Start Date",
     "end_date": "End Date",

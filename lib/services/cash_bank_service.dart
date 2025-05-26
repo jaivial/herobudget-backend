@@ -119,6 +119,15 @@ class CashBankService {
         throw Exception('User not authenticated');
       }
 
+      // Validate amount
+      if (amount <= 0) {
+        throw Exception('Amount must be greater than zero');
+      }
+
+      print(
+        '🔄 Transferring \$${amount.toStringAsFixed(2)} from cash to bank for user: $userId',
+      );
+
       // Make HTTP request
       final response = await http.post(
         Uri.parse('$baseUrl/transfer/cash-to-bank'),
@@ -130,17 +139,32 @@ class CashBankService {
         }),
       );
 
+      print('📡 Transfer response status: ${response.statusCode}');
+      print('📦 Transfer response body: ${response.body}');
+
       // Check if response is successful
       if (response.statusCode == 200) {
+        print('✅ Transfer successful');
         return true;
       } else {
-        throw Exception(
-          'Error transferring cash to bank: ${response.statusCode}',
-        );
+        // Try to parse error message from response
+        String errorMessage =
+            'Error transferring cash to bank: ${response.statusCode}';
+        try {
+          final errorData = json.decode(response.body);
+          if (errorData['message'] != null) {
+            errorMessage = errorData['message'];
+          }
+        } catch (e) {
+          // If can't parse JSON, use default message
+        }
+
+        print('❌ Transfer failed: $errorMessage');
+        throw Exception(errorMessage);
       }
     } catch (e) {
-      print('Error in transferCashToBank: $e');
-      return false;
+      print('❌ Error in transferCashToBank: $e');
+      rethrow; // Re-throw to preserve the original error
     }
   }
 
@@ -155,6 +179,15 @@ class CashBankService {
         throw Exception('User not authenticated');
       }
 
+      // Validate amount
+      if (amount <= 0) {
+        throw Exception('Amount must be greater than zero');
+      }
+
+      print(
+        '🔄 Transferring \$${amount.toStringAsFixed(2)} from bank to cash for user: $userId',
+      );
+
       // Make HTTP request
       final response = await http.post(
         Uri.parse('$baseUrl/transfer/bank-to-cash'),
@@ -166,17 +199,32 @@ class CashBankService {
         }),
       );
 
+      print('📡 Transfer response status: ${response.statusCode}');
+      print('📦 Transfer response body: ${response.body}');
+
       // Check if response is successful
       if (response.statusCode == 200) {
+        print('✅ Transfer successful');
         return true;
       } else {
-        throw Exception(
-          'Error transferring bank to cash: ${response.statusCode}',
-        );
+        // Try to parse error message from response
+        String errorMessage =
+            'Error transferring bank to cash: ${response.statusCode}';
+        try {
+          final errorData = json.decode(response.body);
+          if (errorData['message'] != null) {
+            errorMessage = errorData['message'];
+          }
+        } catch (e) {
+          // If can't parse JSON, use default message
+        }
+
+        print('❌ Transfer failed: $errorMessage');
+        throw Exception(errorMessage);
       }
     } catch (e) {
-      print('Error in transferBankToCash: $e');
-      return false;
+      print('❌ Error in transferBankToCash: $e');
+      rethrow; // Re-throw to preserve the original error
     }
   }
 }
