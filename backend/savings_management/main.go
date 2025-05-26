@@ -30,6 +30,10 @@ type SavingsUpdateRequest struct {
 	Period    string  `json:"period,omitempty"` // New field for period type
 }
 
+type SavingsDeleteRequest struct {
+	UserID string `json:"user_id"`
+}
+
 type ApiResponse struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message,omitempty"`
@@ -102,6 +106,7 @@ func main() {
 	// Set up CORS middleware and routes
 	http.HandleFunc("/savings/fetch", corsMiddleware(handleFetchSavings))
 	http.HandleFunc("/savings/update", corsMiddleware(handleUpdateSavings))
+	http.HandleFunc("/savings/delete", corsMiddleware(handleDeleteSavings))
 
 	port := 8089
 	log.Printf("Savings Management service started on :%d", port)
@@ -112,7 +117,7 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Set headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 		// If it's OPTIONS, return with just the headers (preflight request)
@@ -217,6 +222,38 @@ func handleUpdateSavings(w http.ResponseWriter, r *http.Request) {
 	sendSuccessResponse(w, "Savings updated successfully", currentSavings)
 }
 
+func handleDeleteSavings(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the request body
+	var deleteRequest SavingsDeleteRequest
+	err := json.NewDecoder(r.Body).Decode(&deleteRequest)
+	if err != nil {
+		sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate the request
+	if deleteRequest.UserID == "" {
+		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Delete the savings data
+	err = deleteSavingsData(deleteRequest.UserID)
+	if err != nil {
+		log.Printf("Error deleting savings data: %v", err)
+		sendErrorResponse(w, "Error deleting savings data", http.StatusInternalServerError)
+		return
+	}
+
+	// Return success response
+	sendSuccessResponse(w, "Savings goal deleted successfully", nil)
+}
+
 func fetchSavingsData(userID string) (SavingsData, error) {
 	var savings SavingsData
 
@@ -305,6 +342,29 @@ func updateSavingsData(savings SavingsData) error {
 	}
 
 	return err
+}
+
+func deleteSavingsData(userID string) error {
+	// Execute delete query
+	result, err := db.Exec(`
+		DELETE FROM savings 
+		WHERE user_id = ?
+	`, userID)
+	if err != nil {
+		return err
+	}
+
+	// Check if any rows were affected
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no savings goal found for user %s", userID)
+	}
+
+	return nil
 }
 
 func sendSuccessResponse(w http.ResponseWriter, message string, data interface{}) {

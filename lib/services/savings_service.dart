@@ -116,6 +116,35 @@ class SavingsService {
     }
   }
 
+  /// Delete savings goal for a user
+  Future<bool> deleteSavingsGoal(String userId) async {
+    try {
+      final requestBody = {'user_id': userId};
+
+      final response = await http.delete(
+        Uri.parse('$baseUrl/savings/delete'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          return true;
+        } else {
+          throw Exception(
+            responseData['message'] ?? 'Failed to delete savings goal',
+          );
+        }
+      } else {
+        throw Exception('Error deleting savings goal: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error in deleteSavingsGoal: $e');
+      throw Exception('Error deleting savings goal: $e');
+    }
+  }
+
   /// Check service health
   Future<bool> checkHealth() async {
     try {

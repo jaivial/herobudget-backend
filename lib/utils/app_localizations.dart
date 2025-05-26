@@ -53,6 +53,12 @@ class AppLocalizations {
     'dismiss': 'Dismiss',
     'spent': 'Spent',
     'pie_chart': 'Expense Distribution',
+    'delete_savings_goal': 'Delete Savings Goal',
+    'delete_savings_goal_confirmation':
+        'Are you sure you want to delete your savings goal? This action cannot be undone.',
+    'delete': 'Delete',
+    'savings_goal_deleted_successfully': 'Savings goal deleted successfully',
+    'error_deleting_savings_goal': 'Error deleting savings goal',
   };
 
   AppLocalizations(this.locale);
@@ -134,6 +140,13 @@ class AppLocalizations {
           'quarterly_period': 'This Quarter',
           'semiannual_period': 'This Semester',
           'annual_period': 'This Year',
+          'delete_savings_goal': 'Delete Savings Goal',
+          'delete_savings_goal_confirmation':
+              'Are you sure you want to delete your savings goal? This action cannot be undone.',
+          'delete': 'Delete',
+          'savings_goal_deleted_successfully':
+              'Savings goal deleted successfully',
+          'error_deleting_savings_goal': 'Error deleting savings goal',
         };
       }
 
@@ -183,6 +196,13 @@ class AppLocalizations {
         'quarterly_period': 'This Quarter',
         'semiannual_period': 'This Semester',
         'annual_period': 'This Year',
+        'delete_savings_goal': 'Delete Savings Goal',
+        'delete_savings_goal_confirmation':
+            'Are you sure you want to delete your savings goal? This action cannot be undone.',
+        'delete': 'Delete',
+        'savings_goal_deleted_successfully':
+            'Savings goal deleted successfully',
+        'error_deleting_savings_goal': 'Error deleting savings goal',
       };
       return true;
     }

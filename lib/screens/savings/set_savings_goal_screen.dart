@@ -224,6 +224,140 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
     }
   }
 
+  Future<void> _showDeleteConfirmationDialog() async {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: isDarkMode ? AppTheme.surfaceDark : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  context.tr.translate('delete_savings_goal'),
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            context.tr.translate('delete_savings_goal_confirmation'),
+            style: TextStyle(
+              color:
+                  isDarkMode
+                      ? Colors.white.withOpacity(0.8)
+                      : Colors.grey.shade700,
+              fontSize: 16,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                context.tr.translate('cancel'),
+                style: TextStyle(
+                  color:
+                      isDarkMode
+                          ? Colors.white.withOpacity(0.7)
+                          : Colors.grey.shade600,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteSavingsGoal();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                context.tr.translate('delete'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteSavingsGoal() async {
+    if (_userId == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _savingsService.deleteSavingsGoal(_userId!);
+
+      if (mounted) {
+        // Reset the form to creation mode
+        setState(() {
+          _currentSavingsData = SavingsData(
+            userId: _userId!,
+            available: 0,
+            goal: 0,
+            period: 'monthly',
+            percent: 0,
+            needToSave: 0,
+            dailyTarget: 0,
+          );
+          _goalController.clear();
+          _selectedPeriod = 'monthly';
+          _isEditingExistingGoal = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.tr.translate('savings_goal_deleted_successfully'),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.tr.translate('error_deleting_savings_goal')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      print('Error deleting savings goal: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   void _showPeriodSelector() {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -341,6 +475,15 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
         elevation: 0,
         systemOverlayStyle:
             isDarkMode ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        actions: [
+          if (_isEditingExistingGoal && !_isLoading)
+            IconButton(
+              onPressed: _showDeleteConfirmationDialog,
+              icon: const Icon(Icons.delete_outline),
+              tooltip: context.tr.translate('delete_savings_goal'),
+              color: Colors.red,
+            ),
+        ],
       ),
       body:
           _isLoadingCurrentData
