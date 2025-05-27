@@ -77,22 +77,30 @@ class _AppHeaderState extends State<AppHeader> {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Stack(
         children: [
-          // Sección izquierda - Toggle de tema
-          ThemeToggleButton(
-            currentThemeMode: currentThemeMode,
-            onThemeModeChanged: (ThemeMode mode) {
-              setState(() {
-                currentThemeMode = mode;
-              });
-              themeChangeNotifier.notifyThemeChange(mode);
-            },
+          // Fila con elementos de los lados
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Sección izquierda - Toggle de tema
+              ThemeToggleButton(
+                currentThemeMode: currentThemeMode,
+                onThemeModeChanged: (ThemeMode mode) {
+                  setState(() {
+                    currentThemeMode = mode;
+                  });
+                  themeChangeNotifier.notifyThemeChange(mode);
+                },
+              ),
+
+              // Sección derecha - Selector de idioma
+              const LanguageSelectorButton(),
+            ],
           ),
 
-          // Sección central - Logo de la aplicación
-          Expanded(
+          // Logo centrado absolutamente
+          Positioned.fill(
             child: Center(
               child: Image.asset(
                 'assets/images/herobudgeticon.png',
@@ -101,9 +109,6 @@ class _AppHeaderState extends State<AppHeader> {
               ),
             ),
           ),
-
-          // Sección derecha - Selector de idioma
-          const LanguageSelectorButton(),
         ],
       ),
     );
