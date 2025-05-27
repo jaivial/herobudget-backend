@@ -9,12 +9,16 @@ class AppTheme {
   static const Color backgroundLight = Color(0xFFF3E5F5);
 
   // Colores para tema oscuro
-  static const Color primaryColorDark = Color(0xFF6A1B9A);
-  static const Color secondaryColorDark = Color(0xFFBA68C8);
-  static const Color tertiaryColorDark = Color(0xFFD1C4E9);
+  static const Color primaryColorDark = Color(
+    0xFFBA68C8,
+  ); // Púrpura más claro para mejor legibilidad
+  static const Color secondaryColorDark = Color(0xFFD1C4E9); // Lavanda claro
+  static const Color tertiaryColorDark = Color(0xFFE1BEE7); // Lavanda muy claro
   static const Color backgroundDark = Color(0xFF121212);
   static const Color surfaceDark = Color(0xFF1E1E1E);
-  static const Color purpleAccentDark = Color(0xFF9C27B0);
+  static const Color purpleAccentDark = Color(
+    0xFFBA68C8,
+  ); // Actualizado para consistencia
 
   // Clave para almacenar el modo de tema en SharedPreferences
   static const String themePreferenceKey = 'theme_mode';
@@ -81,6 +85,25 @@ class AppTheme {
       iconTheme: const IconThemeData(color: tertiaryColorDark),
       dialogBackgroundColor: surfaceDark,
     );
+  }
+
+  // Métodos para obtener colores según el tema actual
+  static Color getPrimaryColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? primaryColorDark
+        : primaryColor;
+  }
+
+  static Color getSecondaryColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? secondaryColorDark
+        : secondaryColor;
+  }
+
+  static Color getTertiaryColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? tertiaryColorDark
+        : tertiaryColor;
   }
 
   // Métodos para guardar y obtener el modo de tema

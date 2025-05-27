@@ -57,7 +57,7 @@ class AuthOptionsStep extends StatelessWidget {
                         style: TextStyle(
                           fontSize: isDesktop ? 28 : 24,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
+                          color: AppTheme.getPrimaryColor(context),
                         ),
                         textAlign: TextAlign.center,
                       ),

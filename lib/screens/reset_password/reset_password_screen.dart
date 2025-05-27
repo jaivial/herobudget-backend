@@ -559,7 +559,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     // Create AppBar with custom title and language selector button
     final appBar = AppBar(
       title: Text(_getStepTitle()),
-      backgroundColor: AppTheme.primaryColor,
+      backgroundColor: AppTheme.getPrimaryColor(context),
       foregroundColor: Colors.white,
       elevation: 0,
       // Hide back button if on password step with token from deep link

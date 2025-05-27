@@ -14,12 +14,12 @@ Este documento define los estándares de interfaz de usuario y experiencia de us
 - **Fondo de Scaffold**: `#F5F5F5` (Gris Muy Claro)
 
 ### Tema Oscuro
-- **Color Primario**: `#6A1B9A` (Púrpura Profundo)
-- **Color Secundario**: `#BA68C8` (Púrpura Claro)
-- **Color Terciario**: `#D1C4E9` (Lavanda Claro)
+- **Color Primario**: `#BA68C8` (Púrpura Claro - Mejorado para legibilidad)
+- **Color Secundario**: `#D1C4E9` (Lavanda Claro)
+- **Color Terciario**: `#E1BEE7` (Lavanda Muy Claro)
 - **Color de Fondo**: `#121212` (Casi Negro)
 - **Superficie**: `#1E1E1E` (Gris Muy Oscuro)
-- **Acento Púrpura**: `#9C27B0` (Púrpura)
+- **Acento Púrpura**: `#BA68C8` (Púrpura Claro)
 
 ### Colores Semánticos
 - **Éxito/Positivo**: `#4CAF50` (Verde)

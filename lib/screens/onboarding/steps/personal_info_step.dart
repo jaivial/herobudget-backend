@@ -28,22 +28,22 @@ class PersonalInfoStep extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.person_rounded,
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.getPrimaryColor(context),
                   size: 24,
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Personal Information',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.getPrimaryColor(context),
                 ),
               ),
             ],

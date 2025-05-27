@@ -205,10 +205,10 @@ class _EmailOTPVerificationScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Verify Your Email',
           style: TextStyle(
-            color: AppTheme.primaryColor,
+            color: AppTheme.getPrimaryColor(context),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -229,24 +229,24 @@ class _EmailOTPVerificationScreenState
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.email_outlined,
-                    color: AppTheme.primaryColor,
+                    color: AppTheme.getPrimaryColor(context),
                     size: 40,
                   ),
                 ),
                 const SizedBox(height: 24),
 
                 // Title
-                const Text(
+                Text(
                   'Email Verification',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
+                    color: AppTheme.getPrimaryColor(context),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -290,13 +290,15 @@ class _EmailOTPVerificationScreenState
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              color: AppTheme.getPrimaryColor(
+                                context,
+                              ).withOpacity(0.3),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: AppTheme.primaryColor,
+                            borderSide: BorderSide(
+                              color: AppTheme.getPrimaryColor(context),
                               width: 2,
                             ),
                           ),
@@ -344,14 +346,15 @@ class _EmailOTPVerificationScreenState
                   child: ElevatedButton(
                     onPressed: _isVerifying ? null : _verifyEmail,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
+                      backgroundColor: AppTheme.getPrimaryColor(context),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      disabledBackgroundColor: AppTheme.primaryColor
-                          .withOpacity(0.5),
+                      disabledBackgroundColor: AppTheme.getPrimaryColor(
+                        context,
+                      ).withOpacity(0.5),
                     ),
                     child:
                         _isVerifying
@@ -390,7 +393,7 @@ class _EmailOTPVerificationScreenState
                       color:
                           (_resendCountdown > 0 || _isResending)
                               ? Colors.grey
-                              : AppTheme.primaryColor,
+                              : AppTheme.getPrimaryColor(context),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

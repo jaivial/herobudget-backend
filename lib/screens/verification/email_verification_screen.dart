@@ -205,10 +205,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
           automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: const Text(
+          title: Text(
             'Email Verification Required',
             style: TextStyle(
-              color: AppTheme.primaryColor,
+              color: AppTheme.getPrimaryColor(context),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -228,24 +228,24 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.email_outlined,
-                      color: AppTheme.primaryColor,
+                      color: AppTheme.getPrimaryColor(context),
                       size: 40,
                     ),
                   ),
                   const SizedBox(height: 24),
 
                   // Title
-                  const Text(
+                  Text(
                     'Verify Your Email',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
+                      color: AppTheme.getPrimaryColor(context),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -267,7 +267,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                   const SizedBox(height: 40),
 
                   // Loading indicator
-                  const CircularProgressIndicator(color: AppTheme.primaryColor),
+                  CircularProgressIndicator(
+                    color: AppTheme.getPrimaryColor(context),
+                  ),
                   const SizedBox(height: 40),
 
                   const Text(

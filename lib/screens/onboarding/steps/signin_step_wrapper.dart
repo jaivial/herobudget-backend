@@ -142,12 +142,12 @@ class _SignInStepWrapperState extends State<SignInStepWrapper> {
             ],
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'Sign In to Your Account',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
+              color: AppTheme.getPrimaryColor(context),
             ),
           ),
           const SizedBox(height: 4),

@@ -178,10 +178,10 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
           const SizedBox(height: 10),
           Text(
             context.tr.translate('create_password'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
+              color: AppTheme.getPrimaryColor(context),
             ),
           ),
           const SizedBox(height: 4),

@@ -217,22 +217,24 @@ class _SignInScreenState extends State<SignInScreen> {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  color: AppTheme.getPrimaryColor(
+                                    context,
+                                  ).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.email_outlined,
-                                  color: AppTheme.primaryColor,
+                                  color: AppTheme.getPrimaryColor(context),
                                   size: 24,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Text(
                                 context.tr.translate('email'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
+                                  color: AppTheme.getPrimaryColor(context),
                                 ),
                               ),
                             ],
@@ -271,22 +273,24 @@ class _SignInScreenState extends State<SignInScreen> {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                  color: AppTheme.getPrimaryColor(
+                                    context,
+                                  ).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.lock_outline,
-                                  color: AppTheme.primaryColor,
+                                  color: AppTheme.getPrimaryColor(context),
                                   size: 24,
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Text(
                                 context.tr.translate('password'),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
+                                  color: AppTheme.getPrimaryColor(context),
                                 ),
                               ),
                             ],
@@ -412,10 +416,10 @@ class _SignInScreenState extends State<SignInScreen> {
           const SizedBox(height: 10),
           Text(
             context.tr.translate('login'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
+              color: AppTheme.getPrimaryColor(context),
             ),
           ),
           const SizedBox(height: 4),

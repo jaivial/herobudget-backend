@@ -47,9 +47,9 @@ class EmailStep extends StatelessWidget {
                       color: AppTheme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.email_rounded,
-                      color: AppTheme.primaryColor,
+                      color: AppTheme.getPrimaryColor(context),
                       size: 24,
                     ),
                   ),
@@ -59,7 +59,7 @@ class EmailStep extends StatelessWidget {
                     style: TextStyle(
                       fontSize: isDesktop ? 20 : 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
+                      color: AppTheme.getPrimaryColor(context),
                     ),
                   ),
                 ],

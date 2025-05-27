@@ -288,7 +288,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               Icon(
                                 Icons.account_balance_wallet,
                                 size: 120,
-                                color: AppTheme.primaryColor,
+                                color: AppTheme.getPrimaryColor(context),
                               ),
                               const SizedBox(height: 20),
                               Text(
@@ -296,7 +296,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
+                                  color: AppTheme.getPrimaryColor(context),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -662,10 +662,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 10),
           Text(
             _getStepTitle(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: AppTheme.primaryColor,
+              color: AppTheme.getPrimaryColor(context),
             ),
           ),
           const SizedBox(height: 4),
@@ -704,7 +704,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           },
           style: ElevatedButton.styleFrom(
             minimumSize: const Size.fromHeight(56),
-            backgroundColor: AppTheme.primaryColor,
+            backgroundColor: AppTheme.getPrimaryColor(context),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -793,6 +793,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  foregroundColor: AppTheme.getPrimaryColor(context),
                 ),
                 child: Text(context.tr.translate('back').toUpperCase()),
               ),
@@ -1435,21 +1436,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const SizedBox(
+                            SizedBox(
                               height: 50,
                               width: 50,
                               child: CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppTheme.primaryColor,
+                                  AppTheme.getPrimaryColor(context),
                                 ),
                                 strokeWidth: 3,
                               ),
                             ),
                             const SizedBox(height: 24),
-                            const Text(
+                            Text(
                               'Creating your account...',
                               style: TextStyle(
-                                color: AppTheme.primaryColor,
+                                color: AppTheme.getPrimaryColor(context),
                                 fontSize: 17,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -1479,7 +1480,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _buildFeatureItem(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, size: 24, color: AppTheme.primaryColor),
+        Icon(icon, size: 24, color: AppTheme.getPrimaryColor(context)),
         const SizedBox(width: 16),
         Text(
           text,

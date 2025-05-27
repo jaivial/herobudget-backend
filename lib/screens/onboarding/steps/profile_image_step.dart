@@ -32,22 +32,22 @@ class ProfileImageStep extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.camera_alt_rounded,
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.getPrimaryColor(context),
                   size: 24,
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Profile Picture',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.getPrimaryColor(context),
                 ),
               ),
             ],
@@ -89,7 +89,7 @@ class ProfileImageStep extends StatelessWidget {
                       right: 0,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
+                          color: AppTheme.getPrimaryColor(context),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
@@ -210,21 +210,23 @@ class ProfileImageStep extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.08),
+              color: AppTheme.getPrimaryColor(context).withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+              border: Border.all(
+                color: AppTheme.getPrimaryColor(context).withOpacity(0.2),
+              ),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    color: AppTheme.getPrimaryColor(context).withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.info_outline,
-                    color: AppTheme.primaryColor,
+                    color: AppTheme.getPrimaryColor(context),
                     size: 20,
                   ),
                 ),
@@ -233,7 +235,7 @@ class ProfileImageStep extends StatelessWidget {
                   child: Text(
                     'You\'re almost there! After completing this step, you will be able to access your budget dashboard.',
                     style: TextStyle(
-                      color: AppTheme.primaryColor.withOpacity(0.8),
+                      color: AppTheme.getPrimaryColor(context).withOpacity(0.8),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       height: 1.4,
@@ -270,12 +272,12 @@ class ProfileImageStep extends StatelessWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.photo_library,
-                      color: AppTheme.primaryColor,
+                      color: AppTheme.getPrimaryColor(context),
                     ),
                   ),
                   title: const Text('Photo Library'),
@@ -290,12 +292,12 @@ class ProfileImageStep extends StatelessWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.photo_camera,
-                      color: AppTheme.primaryColor,
+                      color: AppTheme.getPrimaryColor(context),
                     ),
                   ),
                   title: const Text('Camera'),

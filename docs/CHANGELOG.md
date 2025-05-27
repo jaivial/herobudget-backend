@@ -1,5 +1,40 @@
 # Registro de Cambios (Changelog)
 
+## [Versión 2025.01.XX] - Mejora de Legibilidad en Modo Oscuro
+
+### Modificado
+- **Tema Oscuro - Pantallas de Onboarding**: Mejorada la legibilidad cambiando el color primario de `#6A1B9A` (Púrpura Profundo) a `#BA68C8` (Púrpura Claro)
+- **Paleta de Colores Modo Oscuro**: Actualizada la jerarquía de colores para mejor contraste:
+  - Color Primario: `#BA68C8` (Púrpura Claro)
+  - Color Secundario: `#D1C4E9` (Lavanda Claro)
+  - Color Terciario: `#E1BEE7` (Lavanda Muy Claro)
+  - Acento Púrpura: `#BA68C8` (Púrpura Claro)
+- **Sistema de Colores Dinámicos**: Implementados métodos `getPrimaryColor()`, `getSecondaryColor()` y `getTertiaryColor()` que devuelven automáticamente el color correcto según el tema actual
+- **Elementos de UI Actualizados**: Todos los títulos, iconos, botones y elementos decorativos en pantallas de onboarding ahora usan colores dinámicos que se adaptan automáticamente al tema
+
+### Archivos Afectados
+- `lib/theme/app_theme.dart`: Actualizada paleta de colores para modo oscuro y agregados métodos dinámicos de color
+- `lib/screens/onboarding/onboarding_screen.dart`: Actualizado para usar colores dinámicos según el tema
+- `lib/screens/onboarding/steps/auth_options_step.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/onboarding/steps/email_step.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/onboarding/steps/password_step.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/onboarding/steps/signin_step.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/onboarding/steps/personal_info_step.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/onboarding/steps/profile_image_step.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/onboarding/steps/password_step_wrapper.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/onboarding/steps/signin_step_wrapper.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/auth/signin_screen.dart`: Actualizado para usar colores dinámicos en pantalla de inicio de sesión
+- `lib/screens/reset_password/reset_password_screen.dart`: Actualizado para usar colores dinámicos en AppBar
+- `lib/screens/verification/email_otp_verification_screen.dart`: Actualizado para usar colores dinámicos
+- `lib/screens/verification/email_verification_screen.dart`: Actualizado para usar colores dinámicos
+- `docs/UI_UX_GUIDE.md`: Documentación actualizada con nuevos colores
+
+### Impacto en la Experiencia de Usuario
+- **Mejor Legibilidad**: Títulos, botones e iconos en pantallas de onboarding ahora son más legibles en modo oscuro
+- **Contraste Mejorado**: El nuevo color púrpura claro proporciona mejor contraste contra fondos oscuros
+- **Consistencia Visual**: Mantiene la identidad visual púrpura mientras mejora la accesibilidad
+- **Accesibilidad**: Cumple mejor con estándares de contraste para usuarios con dificultades visuales
+
 ## [Versión 2025.01.XX] - Simplificación de Navegación Inferior
 
 ### Modificado

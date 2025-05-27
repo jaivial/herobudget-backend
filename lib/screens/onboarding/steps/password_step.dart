@@ -138,9 +138,9 @@ class _PasswordStepState extends State<PasswordStep>
                   color: AppTheme.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.lock_rounded,
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.getPrimaryColor(context),
                   size: 24,
                 ),
               ),
@@ -150,7 +150,7 @@ class _PasswordStepState extends State<PasswordStep>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
+                  color: AppTheme.getPrimaryColor(context),
                 ),
               ),
             ],
