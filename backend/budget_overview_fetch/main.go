@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -239,7 +240,7 @@ func getTableAndCondition(period, date string) (string, string) {
 	}
 }
 
-// fetchBalanceData retrieves balance data from the specified table
+// fetchBalanceData retrieves balance data from the specified table with data inheritance
 func fetchBalanceData(tableName, userID, condition string) (*BalanceData, error) {
 	query := fmt.Sprintf(`
 		SELECT 
@@ -283,13 +284,65 @@ func fetchBalanceData(tableName, userID, condition string) (*BalanceData, error)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Return empty data if no record found
-			return &BalanceData{}, nil
+			// No data found for the requested period, try to inherit from previous periods
+			log.Printf("🔍 No data found for current period, searching for historical data to inherit...")
+			return fetchBalanceDataWithInheritance(tableName, userID, condition)
 		}
 		return nil, err
 	}
 
 	return &data, nil
+}
+
+// fetchBalanceDataWithInheritance handles data inheritance when no data exists for the requested period
+func fetchBalanceDataWithInheritance(tableName, userID, condition string) (*BalanceData, error) {
+	// Extract period and date from the condition to search backwards
+	period, date := extractPeriodAndDateFromCondition(tableName, condition)
+
+	if period == "" || date == "" {
+		log.Printf("⚠️  Could not extract period/date from condition: %s", condition)
+		return &BalanceData{}, nil
+	}
+
+	// Search for the last available period with data
+	inheritedData, err := findLastAvailablePeriod(tableName, userID, date, period)
+	if err != nil {
+		log.Printf("Error searching for historical data: %v", err)
+		return &BalanceData{}, nil
+	}
+
+	return inheritedData, nil
+}
+
+// extractPeriodAndDateFromCondition extracts period type and date from table name and condition
+func extractPeriodAndDateFromCondition(tableName, condition string) (string, string) {
+	// Determine period from table name
+	var period string
+	switch tableName {
+	case "daily_cash_bank_balance":
+		period = "daily"
+	case "weekly_cash_bank_balance":
+		period = "weekly"
+	case "monthly_cash_bank_balance":
+		period = "monthly"
+	case "quarterly_cash_bank_balance":
+		period = "quarterly"
+	case "semiannual_cash_bank_balance":
+		period = "semiannual"
+	case "annual_cash_bank_balance":
+		period = "annual"
+	default:
+		return "", ""
+	}
+
+	// Extract date from condition using string manipulation
+	// Conditions are in format: "date = '2024-01-15'" or "year_month = '2024-01'" etc.
+	parts := strings.Split(condition, "'")
+	if len(parts) >= 2 {
+		return period, parts[1]
+	}
+
+	return "", ""
 }
 
 // calculateBudgetOverview calculates the budget overview from balance data
@@ -514,4 +567,185 @@ func getSavingsDataFromDB(userID string, remainingAmount float64, period string)
 		NeedToSave:  needToSave,
 		DailyTarget: dailyTarget,
 	}
+}
+
+// parseDateString parses a date string based on the period type and returns a time.Time
+func parseDateString(dateStr, period string) (time.Time, error) {
+	switch period {
+	case "daily":
+		return time.Parse("2006-01-02", dateStr)
+	case "weekly":
+		// Parse format like "2024-W03"
+		parts := strings.Split(dateStr, "-W")
+		if len(parts) != 2 {
+			return time.Time{}, fmt.Errorf("invalid weekly date format: %s", dateStr)
+		}
+		year, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid year in weekly date: %s", parts[0])
+		}
+		week, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid week in weekly date: %s", parts[1])
+		}
+		// Calculate first day of week (Monday)
+		jan1 := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+		daysToFirstMonday := (8 - int(jan1.Weekday())) % 7
+		firstMonday := jan1.AddDate(0, 0, daysToFirstMonday)
+		return firstMonday.AddDate(0, 0, (week-1)*7), nil
+	case "monthly":
+		return time.Parse("2006-01-02", dateStr+"-01")
+	case "quarterly":
+		// Parse format like "2024-Q1"
+		parts := strings.Split(dateStr, "-Q")
+		if len(parts) != 2 {
+			return time.Time{}, fmt.Errorf("invalid quarterly date format: %s", dateStr)
+		}
+		year, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid year in quarterly date: %s", parts[0])
+		}
+		quarter, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid quarter in quarterly date: %s", parts[1])
+		}
+		month := (quarter-1)*3 + 1
+		return time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC), nil
+	case "semiannual":
+		// Parse format like "2024-H1"
+		parts := strings.Split(dateStr, "-H")
+		if len(parts) != 2 {
+			return time.Time{}, fmt.Errorf("invalid semiannual date format: %s", dateStr)
+		}
+		year, err := strconv.Atoi(parts[0])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid year in semiannual date: %s", parts[0])
+		}
+		half, err := strconv.Atoi(parts[1])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid half in semiannual date: %s", parts[1])
+		}
+		month := 1
+		if half == 2 {
+			month = 7
+		}
+		return time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC), nil
+	case "annual":
+		year, err := strconv.Atoi(dateStr)
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid annual date format: %s", dateStr)
+		}
+		return time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC), nil
+	default:
+		return time.Parse("2006-01-02", dateStr+"-01")
+	}
+}
+
+// getPreviousPeriodDate calculates the previous period date string
+func getPreviousPeriodDate(dateStr, period string) (string, error) {
+	currentDate, err := parseDateString(dateStr, period)
+	if err != nil {
+		return "", err
+	}
+
+	var previousDate time.Time
+	switch period {
+	case "daily":
+		previousDate = currentDate.AddDate(0, 0, -1)
+	case "weekly":
+		previousDate = currentDate.AddDate(0, 0, -7)
+	case "monthly":
+		previousDate = currentDate.AddDate(0, -1, 0)
+	case "quarterly":
+		previousDate = currentDate.AddDate(0, -3, 0)
+	case "semiannual":
+		previousDate = currentDate.AddDate(0, -6, 0)
+	case "annual":
+		previousDate = currentDate.AddDate(-1, 0, 0)
+	default:
+		previousDate = currentDate.AddDate(0, -1, 0)
+	}
+
+	return formatDateForPeriod(previousDate, period), nil
+}
+
+// findLastAvailablePeriod searches backwards for the most recent period with data
+func findLastAvailablePeriod(tableName, userID, originalDate, period string) (*BalanceData, error) {
+	const maxSearchPeriods = 24 // Limit search to avoid infinite loops
+
+	currentDate := originalDate
+
+	for i := 0; i < maxSearchPeriods; i++ {
+		// Get previous period date
+		previousDate, err := getPreviousPeriodDate(currentDate, period)
+		if err != nil {
+			log.Printf("Error calculating previous period date: %v", err)
+			break
+		}
+
+		// Get table condition for the previous period
+		_, condition := getTableAndCondition(period, previousDate)
+
+		// Try to fetch data for this period
+		query := fmt.Sprintf(`
+			SELECT 
+				COALESCE(income_bank_amount, 0) as income_bank_amount,
+				COALESCE(income_cash_amount, 0) as income_cash_amount,
+				COALESCE(expense_bank_amount, 0) as expense_bank_amount,
+				COALESCE(expense_cash_amount, 0) as expense_cash_amount,
+				COALESCE(bill_bank_amount, 0) as bill_bank_amount,
+				COALESCE(bill_cash_amount, 0) as bill_cash_amount,
+				COALESCE(bank_amount, 0) as bank_amount,
+				COALESCE(previous_bank_amount, 0) as previous_bank_amount,
+				COALESCE(cash_amount, 0) as cash_amount,
+				COALESCE(previous_cash_amount, 0) as previous_cash_amount,
+				COALESCE(balance_cash_amount, 0) as balance_cash_amount,
+				COALESCE(balance_bank_amount, 0) as balance_bank_amount,
+				COALESCE(total_previous_balance, 0) as total_previous_balance,
+				COALESCE(total_balance, 0) as total_balance
+			FROM %s 
+			WHERE user_id = ? AND %s
+		`, tableName, condition)
+
+		row := db.QueryRow(query, userID)
+
+		var data BalanceData
+		err = row.Scan(
+			&data.IncomeBankAmount,
+			&data.IncomeCashAmount,
+			&data.ExpenseBankAmount,
+			&data.ExpenseCashAmount,
+			&data.BillBankAmount,
+			&data.BillCashAmount,
+			&data.BankAmount,
+			&data.PreviousBankAmount,
+			&data.CashAmount,
+			&data.PreviousCashAmount,
+			&data.BalanceCashAmount,
+			&data.BalanceBankAmount,
+			&data.TotalPreviousBalance,
+			&data.TotalBalance,
+		)
+
+		if err == nil {
+			// Found data! Log the inheritance and return it
+			log.Printf("📊 Data inheritance: Using data from %s for requested period %s (user: %s)",
+				previousDate, originalDate, userID)
+			return &data, nil
+		}
+
+		if err != sql.ErrNoRows {
+			// Some other error occurred
+			log.Printf("Error querying period %s: %v", previousDate, err)
+			break
+		}
+
+		// No data found for this period either, continue searching backwards
+		currentDate = previousDate
+	}
+
+	// No data found in any of the searched periods
+	log.Printf("⚠️  No historical data found for user %s in table %s after searching %d periods backwards from %s",
+		userID, tableName, maxSearchPeriods, originalDate)
+	return &BalanceData{}, nil
 }

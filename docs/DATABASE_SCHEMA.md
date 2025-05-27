@@ -643,5 +643,70 @@ Cuando una factura es pagada, se actualiza su estado en la tabla `bills` y se cr
 
 Este flujo asegura la consistencia entre las facturas pagadas y los gastos registrados, manteniendo actualizado el estado financiero del usuario en todos los periodos de tiempo.
 
+## Herencia de Datos en Períodos Futuros
+
+### Funcionalidad de Herencia Automática
+
+A partir de la implementación de herencia de datos, cuando se consultan períodos futuros sin registros en las tablas `[periodtime]_cash_bank_balance`, el sistema automáticamente hereda los datos del último período disponible con información.
+
+### Comportamiento del Sistema
+
+**Escenario:** Usuario navega a un período futuro (ej: marzo 2025) que no tiene datos registrados.
+
+**Proceso de herencia:**
+1. El sistema busca datos para el período solicitado en la tabla correspondiente
+2. Si no encuentra datos (`sql.ErrNoRows`), inicia búsqueda hacia atrás en el tiempo
+3. Busca iterativamente en períodos anteriores hasta encontrar datos disponibles
+4. Hereda y retorna los datos del último período con información
+5. Registra en logs la herencia de datos para trazabilidad
+
+### Tablas Afectadas
+
+La herencia de datos aplica a todas las tablas de balance por período:
+- `daily_cash_bank_balance`
+- `weekly_cash_bank_balance`
+- `monthly_cash_bank_balance`
+- `quarterly_cash_bank_balance`
+- `semiannual_cash_bank_balance`
+- `annual_cash_bank_balance`
+
+### Campos Heredados
+
+Todos los campos de balance son heredados:
+- `income_bank_amount` / `income_cash_amount`
+- `expense_bank_amount` / `expense_cash_amount`
+- `bill_bank_amount` / `bill_cash_amount`
+- `bank_amount` / `cash_amount`
+- `previous_bank_amount` / `previous_cash_amount`
+- `balance_cash_amount` / `balance_bank_amount`
+- `total_previous_balance` / `total_balance`
+
+### Límites de Búsqueda
+
+- **Máximo de períodos hacia atrás:** 24 períodos
+- **Propósito:** Evitar búsquedas infinitas y mejorar rendimiento
+- **Comportamiento:** Si no se encuentran datos en 24 períodos, retorna datos vacíos
+
+### Impacto en la Interfaz de Usuario
+
+Esta funcionalidad mejora la experiencia en:
+- **Budget Overview Widget:** Muestra datos heredados en lugar de valores vacíos
+- **Cash Bank Distribution Widget:** Mantiene distribución coherente en períodos futuros
+- **Navegación temporal:** Experiencia fluida al avanzar en el tiempo
+
+### Logging y Trazabilidad
+
+El sistema registra automáticamente:
+```
+📊 Data inheritance: Using data from 2024-12 for requested period 2025-03 (user: user123)
+```
+
+### Consideraciones Técnicas
+
+- **Rendimiento:** Búsqueda optimizada con límite de iteraciones
+- **Consistencia:** Mantiene estructura de datos original
+- **Compatibilidad:** No afecta funcionalidad existente para períodos con datos
+- **Escalabilidad:** Funciona independientemente del tipo de período
+
 ---
-Última actualización: 2023-09-15 
+Última actualización: 2024-12-19 

@@ -1,5 +1,35 @@
 # Registro de Cambios (Changelog)
 
+## [Versión 2024.12.19] - 2024-12-19
+
+### Añadido
+- **Herencia de Datos para Períodos Futuros**: Implementada funcionalidad automática de herencia de datos cuando se navega a períodos futuros sin registros en las tablas `[periodtime]_cash_bank_balance`
+- Función `findLastAvailablePeriod()` para búsqueda hacia atrás de datos históricos disponibles
+- Función `fetchBalanceDataWithInheritance()` para manejo de herencia cuando no existen datos
+- Función `extractPeriodAndDateFromCondition()` para extracción de período y fecha desde condiciones SQL
+- Funciones auxiliares de navegación temporal: `parseDateString()` y `getPreviousPeriodDate()`
+- Logging detallado para trazabilidad de herencia de datos
+- Límite de búsqueda de 24 períodos hacia atrás para optimización de rendimiento
+
+### Corregido
+- **Bug de Parsing de Fechas Mensuales**: Corregido error en `parseDateString()` donde el formato de fecha para períodos mensuales no coincidía con el string parseado, causando fallo en la herencia de datos
+- Error "parsing time '2025-06-01': extra text: '-01'" que impedía la funcionalidad de herencia
+
+### Archivos Modificados
+- `backend/budget_overview_fetch/main.go`: Implementación completa de herencia de datos y corrección de parsing
+- `docs/DATABASE_SCHEMA.md`: Documentación de la nueva funcionalidad de herencia
+- `docs/CHANGELOG.md`: Registro de cambios implementados
+
+### Impacto
+- **budget_overview**: Ahora muestra datos heredados del último período disponible en lugar de valores vacíos para períodos futuros
+- **cash_bank_distribution**: Mantiene distribución de efectivo/banco consistente basada en datos históricos
+- **Experiencia de Usuario**: Navegación temporal más fluida sin pantallas vacías en períodos futuros
+
+### Notas Técnicas
+- La herencia busca hasta 24 períodos hacia atrás para encontrar datos disponibles
+- Se mantiene la funcionalidad original para períodos con datos existentes
+- Logging detallado permite monitoreo y debugging de la funcionalidad de herencia
+
 ## [Versión Actual] - 2025-05-20
 
 ### Añadido
