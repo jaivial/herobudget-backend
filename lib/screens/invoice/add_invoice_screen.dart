@@ -175,8 +175,8 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               widget.onSuccess!();
             }
 
-            // Close the screen
-            Navigator.of(context).pop();
+            // Close the screen and return success result
+            Navigator.of(context).pop(true);
           }
         } else {
           setState(() {

@@ -6,7 +6,9 @@ import '../../utils/app_localizations.dart';
 import '../../theme/app_theme.dart';
 
 class PayBillScreen extends StatefulWidget {
-  const PayBillScreen({Key? key}) : super(key: key);
+  final Invoice? preselectedInvoice;
+
+  const PayBillScreen({Key? key, this.preselectedInvoice}) : super(key: key);
 
   @override
   State<PayBillScreen> createState() => _PayBillScreenState();
@@ -63,6 +65,15 @@ class _PayBillScreenState extends State<PayBillScreen> {
         _filteredInvoices = unpaidInvoices;
         _invoicesByDay = invoicesByDay;
         _isLoading = false;
+
+        // If there's a preselected invoice, set it as selected
+        if (widget.preselectedInvoice != null) {
+          final preselected = unpaidInvoices.firstWhere(
+            (invoice) => invoice.id == widget.preselectedInvoice!.id,
+            orElse: () => widget.preselectedInvoice!,
+          );
+          _selectedInvoice = preselected;
+        }
       });
     } catch (e) {
       setState(() {

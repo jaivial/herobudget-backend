@@ -15,7 +15,7 @@ import '../../widgets/finance_metrics.dart';
 import '../../widgets/period_selector.dart';
 import '../../widgets/quick_actions.dart';
 import '../../widgets/savings_overview.dart';
-import '../../widgets/upcoming_bills.dart';
+import '../../widgets/transaction_overview_widget.dart';
 import '../../models/dashboard_model.dart';
 import '../../services/savings_service.dart';
 import '../../services/cash_bank_service.dart';
@@ -757,12 +757,16 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             const SizedBox(height: 20),
 
-            // Upcoming bills
-            UpcomingBillsWidget(
-              bills: dashboardData.upcomingBills,
+            // Transaction Overview (Bills + History)
+            TransactionOverviewWidget(
+              period: _currentPeriod,
+              date: _formatDateForCache(_selectedDate),
               onAddBill: () {
                 // Show modal to add bill
                 _showAddBillDialog();
+              },
+              onRefresh: () {
+                _refreshDashboard();
               },
             ),
 
@@ -919,10 +923,18 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // Dialog to add bill
   void _showAddBillDialog() {
-    // Implementación simplificada, mostrar solo un mensaje
-    ScaffoldMessenger.of(
+    Navigator.push(
       context,
-    ).showSnackBar(SnackBar(content: Text(context.tr.translate('add_bill'))));
+      MaterialPageRoute(
+        builder:
+            (context) => AddInvoiceScreen(
+              onSuccess: () {
+                // Cuando se añade una factura correctamente, actualizamos los datos del dashboard
+                _refreshDashboard();
+              },
+            ),
+      ),
+    );
   }
 
   // Dialog to add income

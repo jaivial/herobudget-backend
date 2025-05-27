@@ -4,6 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/dashboard_model.dart';
 import '../models/invoice_model.dart';
+import '../models/category_model.dart';
+import '../services/category_service.dart';
+import '../utils/icon_utils.dart';
 
 /// Servicio para gestionar las facturas (invoices) utilizando la API de bills_management
 class InvoiceService {
@@ -68,8 +71,8 @@ class InvoiceService {
         throw Exception('User not authenticated');
       }
 
-      // Construir icono según categoría (o usar uno predeterminado)
-      String icon = 'receipt_long';
+      // Obtener el emoji de la categoría seleccionada
+      String icon = await _getCategoryEmoji(userId, category);
 
       // Crear un mapa con los datos de la factura
       final Map<String, dynamic> invoiceData = {
@@ -182,7 +185,7 @@ class InvoiceService {
         'amount': amount,
         'due_date': dueDate,
         'category': category,
-        'icon': 'receipt_long', // Icono predeterminado para facturas
+        'icon': await _getCategoryEmoji(userId, category),
         'recurring': recurring,
       };
 
@@ -288,6 +291,45 @@ class InvoiceService {
     } catch (e) {
       print('Error in fetchUpcomingInvoices: $e');
       throw Exception('Error fetching upcoming invoices: $e');
+    }
+  }
+
+  /// Obtiene el emoji de una categoría específica
+  Future<String> _getCategoryEmoji(String userId, String categoryName) async {
+    try {
+      final categoryService = CategoryService();
+      final categories = await categoryService.fetchCategories(type: 'expense');
+
+      // Buscar la categoría por nombre
+      final category = categories.firstWhere(
+        (cat) => cat.name.toLowerCase() == categoryName.toLowerCase(),
+        orElse:
+            () => Category(
+              id: 0,
+              name: '',
+              emoji: '',
+              type: 'expense',
+              userId: userId,
+            ),
+      );
+
+      // Si encontramos la categoría y tiene emoji, usarlo
+      if (category.emoji.isNotEmpty) {
+        return category.emoji;
+      }
+
+      // Si no, usar IconUtils para obtener un emoji apropiado
+      return IconUtils.getAppropriateEmoji(
+        categoryName: categoryName,
+        iconName: 'receipt_long',
+      );
+    } catch (e) {
+      print('Error getting category emoji: $e');
+      // Fallback: usar IconUtils
+      return IconUtils.getAppropriateEmoji(
+        categoryName: categoryName,
+        iconName: 'receipt_long',
+      );
     }
   }
 }
