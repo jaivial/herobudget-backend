@@ -1,5 +1,23 @@
 # Registro de Cambios (Changelog)
 
+## [Versión 2025.01.XX] - Simplificación de Navegación Inferior
+
+### Modificado
+- **Navegación Inferior**: Simplificada de 5 a 3 botones para mejorar la usabilidad
+  - Eliminados: botones de Transacciones y Estadísticas
+  - Mantenidos: Inicio (Home), Acciones Rápidas (+), Perfil
+  - El botón flotante (+) continúa funcionando como acceso a acciones rápidas
+
+### Archivos Afectados
+- `lib/widgets/app_bottom_navigation.dart`: Reducido número de botones de navegación
+- `lib/screens/dashboard/dashboard_screen.dart`: Actualizada lógica de navegación
+- `docs/UI_UX_GUIDE.md`: Actualizada documentación de navegación
+
+### Impacto en la Experiencia de Usuario
+- **Navegación Simplificada**: Interfaz más limpia y fácil de usar
+- **Acceso Directo**: Solo las funciones más importantes están disponibles en la navegación principal
+- **Consistencia**: El botón flotante (+) mantiene su funcionalidad de acciones rápidas
+
 ## [Versión 2025.05.27.2] - 2025-05-27
 
 ### Corregido

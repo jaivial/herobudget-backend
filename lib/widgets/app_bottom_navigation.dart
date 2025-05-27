@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Una barra de navegación inferior simplificada sin lógica de botón +
+/// Una barra de navegación inferior simplificada con solo 3 botones: inicio, acciones rápidas (+) y perfil
 class AppBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTabChanged;
@@ -40,30 +40,12 @@ class AppBottomNavigation extends StatelessWidget {
             child: _buildNavItem(context, icon: Icons.home_rounded, index: 0),
           ),
 
-          // Botón para ir a Transacciones
-          Expanded(
-            child: _buildNavItem(
-              context,
-              icon: Icons.receipt_long_rounded,
-              index: 1,
-            ),
-          ),
-
           // Espacio para el botón central (implementado con FloatingActionButton)
           const Expanded(child: SizedBox()),
 
-          // Botón para ir a Estadísticas
-          Expanded(
-            child: _buildNavItem(
-              context,
-              icon: Icons.bar_chart_rounded,
-              index: 2,
-            ),
-          ),
-
           // Botón para ir al Perfil
           Expanded(
-            child: _buildNavItem(context, icon: Icons.person_rounded, index: 3),
+            child: _buildNavItem(context, icon: Icons.person_rounded, index: 1),
           ),
         ],
       ),

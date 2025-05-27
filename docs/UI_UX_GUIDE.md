@@ -74,8 +74,11 @@ Hero Budget utiliza la tipografía predeterminada de Material Design.
   - Facturas próximas: `calendar_today`
 
 ## Navegación
-- Navegación por cajón deslizable (Drawer)
-- Navegación de fondo para acciones principales
+- **Navegación Inferior**: Barra de navegación simplificada con 3 botones:
+  - Inicio (Home): Acceso al dashboard principal
+  - Acciones Rápidas (+): Botón flotante central para acciones frecuentes
+  - Perfil: Acceso a la configuración y perfil del usuario
+- Navegación por cajón deslizable (Drawer) para funciones adicionales
 - Navegación por pestañas para secciones relacionadas
 
 ## Diálogos y Alertas

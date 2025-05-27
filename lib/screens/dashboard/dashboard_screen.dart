@@ -734,20 +734,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                     // Ya estamos en Dashboard/Home
                     break;
                   case 1:
-                    // Mostrar mensaje sencillo
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(context.tr.translate('expenses'))),
-                    );
-                    break;
-                  case 2:
-                    // Mostrar mensaje sencillo
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(context.tr.translate('finance_metrics')),
-                      ),
-                    );
-                    break;
-                  case 3:
                     // Navegar a Perfil
                     Navigator.pushNamed(context, '/profile');
                     break;
