@@ -26,6 +26,7 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
   BudgetOverview? _budgetOverview;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isChangingPeriod = false;
 
   // Animation controllers
   late AnimationController _slideController;
@@ -139,6 +140,7 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
   Future<void> _onPeriodChanged(String newPeriod) async {
     if (_currentPeriod != newPeriod) {
       _isNavigatingForward = true; // Assume forward for period changes
+      _isChangingPeriod = true; // Flag to prevent date change interference
 
       await _performTransition(() {
         setState(() {
@@ -146,11 +148,19 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
           _currentDate = _budgetService.getCurrentPeriodDate(newPeriod);
         });
       });
+
+      _isChangingPeriod = false; // Reset flag after transition
     }
   }
 
   /// Handle date change with slide animation
   Future<void> _onDateChanged(DateTime newDate) async {
+    // Skip date change if we're currently changing periods to avoid conflicts
+    if (_isChangingPeriod) {
+      print('🚫 Skipping date change during period transition');
+      return;
+    }
+
     final newDateString = _budgetService.formatDateForPeriod(
       newDate,
       _currentPeriod,

@@ -265,15 +265,11 @@ class _PeriodSelectorState extends State<PeriodSelector> {
       return;
     }
 
-    // Preserve the navigation date if it already exists for this period type
+    // Use cached date if available, otherwise use current date for the new period type
     final DateTime dateToUse =
         _datesByPeriodType.containsKey(periodType)
             ? _datesByPeriodType[periodType]!
-            : _convertCurrentDateToNewPeriodType(
-              _currentPeriod,
-              periodType,
-              _currentDate,
-            );
+            : _getCurrentDateForPeriodType(periodType);
 
     setState(() {
       _currentPeriod = periodType;
@@ -332,6 +328,42 @@ class _PeriodSelectorState extends State<PeriodSelector> {
         return currentDate;
       default:
         return DateTime(year, month, 1);
+    }
+  }
+
+  // Get the current appropriate date for a specific period type
+  // This ensures we always start with relevant, current data
+  DateTime _getCurrentDateForPeriodType(String periodType) {
+    final DateTime now = DateTime.now();
+
+    switch (periodType) {
+      case 'daily':
+        // For daily, use today's date
+        return now;
+      case 'weekly':
+        // For weekly, use the Monday of the current week
+        final daysToMonday =
+            now.weekday - 1; // 0 for Monday, 1 for Tuesday, etc.
+        return now.subtract(Duration(days: daysToMonday));
+      case 'monthly':
+        // For monthly, use the first day of the current month
+        return DateTime(now.year, now.month, 1);
+      case 'quarterly':
+        // For quarterly, use the first day of the current quarter
+        final currentQuarter = ((now.month - 1) ~/ 3);
+        return DateTime(now.year, currentQuarter * 3 + 1, 1);
+      case 'semiannual':
+        // For semiannual, use the first day of the current half
+        final currentHalf = now.month <= 6 ? 1 : 7;
+        return DateTime(now.year, currentHalf, 1);
+      case 'annual':
+        // For annual, use the first day of the current year
+        return DateTime(now.year, 1, 1);
+      case 'custom':
+        // For custom, use the current date
+        return now;
+      default:
+        return DateTime(now.year, now.month, 1);
     }
   }
 
