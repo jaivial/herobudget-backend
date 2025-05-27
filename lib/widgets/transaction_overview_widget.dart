@@ -159,11 +159,6 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                           color: isDarkMode ? Colors.white : null,
                         ),
                       ),
-                      IconButton(
-                        onPressed: _handleRefresh,
-                        icon: const Icon(Icons.refresh),
-                        tooltip: context.tr.translate('refresh'),
-                      ),
                     ],
                   ),
                 ),
@@ -277,11 +272,8 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
             ),
           ),
 
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: 400,
-              maxHeight: MediaQuery.of(context).size.height * 0.6,
-            ),
+          SizedBox(
+            height: 600,
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -420,12 +412,6 @@ class CompactTransactionOverview extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    if (onRefresh != null)
-                      IconButton(
-                        onPressed: onRefresh,
-                        icon: const Icon(Icons.refresh),
-                        tooltip: context.tr.translate('refresh'),
-                      ),
                     if (onViewAll != null)
                       TextButton(
                         onPressed: onViewAll,

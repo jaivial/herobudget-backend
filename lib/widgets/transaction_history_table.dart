@@ -362,11 +362,6 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
                     ),
                   ],
             ),
-            IconButton(
-              onPressed: _refreshData,
-              icon: const Icon(Icons.refresh, size: 20), // Smaller icon
-              tooltip: context.tr.translate('refresh'),
-            ),
           ],
         ),
 
@@ -453,77 +448,76 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
             ),
           ),
 
-        // Loading state
-        if (_isLoading)
-          const Expanded(child: Center(child: CircularProgressIndicator()))
-        // Empty state
-        else if (_filteredTransactions.isEmpty)
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.receipt_long_outlined,
-                    size: 60,
-                    color:
-                        isDarkMode
-                            ? Colors.white.withOpacity(0.3)
-                            : Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _filters.hasActiveFilters
-                        ? context.tr.translate('no_transactions_found')
-                        : context.tr.translate('no_transactions'),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color:
-                          isDarkMode
-                              ? Colors.white.withOpacity(0.7)
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
+        // Content area with scroll
+        Expanded(
+          child:
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _filteredTransactions.isEmpty
+                  ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          size: 60,
+                          color:
+                              isDarkMode
+                                  ? Colors.white.withOpacity(0.3)
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant
+                                      .withOpacity(0.3),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _filters.hasActiveFilters
+                              ? context.tr.translate('no_transactions_found')
+                              : context.tr.translate('no_transactions'),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                isDarkMode
+                                    ? Colors.white.withOpacity(0.7)
+                                    : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (_filters.hasActiveFilters) ...[
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: _clearFilters,
+                            child: Text(context.tr.translate('clear_filters')),
+                          ),
+                        ],
+                      ],
                     ),
-                  ),
-                  if (_filters.hasActiveFilters) ...[
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _clearFilters,
-                      child: Text(context.tr.translate('clear_filters')),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          )
-        // Transactions list
-        else
-          Expanded(
-            child: ListView.separated(
-              controller: _scrollController,
-              itemCount:
-                  _filteredTransactions.length + (_isLoadingMore ? 1 : 0),
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                if (index >= _filteredTransactions.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
+                  )
+                  : ListView.separated(
+                    itemCount:
+                        _filteredTransactions.length + (_isLoadingMore ? 1 : 0),
+                    separatorBuilder:
+                        (context, index) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      if (index >= _filteredTransactions.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
 
-                final transaction = _filteredTransactions[index];
-                return TransactionListItem(
-                  transaction: transaction,
-                  isDarkMode: isDarkMode,
-                  color: _getTransactionColor(transaction),
-                  icon: _getTransactionIcon(transaction),
-                );
-              },
-            ),
-          ),
+                      final transaction = _filteredTransactions[index];
+                      return TransactionListItem(
+                        transaction: transaction,
+                        isDarkMode: isDarkMode,
+                        color: _getTransactionColor(transaction),
+                        icon: _getTransactionIcon(transaction),
+                      );
+                    },
+                  ),
+        ),
       ],
     );
   }
