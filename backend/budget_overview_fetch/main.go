@@ -739,52 +739,55 @@ func findLastAvailablePeriod(tableName, userID, originalDate, period string) (*B
 		// Get table condition for the previous period
 		_, condition := getTableAndCondition(period, previousDate)
 
-		// Try to fetch data for this period
+		// Fetch all balance data needed for inheritance calculation
 		query := fmt.Sprintf(`
 			SELECT 
+				COALESCE(total_previous_balance, 0) as total_previous_balance,
+				COALESCE(total_balance, 0) as total_balance,
 				COALESCE(income_bank_amount, 0) as income_bank_amount,
 				COALESCE(income_cash_amount, 0) as income_cash_amount,
 				COALESCE(expense_bank_amount, 0) as expense_bank_amount,
 				COALESCE(expense_cash_amount, 0) as expense_cash_amount,
 				COALESCE(bill_bank_amount, 0) as bill_bank_amount,
-				COALESCE(bill_cash_amount, 0) as bill_cash_amount,
-				COALESCE(bank_amount, 0) as bank_amount,
-				COALESCE(previous_bank_amount, 0) as previous_bank_amount,
-				COALESCE(cash_amount, 0) as cash_amount,
-				COALESCE(previous_cash_amount, 0) as previous_cash_amount,
-				COALESCE(balance_cash_amount, 0) as balance_cash_amount,
-				COALESCE(balance_bank_amount, 0) as balance_bank_amount,
-				COALESCE(total_previous_balance, 0) as total_previous_balance,
-				COALESCE(total_balance, 0) as total_balance
+				COALESCE(bill_cash_amount, 0) as bill_cash_amount
 			FROM %s 
 			WHERE user_id = ? AND %s
 		`, tableName, condition)
 
 		row := db.QueryRow(query, userID)
 
-		var data BalanceData
-		err = row.Scan(
-			&data.IncomeBankAmount,
-			&data.IncomeCashAmount,
-			&data.ExpenseBankAmount,
-			&data.ExpenseCashAmount,
-			&data.BillBankAmount,
-			&data.BillCashAmount,
-			&data.BankAmount,
-			&data.PreviousBankAmount,
-			&data.CashAmount,
-			&data.PreviousCashAmount,
-			&data.BalanceCashAmount,
-			&data.BalanceBankAmount,
-			&data.TotalPreviousBalance,
-			&data.TotalBalance,
-		)
+		var totalPreviousBalance, totalBalance, incomeBankAmount, incomeCashAmount float64
+		var expenseBankAmount, expenseCashAmount, billBankAmount, billCashAmount float64
+		err = row.Scan(&totalPreviousBalance, &totalBalance, &incomeBankAmount, &incomeCashAmount,
+			&expenseBankAmount, &expenseCashAmount, &billBankAmount, &billCashAmount)
 
 		if err == nil {
-			// Found data! Log the inheritance and return it
-			log.Printf("📊 Data inheritance: Using data from %s for requested period %s (user: %s)",
-				previousDate, originalDate, userID)
-			return &data, nil
+			// Found data! Calculate inherited balance including all movements from the last period
+			// Formula: total_previous_balance + income_bank_amount + income_cash_amount - expense_bank_amount - expense_cash_amount - bill_cash_amount - bill_bank_amount
+			inheritedBalance := totalPreviousBalance + incomeBankAmount + incomeCashAmount - expenseBankAmount - expenseCashAmount - billCashAmount - billBankAmount
+
+			// Create a clean BalanceData with only the inherited balance as total_previous_balance
+			// All other fields remain 0 for the future period
+			data := &BalanceData{
+				IncomeBankAmount:     0,
+				IncomeCashAmount:     0,
+				ExpenseBankAmount:    0,
+				ExpenseCashAmount:    0,
+				BillBankAmount:       0,
+				BillCashAmount:       0,
+				BankAmount:           0,
+				PreviousBankAmount:   0,
+				CashAmount:           0,
+				PreviousCashAmount:   0,
+				BalanceCashAmount:    0,
+				BalanceBankAmount:    0,
+				TotalPreviousBalance: inheritedBalance,
+				TotalBalance:         0, // Will be calculated based on future period activity
+			}
+
+			log.Printf("📊 Balance inheritance: Using balance %.2f (%.2f + %.2f + %.2f - %.2f - %.2f - %.2f - %.2f) from %s as total_previous_balance for requested period %s (user: %s)",
+				inheritedBalance, totalPreviousBalance, incomeBankAmount, incomeCashAmount, expenseBankAmount, expenseCashAmount, billCashAmount, billBankAmount, previousDate, originalDate, userID)
+			return data, nil
 		}
 
 		if err != sql.ErrNoRows {
