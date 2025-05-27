@@ -237,14 +237,22 @@ class TransactionHistoryResponse {
 
   /// Factory constructor from JSON
   factory TransactionHistoryResponse.fromJson(Map<String, dynamic> json) {
+    // Handle null transactions array from backend
+    final transactionsData = json['transactions'] as List<dynamic>?;
+    final transactions =
+        transactionsData != null
+            ? transactionsData
+                .map(
+                  (item) => Transaction.fromJson(item as Map<String, dynamic>),
+                )
+                .toList()
+            : <Transaction>[];
+
     return TransactionHistoryResponse(
-      transactions:
-          (json['transactions'] as List<dynamic>)
-              .map((item) => Transaction.fromJson(item as Map<String, dynamic>))
-              .toList(),
-      total: json['total'] as int,
-      limit: json['limit'] as int,
-      offset: json['offset'] as int,
+      transactions: transactions,
+      total: json['total'] as int? ?? 0,
+      limit: json['limit'] as int? ?? 50,
+      offset: json['offset'] as int? ?? 0,
       period: json['period'] as String?,
       startDate: json['start_date'] as String?,
       endDate: json['end_date'] as String?,

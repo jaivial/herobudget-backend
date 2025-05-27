@@ -170,6 +170,11 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
     }
   }
 
+  /// Public method to refresh data from external widgets
+  Future<void> refreshData() async {
+    await _refreshData();
+  }
+
   void _updateFilters(TransactionFilters newFilters) {
     setState(() {
       _filters = newFilters;

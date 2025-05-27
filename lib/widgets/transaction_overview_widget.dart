@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import '../utils/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../screens/invoice/add_invoice_screen.dart';
+import '../services/budget_overview_service.dart';
 import 'upcoming_bills.dart';
 import 'transaction_history_table.dart';
 
@@ -29,6 +31,14 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
   late TabController _tabController;
   int _currentTabIndex = 0;
   final GlobalKey<State<UpcomingBillsWidget>> _upcomingBillsKey = GlobalKey();
+  final GlobalKey<State<TransactionHistoryTable>> _transactionHistoryKey =
+      GlobalKey();
+
+  final BudgetOverviewService _budgetService = BudgetOverviewService();
+
+  String _currentPeriod = 'monthly';
+  String _formattedDate = '';
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -41,6 +51,47 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
         });
       }
     });
+
+    _updatePeriodAndDate();
+  }
+
+  @override
+  void didUpdateWidget(TransactionOverviewWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.period != widget.period || oldWidget.date != widget.date) {
+      _updatePeriodAndDate();
+      // Defer refresh until after the build phase completes
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _handleRefresh();
+        }
+      });
+    }
+  }
+
+  void _updatePeriodAndDate() {
+    _currentPeriod = widget.period ?? 'monthly';
+
+    if (widget.date != null) {
+      try {
+        final DateTime dateTime = DateTime.parse(widget.date!);
+        _formattedDate = _budgetService.formatDateForPeriod(
+          dateTime,
+          _currentPeriod,
+        );
+      } catch (e) {
+        _formattedDate =
+            widget.date!.length <= 7
+                ? widget.date!
+                : _budgetService.getCurrentPeriodDate(_currentPeriod);
+      }
+    } else {
+      _formattedDate = _budgetService.getCurrentPeriodDate(_currentPeriod);
+    }
+
+    print(
+      '🔄 TransactionOverviewWidget: Updated period=$_currentPeriod, date=$_formattedDate',
+    );
   }
 
   @override
@@ -49,14 +100,12 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
     super.dispose();
   }
 
-  // Método para manejar la navegación a AddInvoiceScreen
   Future<void> _handleAddBill() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AddInvoiceScreen()),
     );
 
-    // Si se añadió exitosamente una factura, actualizar los datos
     if (result == true) {
       _handleRefresh();
     }
@@ -85,7 +134,6 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header with tabs
           Container(
             decoration: BoxDecoration(
               color:
@@ -98,7 +146,6 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
             ),
             child: Column(
               children: [
-                // Title
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                   child: Row(
@@ -112,7 +159,6 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                           color: isDarkMode ? Colors.white : null,
                         ),
                       ),
-                      // Global refresh button
                       IconButton(
                         onPressed: _handleRefresh,
                         icon: const Icon(Icons.refresh),
@@ -122,7 +168,6 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                   ),
                 ),
 
-                // Tab bar
                 Container(
                   margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
                   decoration: BoxDecoration(
@@ -133,8 +178,7 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TabBar(
-                    isScrollable:
-                        false, // Disable scrolling to fit tabs properly
+                    isScrollable: false,
                     tabAlignment: TabAlignment.fill,
                     controller: _tabController,
                     indicator: BoxDecoration(
@@ -233,38 +277,34 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
             ),
           ),
 
-          // Tab content
           ConstrainedBox(
             constraints: BoxConstraints(
               minHeight: 400,
-              maxHeight:
-                  MediaQuery.of(context).size.height * 0.6, // Responsive height
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
             ),
             child: TabBarView(
               controller: _tabController,
               children: [
-                // Upcoming Bills Tab
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: UpcomingBillsWidget(
                     key: _upcomingBillsKey,
-                    period: widget.period,
-                    date: widget.date,
-                    onAddBill:
-                        _handleAddBill, // Usar nuestro método personalizado
+                    period: _currentPeriod,
+                    date: _formattedDate,
+                    onAddBill: _handleAddBill,
                     onRefresh: _handleRefresh,
                   ),
                 ),
 
-                // Transaction History Tab
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 8,
                   ),
                   child: TransactionHistoryTable(
-                    period: widget.period,
-                    date: widget.date,
+                    key: _transactionHistoryKey,
+                    period: _currentPeriod,
+                    date: _formattedDate,
                     onRefresh: _handleRefresh,
                   ),
                 ),
@@ -277,23 +317,56 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
   }
 
   void _handleRefresh() {
-    // Refrescar solo el widget de upcoming bills localmente
-    final upcomingBillsState = _upcomingBillsKey.currentState;
-    if (upcomingBillsState != null) {
-      final dynamic state = upcomingBillsState;
-      if (state.mounted) {
-        try {
-          state.refreshData();
-        } catch (e) {
-          // Si hay error, no hacer nada para evitar bucles
-          print('Error refreshing upcoming bills: $e');
+    // Prevent multiple simultaneous refresh calls
+    if (_isRefreshing) {
+      print(
+        '🔄 TransactionOverviewWidget: Refresh already in progress, skipping...',
+      );
+      return;
+    }
+
+    _isRefreshing = true;
+    print(
+      '🔄 TransactionOverviewWidget: Refreshing with period=$_currentPeriod, date=$_formattedDate',
+    );
+
+    try {
+      final upcomingBillsState = _upcomingBillsKey.currentState;
+      if (upcomingBillsState != null) {
+        final dynamic state = upcomingBillsState;
+        if (state.mounted) {
+          try {
+            state.refreshData();
+          } catch (e) {
+            print('Error refreshing upcoming bills: $e');
+          }
         }
       }
+
+      final transactionHistoryState = _transactionHistoryKey.currentState;
+      if (transactionHistoryState != null) {
+        final dynamic state = transactionHistoryState;
+        if (state.mounted) {
+          try {
+            state.refreshData();
+          } catch (e) {
+            print('Error refreshing transaction history: $e');
+          }
+        }
+      }
+
+      if (widget.onRefresh != null) {
+        widget.onRefresh!();
+      }
+    } finally {
+      // Reset refresh flag after a delay to prevent rapid successive calls
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        _isRefreshing = false;
+      });
     }
   }
 }
 
-// Alternative compact version for smaller screens or dashboard integration
 class CompactTransactionOverview extends StatelessWidget {
   final String? period;
   final String? date;
@@ -332,7 +405,6 @@ class CompactTransactionOverview extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -365,7 +437,6 @@ class CompactTransactionOverview extends StatelessWidget {
             ),
           ),
 
-          // Upcoming Bills Section (Compact)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: UpcomingBillsWidget(
@@ -383,7 +454,6 @@ class CompactTransactionOverview extends StatelessWidget {
   }
 }
 
-// Quick action buttons for transaction management
 class TransactionQuickActions extends StatelessWidget {
   final VoidCallback? onAddIncome;
   final VoidCallback? onAddExpense;
@@ -487,7 +557,6 @@ class TransactionQuickActions extends StatelessWidget {
   }
 }
 
-// Helper widget for quick action buttons
 class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String label;

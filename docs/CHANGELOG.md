@@ -177,4 +177,55 @@ Historial de versiones anteriores no disponible.
 
 ### Documentación
 - Actualización del esquema de base de datos para incluir el flujo de pago de facturas
-- Documentación del proceso de actualización de balances en cascada 
+- Documentación del proceso de actualización de balances en cascada
+
+## [Unreleased] - 2025-01-27
+
+### Fixed
+- **TransactionOverviewWidget Dynamic Period Support**: Solucionado el problema donde los datos de transacciones (bills, expenses, incomes) no se actualizaban dinámicamente al cambiar el período de tiempo en el selector de períodos.
+- **Infinite Loop Bug**: Solucionado el bucle infinito que ocurría al cambiar períodos temporales cuando el backend devolvía `transactions: null`.
+- **Null Transactions Handling**: Corregido el error de parsing cuando el backend devuelve `transactions: null` para períodos sin datos.
+- **setState During Build Error**: Solucionado el error "setState() called during build" que ocurría al cambiar períodos temporales. Implementado `SchedulerBinding.instance.addPostFrameCallback()` para diferir las llamadas de refresh hasta después de completar el proceso de construcción del widget.
+
+### Changed
+- **TransactionOverviewWidget**: 
+  - Agregado estado interno para manejar `_currentPeriod` y `_formattedDate`
+  - Implementado método `_updatePeriodAndDate()` para formatear correctamente las fechas según el período seleccionado
+  - Agregado servicio `BudgetOverviewService` para usar `formatDateForPeriod()`
+  - Mejorado el método `_handleRefresh()` para refrescar ambos tabs (Upcoming Bills y Transaction History)
+  - Agregadas keys para los widgets internos para permitir refresh programático
+  - **Agregado mecanismo anti-bucle**: Implementado flag `_isRefreshing` para prevenir múltiples llamadas simultáneas de refresh
+  - **Corregido setState durante build**: Implementado `SchedulerBinding.instance.addPostFrameCallback()` en `didUpdateWidget()` para diferir refresh hasta después del build
+  - **Agregada importación**: `package:flutter/scheduler.dart` para usar `SchedulerBinding`
+
+- **TransactionHistoryTable**: 
+  - Agregado método público `refreshData()` para permitir refresh desde widgets externos
+
+- **TransactionHistoryResponse Model**: 
+  - **Mejorado manejo de null**: Agregada validación para manejar `transactions: null` del backend
+  - Agregados valores por defecto para `total`, `limit` y `offset` cuando son null
+
+- **Dashboard Screen**: 
+  - Agregado método `_formatDateForPeriod()` para formatear fechas según el período específico
+  - Modificado la llamada a `TransactionOverviewWidget` para usar el formato de fecha correcto
+
+### Technical Details
+- Los datos ahora se actualizan correctamente cuando se cambia el período temporal
+- El formateo de fechas es consistente entre `BudgetOverviewWithPeriod` y `TransactionOverviewWidget`
+- Se mantiene la funcionalidad de refresh manual y automático
+- **Prevención de bucles infinitos**: El sistema ahora maneja correctamente los casos donde el backend devuelve datos null
+- **Manejo robusto de errores**: Mejorada la tolerancia a fallos en la comunicación con el backend
+
+### Technical Details
+- Los datos ahora se actualizan correctamente cuando se cambia entre períodos (daily, weekly, monthly, quarterly, semiannual, annual, custom)
+- El formato de fecha se ajusta automáticamente según el período: 
+  - Daily: "2025-05-27"
+  - Monthly: "2025-05" 
+  - Quarterly: "2025-Q2"
+  - etc.
+- Implementado patrón similar a `BudgetOverviewWithPeriod` para consistencia en el manejo de períodos
+
+### Files Modified
+- `lib/widgets/transaction_overview_widget.dart`
+- `lib/widgets/transaction_history_table.dart` 
+- `lib/screens/dashboard/dashboard_screen.dart` 

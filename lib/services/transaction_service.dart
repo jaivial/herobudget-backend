@@ -92,7 +92,12 @@ class TransactionService {
   }
 
   /// Fetch upcoming bills
-  Future<UpcomingBillsResponse> fetchUpcomingBills() async {
+  Future<UpcomingBillsResponse> fetchUpcomingBills({
+    String? period,
+    String? date,
+    String? startDate,
+    String? endDate,
+  }) async {
     try {
       // Get user ID from SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -103,7 +108,19 @@ class TransactionService {
       }
 
       // Prepare request body
-      final requestBody = {'user_id': userId};
+      final requestBody = <String, dynamic>{'user_id': userId};
+
+      // Add period and date information
+      if (period != null && period.isNotEmpty) {
+        requestBody['period'] = period;
+      }
+      if (date != null && date.isNotEmpty) {
+        requestBody['date'] = date;
+      }
+      if (startDate != null && endDate != null) {
+        requestBody['start_date'] = startDate;
+        requestBody['end_date'] = endDate;
+      }
 
       print(
         '🔄 TransactionService: Making request to $baseUrl/transactions/upcoming-bills',

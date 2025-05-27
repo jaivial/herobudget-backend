@@ -61,7 +61,10 @@ class _UpcomingBillsWidgetState extends State<UpcomingBillsWidget> {
     });
 
     try {
-      final response = await _transactionService.fetchUpcomingBills();
+      final response = await _transactionService.fetchUpcomingBills(
+        period: widget.period,
+        date: widget.date,
+      );
 
       if (mounted) {
         setState(() {

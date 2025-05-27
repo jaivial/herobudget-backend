@@ -9,7 +9,14 @@ import 'savings_overview.dart';
 import 'cash_bank_distribution.dart';
 
 class BudgetOverviewWithPeriod extends StatefulWidget {
-  const BudgetOverviewWithPeriod({super.key});
+  final Function(String period, String date)? onPeriodChanged;
+  final Function(String period, String date)? onDateChanged;
+
+  const BudgetOverviewWithPeriod({
+    super.key,
+    this.onPeriodChanged,
+    this.onDateChanged,
+  });
 
   @override
   State<BudgetOverviewWithPeriod> createState() =>
@@ -150,6 +157,11 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
       });
 
       _isChangingPeriod = false; // Reset flag after transition
+
+      // Notify parent widget about the change
+      if (widget.onPeriodChanged != null) {
+        widget.onPeriodChanged!(_currentPeriod, _currentDate);
+      }
     }
   }
 
@@ -178,6 +190,11 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
           _currentDate = newDateString;
         });
       });
+
+      // Notify parent widget about the change
+      if (widget.onDateChanged != null) {
+        widget.onDateChanged!(_currentPeriod, _currentDate);
+      }
     }
   }
 
@@ -198,6 +215,11 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
         _currentDate = monthlyDate;
       });
     });
+
+    // Notify parent widget about the change
+    if (widget.onPeriodChanged != null) {
+      widget.onPeriodChanged!(_currentPeriod, _currentDate);
+    }
   }
 
   /// Perform transition animation and data fetch

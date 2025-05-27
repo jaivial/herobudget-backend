@@ -599,6 +599,78 @@ class _DashboardScreenState extends State<DashboardScreen>
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
+  // Formato de fecha para período específico (para TransactionOverviewWidget)
+  String _formatDateForPeriod(DateTime date, String period) {
+    switch (period.toLowerCase()) {
+      case 'daily':
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      case 'weekly':
+        // Calculate ISO week
+        final dayOfYear = date.difference(DateTime(date.year, 1, 1)).inDays + 1;
+        final week = ((dayOfYear - date.weekday + 10) / 7).floor();
+        return '${date.year}-W${week.toString().padLeft(2, '0')}';
+      case 'monthly':
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}';
+      case 'quarterly':
+        final quarter = ((date.month - 1) ~/ 3) + 1;
+        return '${date.year}-Q$quarter';
+      case 'semiannual':
+        final half = date.month <= 6 ? 1 : 2;
+        return '${date.year}-H$half';
+      case 'annual':
+        return date.year.toString();
+      default:
+        // Default to monthly
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}';
+    }
+  }
+
+  /// Parse date string back to DateTime based on period
+  DateTime _parseDateFromString(String dateString, String period) {
+    try {
+      switch (period.toLowerCase()) {
+        case 'daily':
+          return DateTime.parse(dateString);
+        case 'weekly':
+          // Parse format like "2024-W03"
+          final parts = dateString.split('-W');
+          final year = int.parse(parts[0]);
+          final week = int.parse(parts[1]);
+          // Calculate first day of week (Monday)
+          final jan1 = DateTime(year, 1, 1);
+          final daysToFirstMonday = (8 - jan1.weekday) % 7;
+          final firstMonday = jan1.add(Duration(days: daysToFirstMonday));
+          return firstMonday.add(Duration(days: (week - 1) * 7));
+        case 'monthly':
+          final parts = dateString.split('-');
+          return DateTime(int.parse(parts[0]), int.parse(parts[1]), 1);
+        case 'quarterly':
+          // Parse format like "2024-Q1"
+          final parts = dateString.split('-Q');
+          final year = int.parse(parts[0]);
+          final quarter = int.parse(parts[1]);
+          final month = (quarter - 1) * 3 + 1;
+          return DateTime(year, month, 1);
+        case 'semiannual':
+          // Parse format like "2024-H1"
+          final parts = dateString.split('-H');
+          final year = int.parse(parts[0]);
+          final half = int.parse(parts[1]);
+          final month = half == 1 ? 1 : 7;
+          return DateTime(year, month, 1);
+        case 'annual':
+          return DateTime(int.parse(dateString), 1, 1);
+        default:
+          // Default to monthly
+          final parts = dateString.split('-');
+          return DateTime(int.parse(parts[0]), int.parse(parts[1]), 1);
+      }
+    } catch (e) {
+      print('Error parsing date string $dateString for period $period: $e');
+      return DateTime.now();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -745,7 +817,21 @@ class _DashboardScreenState extends State<DashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Budget overview integrado con period selector y fetch automático
-            BudgetOverviewWithPeriod(key: _budgetOverviewKey),
+            BudgetOverviewWithPeriod(
+              key: _budgetOverviewKey,
+              onPeriodChanged: (period, date) {
+                setState(() {
+                  _currentPeriod = period;
+                  _selectedDate = _parseDateFromString(date, period);
+                });
+              },
+              onDateChanged: (period, date) {
+                setState(() {
+                  _currentPeriod = period;
+                  _selectedDate = _parseDateFromString(date, period);
+                });
+              },
+            ),
 
             const SizedBox(height: 20),
 
@@ -760,7 +846,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             // Transaction Overview (Bills + History)
             TransactionOverviewWidget(
               period: _currentPeriod,
-              date: _formatDateForCache(_selectedDate),
+              date: _formatDateForPeriod(_selectedDate, _currentPeriod),
               onAddBill: () {
                 // Show modal to add bill
                 _showAddBillDialog();

@@ -111,6 +111,7 @@ type Transaction struct {
 type TransactionRequest struct {
 	UserID           string   `json:"user_id"`
 	Period           string   `json:"period,omitempty"`            // daily, weekly, monthly, quarterly, semiannual, annual
+	Date             string   `json:"date,omitempty"`              // Format depends on period type
 	StartDate        string   `json:"start_date,omitempty"`        // YYYY-MM-DD
 	EndDate          string   `json:"end_date,omitempty"`          // YYYY-MM-DD
 	TransactionTypes []string `json:"transaction_types,omitempty"` // ["income", "expense", "bill"]
@@ -408,8 +409,8 @@ func calculateBudgetOverview(data *BalanceData, period, userID string) *BudgetOv
 	// Calculate total amount (current balance + expenses)
 	totalAmount := data.TotalBalance + combinedExpense
 
-	// Calculate remaining amount
-	remainingAmount := totalAmount - combinedExpense
+	// Calculate remaining amount: dinero_periodo_anterior + ingresos_periodo - gastos_periodo - facturas_futuras_no_pagadas
+	remainingAmount := data.TotalPreviousBalance + totalIncome - spentAmount - upcomingAmount
 
 	// Calculate expense percentage
 	var expensePercent float64
@@ -832,7 +833,7 @@ func handleTransactionHistory(w http.ResponseWriter, r *http.Request) {
 
 	// Calculate date range if period is specified
 	if request.Period != "" && request.StartDate == "" && request.EndDate == "" {
-		startDate, endDate, err := calculatePeriodDateRange(request.Period)
+		startDate, endDate, err := calculatePeriodDateRangeWithBase(request.Period, request.Date)
 		if err != nil {
 			log.Printf("Error calculating period date range: %v", err)
 			sendErrorResponse(w, "Invalid period specified", http.StatusBadRequest)
@@ -873,8 +874,20 @@ func handleUpcomingBills(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Calculate date range if period is specified
+	if request.Period != "" && request.StartDate == "" && request.EndDate == "" {
+		startDate, endDate, err := calculatePeriodDateRangeWithBase(request.Period, request.Date)
+		if err != nil {
+			log.Printf("Error calculating period date range: %v", err)
+			sendErrorResponse(w, "Invalid period specified", http.StatusBadRequest)
+			return
+		}
+		request.StartDate = startDate
+		request.EndDate = endDate
+	}
+
 	// Fetch upcoming bills
-	response, err := fetchUpcomingBills(request.UserID)
+	response, err := fetchUpcomingBills(request)
 	if err != nil {
 		log.Printf("Error fetching upcoming bills: %v", err)
 		sendErrorResponse(w, "Failed to fetch upcoming bills", http.StatusInternalServerError)
@@ -886,41 +899,59 @@ func handleUpcomingBills(w http.ResponseWriter, r *http.Request) {
 
 // calculatePeriodDateRange calculates start and end dates for a given period
 func calculatePeriodDateRange(period string) (string, string, error) {
-	now := time.Now()
+	return calculatePeriodDateRangeWithBase(period, "")
+}
+
+// calculatePeriodDateRangeWithBase calculates start and end dates for a given period with optional base date
+func calculatePeriodDateRangeWithBase(period, baseDate string) (string, string, error) {
+	var baseTime time.Time
+	var err error
+
+	// Use provided base date or current time
+	if baseDate != "" {
+		baseTime, err = parseDateString(baseDate, period)
+		if err != nil {
+			log.Printf("Error parsing base date %s for period %s: %v", baseDate, period, err)
+			baseTime = time.Now()
+		}
+	} else {
+		baseTime = time.Now()
+	}
+
 	var startDate, endDate time.Time
 
 	switch period {
 	case "daily":
-		startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		startDate = time.Date(baseTime.Year(), baseTime.Month(), baseTime.Day(), 0, 0, 0, 0, baseTime.Location())
 		endDate = startDate.AddDate(0, 0, 1).Add(-time.Second)
 	case "weekly":
-		// Start of current week (Monday)
-		weekday := int(now.Weekday())
+		// Start of week (Monday) for the base date
+		weekday := int(baseTime.Weekday())
 		if weekday == 0 {
 			weekday = 7 // Sunday = 7
 		}
-		startDate = now.AddDate(0, 0, -(weekday - 1))
+		startDate = baseTime.AddDate(0, 0, -(weekday - 1))
 		startDate = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
 		endDate = startDate.AddDate(0, 0, 7).Add(-time.Second)
 	case "monthly":
-		startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		startDate = time.Date(baseTime.Year(), baseTime.Month(), 1, 0, 0, 0, 0, baseTime.Location())
 		endDate = startDate.AddDate(0, 1, 0).Add(-time.Second)
 	case "quarterly":
-		quarter := ((now.Month() - 1) / 3) + 1
+		quarter := ((baseTime.Month() - 1) / 3) + 1
 		startMonth := (quarter-1)*3 + 1
-		startDate = time.Date(now.Year(), time.Month(startMonth), 1, 0, 0, 0, 0, now.Location())
+		startDate = time.Date(baseTime.Year(), time.Month(startMonth), 1, 0, 0, 0, 0, baseTime.Location())
 		endDate = startDate.AddDate(0, 3, 0).Add(-time.Second)
 	case "semiannual":
 		var startMonth time.Month
-		if now.Month() <= 6 {
+		if baseTime.Month() <= 6 {
 			startMonth = 1
 		} else {
 			startMonth = 7
 		}
-		startDate = time.Date(now.Year(), startMonth, 1, 0, 0, 0, 0, now.Location())
+		startDate = time.Date(baseTime.Year(), startMonth, 1, 0, 0, 0, 0, baseTime.Location())
 		endDate = startDate.AddDate(0, 6, 0).Add(-time.Second)
 	case "annual":
-		startDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
+		startDate = time.Date(baseTime.Year(), 1, 1, 0, 0, 0, 0, baseTime.Location())
 		endDate = startDate.AddDate(1, 0, 0).Add(-time.Second)
 	default:
 		return "", "", fmt.Errorf("invalid period: %s", period)
@@ -1117,15 +1148,42 @@ func fetchTransactionHistory(request TransactionRequest) (*TransactionHistoryRes
 }
 
 // fetchUpcomingBills retrieves upcoming (unpaid) bills from the database
-func fetchUpcomingBills(userID string) (*UpcomingBillsResponse, error) {
-	query := `
+func fetchUpcomingBills(request TransactionRequest) (*UpcomingBillsResponse, error) {
+	// Build the WHERE clause for filtering
+	whereConditions := []string{"user_id = ?", "paid = 0"}
+	args := []interface{}{request.UserID}
+
+	// Add date range filter
+	if request.StartDate != "" && request.EndDate != "" {
+		whereConditions = append(whereConditions, "due_date BETWEEN ? AND ?")
+		args = append(args, request.StartDate, request.EndDate)
+	} else if request.StartDate != "" {
+		whereConditions = append(whereConditions, "due_date >= ?")
+		args = append(args, request.StartDate)
+	} else if request.EndDate != "" {
+		whereConditions = append(whereConditions, "due_date <= ?")
+		args = append(args, request.EndDate)
+	}
+
+	// Build payment method filter
+	if len(request.PaymentMethods) > 0 {
+		placeholders := make([]string, len(request.PaymentMethods))
+		for i, method := range request.PaymentMethods {
+			placeholders[i] = "?"
+			args = append(args, method)
+		}
+		whereConditions = append(whereConditions, fmt.Sprintf("payment_method IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	// Build the query
+	query := fmt.Sprintf(`
 		SELECT 
 			id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, payment_method
 		FROM bills 
-		WHERE user_id = ? AND paid = 0 
-		ORDER BY due_date ASC`
+		WHERE %s 
+		ORDER BY due_date ASC`, strings.Join(whereConditions, " AND "))
 
-	rows, err := db.Query(query, userID)
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query upcoming bills: %v", err)
 	}
