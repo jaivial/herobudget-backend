@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
 import '../utils/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../services/dashboard_service.dart';
 
 class FinanceMetricsWidget extends StatelessWidget {
   final FinanceMetrics metrics;
@@ -21,12 +22,9 @@ class FinanceMetricsWidget extends StatelessWidget {
     final double billsPercent = total > 0 ? (metrics.bills / total * 100) : 0;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color:
-            isDarkMode
-                ? AppTheme.surfaceDark
-                : Theme.of(context).colorScheme.surface,
+        color: isDarkMode ? AppTheme.surfaceDark : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -47,7 +45,7 @@ class FinanceMetricsWidget extends StatelessWidget {
               color: isDarkMode ? Colors.white : null,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           Container(
             height: 20,
@@ -160,6 +158,175 @@ class FinanceMetricsWidget extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// NEW WIDGET: FinanceMetricsWithPeriod - Dynamic widget controlled by parent
+class FinanceMetricsWithPeriod extends StatefulWidget {
+  final String currentPeriod;
+  final DateTime currentDate;
+
+  const FinanceMetricsWithPeriod({
+    super.key,
+    required this.currentPeriod,
+    required this.currentDate,
+  });
+
+  @override
+  State<FinanceMetricsWithPeriod> createState() =>
+      _FinanceMetricsWithPeriodState();
+}
+
+class _FinanceMetricsWithPeriodState extends State<FinanceMetricsWithPeriod> {
+  final DashboardService _dashboardService = DashboardService();
+
+  String _currentPeriod = 'monthly';
+  DateTime _selectedDate = DateTime.now();
+  bool _isLoading = false;
+  String? _errorMessage;
+  FinanceMetrics? _financeMetrics;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPeriod = widget.currentPeriod;
+    _selectedDate = widget.currentDate;
+    _fetchFinanceMetrics();
+  }
+
+  @override
+  void didUpdateWidget(FinanceMetricsWithPeriod oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update data when parent changes period or date
+    if (oldWidget.currentPeriod != widget.currentPeriod ||
+        oldWidget.currentDate != widget.currentDate) {
+      _currentPeriod = widget.currentPeriod;
+      _selectedDate = widget.currentDate;
+      _fetchFinanceMetrics();
+    }
+  }
+
+  Future<void> _fetchFinanceMetrics() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      print(
+        '🔄 Fetching finance metrics for period: $_currentPeriod, date: $_selectedDate',
+      );
+
+      // Fetch budget overview from our new backend
+      final budgetOverview = await _dashboardService.fetchBudgetOverview(
+        period: _currentPeriod,
+        selectedDate: _selectedDate,
+      );
+
+      // Create FinanceMetrics from BudgetOverview
+      final financeMetrics = _dashboardService
+          .createFinanceMetricsFromBudgetOverview(budgetOverview);
+
+      if (mounted) {
+        setState(() {
+          _financeMetrics = financeMetrics;
+          _isLoading = false;
+        });
+
+        print('✅ Finance metrics updated successfully');
+        print('   Income: \$${financeMetrics.income.toStringAsFixed(2)}');
+        print('   Expenses: \$${financeMetrics.expenses.toStringAsFixed(2)}');
+        print('   Bills: \$${financeMetrics.bills.toStringAsFixed(2)}');
+      }
+    } catch (e) {
+      print('❌ Error fetching finance metrics: $e');
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDarkMode ? AppTheme.surfaceDark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Content area
+          if (_isLoading)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_errorMessage != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Error loading data',
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: _fetchFinanceMetrics,
+                      child: Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_financeMetrics != null)
+            // Use the original FinanceMetricsWidget to display the data
+            FinanceMetricsWidget(metrics: _financeMetrics!)
+          else
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'No data available',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

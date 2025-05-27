@@ -82,6 +82,11 @@ Almacena las facturas recurrentes y no recurrentes de los usuarios.
 | created_at | TIMESTAMP | Fecha de creación del registro |
 | updated_at | TIMESTAMP | Fecha de última actualización |
 
+**Uso en el sistema:**
+- Las facturas con `paid = 1` se incluyen en el historial de transacciones
+- Las facturas con `paid = 0` aparecen en la lista de próximas facturas
+- El campo `due_date` se usa como `date` en las consultas de historial de transacciones
+
 ### Balances (`balances`)
 
 Almacena el balance total del usuario entre efectivo y banco.

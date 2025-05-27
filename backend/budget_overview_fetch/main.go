@@ -90,6 +90,56 @@ type SavingsData struct {
 	DailyTarget float64 `json:"daily_target"`
 }
 
+// Transaction represents a unified transaction (income, expense, or bill)
+type Transaction struct {
+	ID            int     `json:"id"`
+	Type          string  `json:"type"` // "income", "expense", "bill"
+	Amount        float64 `json:"amount"`
+	Date          string  `json:"date"`
+	Category      string  `json:"category"`
+	PaymentMethod string  `json:"payment_method"`
+	Description   string  `json:"description,omitempty"`
+	Name          string  `json:"name,omitempty"`         // For bills
+	Paid          *bool   `json:"paid,omitempty"`         // For bills (pointer to handle null)
+	Overdue       *bool   `json:"overdue,omitempty"`      // For bills (pointer to handle null)
+	OverdueDays   *int    `json:"overdue_days,omitempty"` // For bills (pointer to handle null)
+	Recurring     *bool   `json:"recurring,omitempty"`    // For bills (pointer to handle null)
+	Icon          string  `json:"icon,omitempty"`         // For bills
+}
+
+// TransactionRequest represents the request structure for transaction queries
+type TransactionRequest struct {
+	UserID           string   `json:"user_id"`
+	Period           string   `json:"period,omitempty"`            // daily, weekly, monthly, quarterly, semiannual, annual
+	StartDate        string   `json:"start_date,omitempty"`        // YYYY-MM-DD
+	EndDate          string   `json:"end_date,omitempty"`          // YYYY-MM-DD
+	TransactionTypes []string `json:"transaction_types,omitempty"` // ["income", "expense", "bill"]
+	PaymentMethods   []string `json:"payment_methods,omitempty"`   // ["cash", "bank"]
+	Limit            int      `json:"limit,omitempty"`             // For pagination (default: 100)
+	Offset           int      `json:"offset,omitempty"`            // For pagination (default: 0)
+}
+
+// TransactionHistoryResponse represents the response for transaction history
+type TransactionHistoryResponse struct {
+	Transactions []Transaction `json:"transactions"`
+	Total        int           `json:"total"`
+	Limit        int           `json:"limit"`
+	Offset       int           `json:"offset"`
+	Period       string        `json:"period,omitempty"`
+	StartDate    string        `json:"start_date,omitempty"`
+	EndDate      string        `json:"end_date,omitempty"`
+}
+
+// UpcomingBillsResponse represents the response for upcoming bills
+type UpcomingBillsResponse struct {
+	Bills     []Transaction `json:"bills"`
+	Total     int           `json:"total"`
+	Overdue   int           `json:"overdue"`
+	Upcoming  int           `json:"upcoming"`
+	ThisWeek  int           `json:"this_week"`
+	ThisMonth int           `json:"this_month"`
+}
+
 var (
 	db *sql.DB
 )
@@ -124,6 +174,8 @@ func init() {
 func main() {
 	// Set up HTTP routes
 	http.HandleFunc("/budget-overview", corsMiddleware(handleBudgetOverview))
+	http.HandleFunc("/transactions/history", corsMiddleware(handleTransactionHistory))
+	http.HandleFunc("/transactions/upcoming-bills", corsMiddleware(handleUpcomingBills))
 	http.HandleFunc("/health", corsMiddleware(handleHealth))
 
 	// Start server on port 8097
@@ -748,4 +800,402 @@ func findLastAvailablePeriod(tableName, userID, originalDate, period string) (*B
 	log.Printf("⚠️  No historical data found for user %s in table %s after searching %d periods backwards from %s",
 		userID, tableName, maxSearchPeriods, originalDate)
 	return &BalanceData{}, nil
+}
+
+// handleTransactionHistory handles requests for transaction history
+func handleTransactionHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var request TransactionRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		log.Printf("Error decoding transaction request: %v", err)
+		sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+		return
+	}
+
+	// Validate required fields
+	if request.UserID == "" {
+		sendErrorResponse(w, "user_id is required", http.StatusBadRequest)
+		return
+	}
+
+	// Set defaults
+	if request.Limit <= 0 {
+		request.Limit = 100
+	}
+	if request.Limit > 1000 {
+		request.Limit = 1000 // Maximum limit
+	}
+
+	// Calculate date range if period is specified
+	if request.Period != "" && request.StartDate == "" && request.EndDate == "" {
+		startDate, endDate, err := calculatePeriodDateRange(request.Period)
+		if err != nil {
+			log.Printf("Error calculating period date range: %v", err)
+			sendErrorResponse(w, "Invalid period specified", http.StatusBadRequest)
+			return
+		}
+		request.StartDate = startDate
+		request.EndDate = endDate
+	}
+
+	// Fetch transaction history
+	response, err := fetchTransactionHistory(request)
+	if err != nil {
+		log.Printf("Error fetching transaction history: %v", err)
+		sendErrorResponse(w, "Failed to fetch transaction history", http.StatusInternalServerError)
+		return
+	}
+
+	sendSuccessResponse(w, "Transaction history fetched successfully", response)
+}
+
+// handleUpcomingBills handles requests for upcoming bills
+func handleUpcomingBills(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var request TransactionRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		log.Printf("Error decoding upcoming bills request: %v", err)
+		sendErrorResponse(w, "Invalid request format", http.StatusBadRequest)
+		return
+	}
+
+	// Validate required fields
+	if request.UserID == "" {
+		sendErrorResponse(w, "user_id is required", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch upcoming bills
+	response, err := fetchUpcomingBills(request.UserID)
+	if err != nil {
+		log.Printf("Error fetching upcoming bills: %v", err)
+		sendErrorResponse(w, "Failed to fetch upcoming bills", http.StatusInternalServerError)
+		return
+	}
+
+	sendSuccessResponse(w, "Upcoming bills fetched successfully", response)
+}
+
+// calculatePeriodDateRange calculates start and end dates for a given period
+func calculatePeriodDateRange(period string) (string, string, error) {
+	now := time.Now()
+	var startDate, endDate time.Time
+
+	switch period {
+	case "daily":
+		startDate = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		endDate = startDate.AddDate(0, 0, 1).Add(-time.Second)
+	case "weekly":
+		// Start of current week (Monday)
+		weekday := int(now.Weekday())
+		if weekday == 0 {
+			weekday = 7 // Sunday = 7
+		}
+		startDate = now.AddDate(0, 0, -(weekday - 1))
+		startDate = time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, startDate.Location())
+		endDate = startDate.AddDate(0, 0, 7).Add(-time.Second)
+	case "monthly":
+		startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		endDate = startDate.AddDate(0, 1, 0).Add(-time.Second)
+	case "quarterly":
+		quarter := ((now.Month() - 1) / 3) + 1
+		startMonth := (quarter-1)*3 + 1
+		startDate = time.Date(now.Year(), time.Month(startMonth), 1, 0, 0, 0, 0, now.Location())
+		endDate = startDate.AddDate(0, 3, 0).Add(-time.Second)
+	case "semiannual":
+		var startMonth time.Month
+		if now.Month() <= 6 {
+			startMonth = 1
+		} else {
+			startMonth = 7
+		}
+		startDate = time.Date(now.Year(), startMonth, 1, 0, 0, 0, 0, now.Location())
+		endDate = startDate.AddDate(0, 6, 0).Add(-time.Second)
+	case "annual":
+		startDate = time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
+		endDate = startDate.AddDate(1, 0, 0).Add(-time.Second)
+	default:
+		return "", "", fmt.Errorf("invalid period: %s", period)
+	}
+
+	return startDate.Format("2006-01-02"), endDate.Format("2006-01-02"), nil
+}
+
+// fetchTransactionHistory retrieves transaction history from the database
+func fetchTransactionHistory(request TransactionRequest) (*TransactionHistoryResponse, error) {
+	var transactions []Transaction
+	var totalCount int
+
+	// Build the WHERE clause for filtering
+	whereConditions := []string{"user_id = ?"}
+	args := []interface{}{request.UserID}
+
+	// Add date range filter
+	if request.StartDate != "" && request.EndDate != "" {
+		whereConditions = append(whereConditions, "date BETWEEN ? AND ?")
+		args = append(args, request.StartDate, request.EndDate)
+	} else if request.StartDate != "" {
+		whereConditions = append(whereConditions, "date >= ?")
+		args = append(args, request.StartDate)
+	} else if request.EndDate != "" {
+		whereConditions = append(whereConditions, "date <= ?")
+		args = append(args, request.EndDate)
+	}
+
+	// Build payment method filter
+	var paymentMethodFilter string
+	if len(request.PaymentMethods) > 0 {
+		placeholders := make([]string, len(request.PaymentMethods))
+		for i, method := range request.PaymentMethods {
+			placeholders[i] = "?"
+			args = append(args, method)
+		}
+		paymentMethodFilter = fmt.Sprintf("payment_method IN (%s)", strings.Join(placeholders, ","))
+	}
+
+	// Build transaction type filter
+	var queries []string
+	includeIncomes := len(request.TransactionTypes) == 0 || contains(request.TransactionTypes, "income")
+	includeExpenses := len(request.TransactionTypes) == 0 || contains(request.TransactionTypes, "expense")
+	includeBills := len(request.TransactionTypes) == 0 || contains(request.TransactionTypes, "bill")
+
+	// Income query
+	if includeIncomes {
+		incomeWhere := strings.Join(whereConditions, " AND ")
+		if paymentMethodFilter != "" {
+			incomeWhere += " AND " + paymentMethodFilter
+		}
+
+		incomeQuery := fmt.Sprintf(`
+			SELECT 
+				id, 'income' as type, amount, date, category, payment_method, description,
+				NULL as name, NULL as paid, NULL as overdue, NULL as overdue_days,
+				NULL as recurring, NULL as icon
+			FROM incomes 
+			WHERE %s`, incomeWhere)
+		queries = append(queries, incomeQuery)
+	}
+
+	// Expense query
+	if includeExpenses {
+		expenseWhere := strings.Join(whereConditions, " AND ")
+		if paymentMethodFilter != "" {
+			expenseWhere += " AND " + paymentMethodFilter
+		}
+
+		expenseQuery := fmt.Sprintf(`
+			SELECT 
+				id, 'expense' as type, amount, date, category, payment_method, description,
+				NULL as name, NULL as paid, NULL as overdue, NULL as overdue_days,
+				NULL as recurring, NULL as icon
+			FROM expenses 
+			WHERE %s`, expenseWhere)
+		queries = append(queries, expenseQuery)
+	}
+
+	// Bills query (only paid bills for history)
+	if includeBills {
+		billWhere := strings.Join(whereConditions, " AND ") + " AND paid = 1"
+		if paymentMethodFilter != "" {
+			billWhere += " AND " + paymentMethodFilter
+		}
+
+		billQuery := fmt.Sprintf(`
+			SELECT 
+				id, 'bill' as type, amount, due_date as date, category, payment_method, NULL as description,
+				name, paid, overdue, overdue_days, recurring, icon
+			FROM bills 
+			WHERE %s`, billWhere)
+		queries = append(queries, billQuery)
+	}
+
+	if len(queries) == 0 {
+		return &TransactionHistoryResponse{
+			Transactions: []Transaction{},
+			Total:        0,
+			Limit:        request.Limit,
+			Offset:       request.Offset,
+			StartDate:    request.StartDate,
+			EndDate:      request.EndDate,
+			Period:       request.Period,
+		}, nil
+	}
+
+	// Combine queries with UNION ALL
+	unionQuery := strings.Join(queries, " UNION ALL ")
+	finalQuery := fmt.Sprintf(`
+		SELECT * FROM (%s) 
+		ORDER BY date DESC 
+		LIMIT ? OFFSET ?`, unionQuery)
+
+	// Add limit and offset to args
+	finalArgs := make([]interface{}, 0)
+	for range queries {
+		finalArgs = append(finalArgs, args...)
+	}
+	finalArgs = append(finalArgs, request.Limit, request.Offset)
+
+	// Execute query
+	rows, err := db.Query(finalQuery, finalArgs...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query transactions: %v", err)
+	}
+	defer rows.Close()
+
+	// Scan results
+	for rows.Next() {
+		var t Transaction
+		var paid, overdue, recurring sql.NullBool
+		var overdueDays sql.NullInt64
+		var name, description, icon sql.NullString
+
+		err := rows.Scan(
+			&t.ID, &t.Type, &t.Amount, &t.Date, &t.Category, &t.PaymentMethod,
+			&description, &name, &paid, &overdue, &overdueDays, &recurring, &icon,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan transaction: %v", err)
+		}
+
+		// Handle nullable fields
+		if description.Valid {
+			t.Description = description.String
+		}
+		if name.Valid {
+			t.Name = name.String
+		}
+		if icon.Valid {
+			t.Icon = icon.String
+		}
+		if paid.Valid {
+			t.Paid = &paid.Bool
+		}
+		if overdue.Valid {
+			t.Overdue = &overdue.Bool
+		}
+		if recurring.Valid {
+			t.Recurring = &recurring.Bool
+		}
+		if overdueDays.Valid {
+			days := int(overdueDays.Int64)
+			t.OverdueDays = &days
+		}
+
+		transactions = append(transactions, t)
+	}
+
+	// Get total count (without limit/offset)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM (%s)", unionQuery)
+	countArgs := make([]interface{}, 0)
+	for range queries {
+		countArgs = append(countArgs, args...)
+	}
+
+	err = db.QueryRow(countQuery, countArgs...).Scan(&totalCount)
+	if err != nil {
+		log.Printf("Warning: failed to get total count: %v", err)
+		totalCount = len(transactions)
+	}
+
+	return &TransactionHistoryResponse{
+		Transactions: transactions,
+		Total:        totalCount,
+		Limit:        request.Limit,
+		Offset:       request.Offset,
+		StartDate:    request.StartDate,
+		EndDate:      request.EndDate,
+		Period:       request.Period,
+	}, nil
+}
+
+// fetchUpcomingBills retrieves upcoming (unpaid) bills from the database
+func fetchUpcomingBills(userID string) (*UpcomingBillsResponse, error) {
+	query := `
+		SELECT 
+			id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, payment_method
+		FROM bills 
+		WHERE user_id = ? AND paid = 0 
+		ORDER BY due_date ASC`
+
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query upcoming bills: %v", err)
+	}
+	defer rows.Close()
+
+	var bills []Transaction
+	var overdue, upcoming, thisWeek, thisMonth int
+	now := time.Now()
+	weekFromNow := now.AddDate(0, 0, 7)
+	monthFromNow := now.AddDate(0, 1, 0)
+
+	for rows.Next() {
+		var t Transaction
+		var paid, overdueFlag, recurring bool
+		var overdueDays int
+
+		err := rows.Scan(
+			&t.ID, &t.Name, &t.Amount, &t.Date, &paid, &overdueFlag, &overdueDays,
+			&recurring, &t.Category, &t.Icon, &t.PaymentMethod,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan bill: %v", err)
+		}
+
+		// Set transaction type and bill-specific fields
+		t.Type = "bill"
+		t.Paid = &paid
+		t.Overdue = &overdueFlag
+		t.Recurring = &recurring
+		t.OverdueDays = &overdueDays
+
+		// Parse due date for categorization
+		dueDate, err := time.Parse("2006-01-02", t.Date)
+		if err != nil {
+			log.Printf("Warning: failed to parse due date %s: %v", t.Date, err)
+			continue
+		}
+
+		// Categorize bills
+		if overdueFlag {
+			overdue++
+		} else {
+			upcoming++
+			if dueDate.Before(weekFromNow) {
+				thisWeek++
+			}
+			if dueDate.Before(monthFromNow) {
+				thisMonth++
+			}
+		}
+
+		bills = append(bills, t)
+	}
+
+	return &UpcomingBillsResponse{
+		Bills:     bills,
+		Total:     len(bills),
+		Overdue:   overdue,
+		Upcoming:  upcoming,
+		ThisWeek:  thisWeek,
+		ThisMonth: thisMonth,
+	}, nil
+}
+
+// contains checks if a slice contains a specific string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }

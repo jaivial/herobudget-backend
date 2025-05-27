@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../models/user_model.dart';
 import '../models/dashboard_model.dart';
+import 'package:intl/intl.dart';
 
 class DashboardService {
   static String get baseUrl => ApiConfig.fetchDashboardServiceUrl;
@@ -520,5 +521,118 @@ class DashboardService {
       print('Error in payBill: $e');
       return false;
     }
+  }
+
+  // NEW METHOD: Fetch budget overview from our new backend endpoint
+  Future<BudgetOverview> fetchBudgetOverview({
+    String period = 'monthly',
+    DateTime? selectedDate,
+  }) async {
+    try {
+      // Get user ID from SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Use selected date or current date if not provided
+      final date = selectedDate ?? DateTime.now();
+      final dateString = _formatDateForPeriod(date, period);
+
+      // Log for debug
+      print(
+        '📊 fetchBudgetOverview - Period: $period, Date: $dateString (${_getReadableDate(date)})',
+      );
+
+      // Make HTTP request to our new budget overview endpoint
+      final apiUrl = '${moneyFlowCalculationUrl}/budget-overview';
+      print('💰 Requesting budget overview from: $apiUrl');
+
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'user_id': userId,
+          'period': period,
+          'date': dateString,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ Budget overview received successfully');
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final budgetData = responseData['data'];
+
+          // Create BudgetOverview from the response
+          return BudgetOverview(
+            moneyFlow: MoneyFlow(
+              percent: 0.0, // This can be calculated if needed
+              fromPrevious:
+                  budgetData['money_flow']['from_previous']?.toDouble() ?? 0.0,
+            ),
+            remainingAmount: budgetData['remaining_amount']?.toDouble() ?? 0.0,
+            totalAmount: budgetData['total_amount']?.toDouble() ?? 0.0,
+            spentAmount: budgetData['spent_amount']?.toDouble() ?? 0.0,
+            upcomingAmount: budgetData['upcoming_amount']?.toDouble() ?? 0.0,
+            combinedExpense: budgetData['combined_expense']?.toDouble() ?? 0.0,
+            expensePercent: budgetData['expense_percent']?.toDouble() ?? 0.0,
+            dailyRate: budgetData['daily_rate']?.toDouble() ?? 0.0,
+            highSpending: budgetData['high_spending'] ?? false,
+            totalIncome: budgetData['total_income']?.toDouble() ?? 0.0,
+          );
+        } else {
+          throw Exception('Invalid response format from budget overview API');
+        }
+      } else {
+        print('❌ Budget overview API error: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        throw Exception(
+          'Error fetching budget overview: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      print('❌ Error in fetchBudgetOverview: $e');
+      throw Exception('Error fetching budget overview: $e');
+    }
+  }
+
+  // Helper method to format date according to period type
+  String _formatDateForPeriod(DateTime date, String period) {
+    switch (period) {
+      case 'daily':
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      case 'weekly':
+        // Calculate ISO week (without 'W' prefix to match database format)
+        int dayOfYear = int.parse(DateFormat("D").format(date));
+        int woy = ((dayOfYear - date.weekday + 10) / 7).floor();
+        return '${date.year}-${woy.toString().padLeft(2, '0')}';
+      case 'monthly':
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}';
+      case 'quarterly':
+        int quarter = ((date.month - 1) / 3).floor() + 1;
+        return '${date.year}-Q$quarter';
+      case 'semiannual':
+        int half = date.month <= 6 ? 1 : 2;
+        return '${date.year}-H$half';
+      case 'annual':
+        return '${date.year}';
+      default:
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}';
+    }
+  }
+
+  // NEW METHOD: Create FinanceMetrics from BudgetOverview data
+  FinanceMetrics createFinanceMetricsFromBudgetOverview(
+    BudgetOverview budgetOverview,
+  ) {
+    return FinanceMetrics(
+      income: budgetOverview.totalIncome,
+      expenses: budgetOverview.spentAmount,
+      bills: budgetOverview.upcomingAmount,
+    );
   }
 }

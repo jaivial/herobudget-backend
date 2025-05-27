@@ -749,8 +749,11 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             const SizedBox(height: 20),
 
-            // Finance metrics
-            FinanceMetricsWidget(metrics: dashboardData.financeMetrics),
+            // Finance metrics with dynamic period selection
+            FinanceMetricsWithPeriod(
+              currentPeriod: _currentPeriod,
+              currentDate: _selectedDate,
+            ),
 
             const SizedBox(height: 20),
 

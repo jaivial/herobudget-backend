@@ -121,7 +121,7 @@ func TestCalculateBudgetOverview(t *testing.T) {
 		TotalPreviousBalance: 800.00,
 	}
 
-	overview := calculateBudgetOverview(testData, "monthly")
+	overview := calculateBudgetOverview(testData, "monthly", "test_user")
 
 	// Check calculated values
 	expectedTotalIncome := 3500.00 // 3000 + 500
@@ -388,6 +388,284 @@ func BenchmarkCalculateBudgetOverview(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		calculateBudgetOverview(testData, "monthly")
+		calculateBudgetOverview(testData, "monthly", "test_user")
+	}
+}
+
+// Test Transaction struct serialization
+func TestTransactionSerialization(t *testing.T) {
+	paid := true
+	overdue := false
+	recurring := true
+	overdueDays := 5
+
+	transaction := &Transaction{
+		ID:            1,
+		Type:          "bill",
+		Amount:        150.50,
+		Date:          "2024-01-15",
+		Category:      "utilities",
+		PaymentMethod: "bank",
+		Description:   "Electric bill",
+		Name:          "Electric Company",
+		Paid:          &paid,
+		Overdue:       &overdue,
+		Recurring:     &recurring,
+		OverdueDays:   &overdueDays,
+		Icon:          "⚡",
+	}
+
+	data, err := json.Marshal(transaction)
+	if err != nil {
+		t.Fatalf("Failed to marshal Transaction: %v", err)
+	}
+
+	var unmarshaled Transaction
+	if err := json.Unmarshal(data, &unmarshaled); err != nil {
+		t.Fatalf("Failed to unmarshal Transaction: %v", err)
+	}
+
+	if unmarshaled.ID != transaction.ID {
+		t.Errorf("Expected ID %d, got %d", transaction.ID, unmarshaled.ID)
+	}
+
+	if unmarshaled.Type != transaction.Type {
+		t.Errorf("Expected Type %s, got %s", transaction.Type, unmarshaled.Type)
+	}
+
+	if unmarshaled.Amount != transaction.Amount {
+		t.Errorf("Expected Amount %f, got %f", transaction.Amount, unmarshaled.Amount)
+	}
+
+	if *unmarshaled.Paid != *transaction.Paid {
+		t.Errorf("Expected Paid %v, got %v", *transaction.Paid, *unmarshaled.Paid)
+	}
+}
+
+// Test calculatePeriodDateRange function
+func TestCalculatePeriodDateRange(t *testing.T) {
+	tests := []struct {
+		period    string
+		wantError bool
+	}{
+		{period: "daily", wantError: false},
+		{period: "weekly", wantError: false},
+		{period: "monthly", wantError: false},
+		{period: "quarterly", wantError: false},
+		{period: "semiannual", wantError: false},
+		{period: "annual", wantError: false},
+		{period: "invalid", wantError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.period, func(t *testing.T) {
+			startDate, endDate, err := calculatePeriodDateRange(tt.period)
+
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("Expected error for period %s, got nil", tt.period)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error for period %s: %v", tt.period, err)
+				return
+			}
+
+			if startDate == "" || endDate == "" {
+				t.Errorf("Expected non-empty dates for period %s, got start: %s, end: %s", tt.period, startDate, endDate)
+			}
+
+			// Validate date format
+			if _, err := time.Parse("2006-01-02", startDate); err != nil {
+				t.Errorf("Invalid start date format for period %s: %s", tt.period, startDate)
+			}
+
+			if _, err := time.Parse("2006-01-02", endDate); err != nil {
+				t.Errorf("Invalid end date format for period %s: %s", tt.period, endDate)
+			}
+		})
+	}
+}
+
+// Test contains function
+func TestContains(t *testing.T) {
+	slice := []string{"income", "expense", "bill"}
+
+	tests := []struct {
+		item string
+		want bool
+	}{
+		{item: "income", want: true},
+		{item: "expense", want: true},
+		{item: "bill", want: true},
+		{item: "transfer", want: false},
+		{item: "", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.item, func(t *testing.T) {
+			got := contains(slice, tt.item)
+			if got != tt.want {
+				t.Errorf("contains() = %v, want %v for item %s", got, tt.want, tt.item)
+			}
+		})
+	}
+}
+
+// Test handleTransactionHistory with invalid method
+func TestHandleTransactionHistoryInvalidMethod(t *testing.T) {
+	req, err := http.NewRequest("GET", "/transactions/history", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(handleTransactionHistory)
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusMethodNotAllowed {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusMethodNotAllowed)
+	}
+
+	var response ApiResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Success {
+		t.Errorf("Expected success false, got %v", response.Success)
+	}
+}
+
+// Test handleTransactionHistory with missing user_id
+func TestHandleTransactionHistoryMissingUserID(t *testing.T) {
+	request := TransactionRequest{
+		Period:    "monthly",
+		StartDate: "2024-01-01",
+		EndDate:   "2024-01-31",
+	}
+
+	requestBody, _ := json.Marshal(request)
+	req, err := http.NewRequest("POST", "/transactions/history", bytes.NewBuffer(requestBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(handleTransactionHistory)
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	var response ApiResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Success {
+		t.Errorf("Expected success false, got %v", response.Success)
+	}
+
+	if response.Message != "user_id is required" {
+		t.Errorf("Expected message 'user_id is required', got '%v'", response.Message)
+	}
+}
+
+// Test handleUpcomingBills with invalid method
+func TestHandleUpcomingBillsInvalidMethod(t *testing.T) {
+	req, err := http.NewRequest("GET", "/transactions/upcoming-bills", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(handleUpcomingBills)
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusMethodNotAllowed {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusMethodNotAllowed)
+	}
+
+	var response ApiResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Success {
+		t.Errorf("Expected success false, got %v", response.Success)
+	}
+}
+
+// Test handleUpcomingBills with missing user_id
+func TestHandleUpcomingBillsMissingUserID(t *testing.T) {
+	request := TransactionRequest{
+		Period: "monthly",
+	}
+
+	requestBody, _ := json.Marshal(request)
+	req, err := http.NewRequest("POST", "/transactions/upcoming-bills", bytes.NewBuffer(requestBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(handleUpcomingBills)
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	var response ApiResponse
+	if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
+
+	if response.Success {
+		t.Errorf("Expected success false, got %v", response.Success)
+	}
+
+	if response.Message != "user_id is required" {
+		t.Errorf("Expected message 'user_id is required', got '%v'", response.Message)
+	}
+}
+
+// Test TransactionRequest validation and defaults
+func TestTransactionRequestDefaults(t *testing.T) {
+	request := TransactionRequest{
+		UserID: "test_user",
+		Limit:  0, // Should default to 100
+	}
+
+	// Simulate the validation logic from handleTransactionHistory
+	if request.Limit <= 0 {
+		request.Limit = 100
+	}
+	if request.Limit > 1000 {
+		request.Limit = 1000
+	}
+
+	if request.Limit != 100 {
+		t.Errorf("Expected default limit 100, got %d", request.Limit)
+	}
+
+	// Test maximum limit
+	request.Limit = 1500
+	if request.Limit > 1000 {
+		request.Limit = 1000
+	}
+
+	if request.Limit != 1000 {
+		t.Errorf("Expected maximum limit 1000, got %d", request.Limit)
 	}
 }

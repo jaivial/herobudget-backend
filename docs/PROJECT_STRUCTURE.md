@@ -83,6 +83,27 @@ Maneja las facturas recurrentes y no recurrentes:
 
 Las facturas pagadas también actualizan los balances por periodos, utilizando el mismo conjunto de funciones que los otros servicios.
 
+### Servicio de Obtención de Datos Presupuestarios (`budget_overview_fetch`)
+
+Este servicio se encarga de obtener y procesar datos financieros agregados y transacciones individuales:
+
+**Funcionalidades principales:**
+- **Resumen presupuestario por períodos**: Obtiene datos agregados de balance, gastos, ingresos y facturas para diferentes períodos (diario, semanal, mensual, trimestral, semestral, anual)
+- **Historial de transacciones**: Proporciona acceso unificado a todas las transacciones (ingresos, gastos, facturas pagadas) con filtros por período, tipo de transacción y método de pago
+- **Próximas facturas**: Lista las facturas pendientes de pago con categorización por urgencia (vencidas, próximas, esta semana, este mes)
+
+**Endpoints disponibles:**
+- `POST /budget-overview`: Obtiene el resumen presupuestario para un período específico
+- `POST /transactions/history`: Obtiene el historial de transacciones con filtros opcionales
+- `POST /transactions/upcoming-bills`: Obtiene las facturas pendientes de pago
+- `GET /health`: Verificación de estado del servicio
+
+**Características técnicas:**
+- **Herencia de datos**: Si no hay datos para un período solicitado, busca automáticamente en períodos anteriores
+- **Paginación**: Soporte para paginación en consultas de transacciones (límite máximo: 1000 registros)
+- **Filtros flexibles**: Permite filtrar por tipo de transacción, método de pago y rangos de fechas
+- **Respuestas unificadas**: Estructura consistente de respuestas JSON con metadatos de paginación y estado
+
 ## Base de Datos
 
 La aplicación utiliza SQLite como motor de base de datos. El archivo `users.db` contiene todas las tablas necesarias para el funcionamiento de la aplicación.
@@ -181,11 +202,17 @@ Contiene los servicios que implementan la lógica de negocio y la comunicación 
 - `expense_service.dart`: Gestiona las operaciones CRUD de gastos.
 - `income_service.dart`: Gestiona las operaciones CRUD de ingresos.
 - `profile_service.dart`: Gestiona las operaciones del perfil de usuario.
-- `dashboard_service.dart`: Gestiona los datos para el dashboard.
+- `dashboard_service.dart`: **Actualizado** - Ahora incluye integración con el endpoint `/budget-overview` del backend para obtener datos financieros en tiempo real según el período seleccionado.
 - `language_service.dart`: Gestiona la configuración de idioma.
 - `savings_service.dart`: Gestiona las operaciones de ahorros.
 - `bills_service.dart`: Gestiona las operaciones de facturas recurrentes.
 - `api_helper.dart`: Utilidad para comunicación con la API.
+
+**Nuevas funcionalidades en `dashboard_service.dart`:**
+- `fetchBudgetOverview()`: Método que se conecta con el endpoint `/budget-overview` del microservicio `budget_overview_fetch`
+- `createFinanceMetricsFromBudgetOverview()`: Convierte los datos del backend al modelo `FinanceMetrics` del frontend
+- `_formatDateForPeriod()`: Formatea fechas según el tipo de período (diario, semanal, mensual, etc.)
+- Soporte para todos los períodos: daily, weekly, monthly, quarterly, semiannual, annual
 
 #### 4. Theme (`lib/theme/`)
 Define la apariencia visual de la aplicación.
@@ -193,7 +220,33 @@ Define la apariencia visual de la aplicación.
 - `app_theme.dart`: Definición de temas (claro/oscuro), colores y estilos.
 
 #### 5. Widgets (`lib/widgets/`)
-Contiene widgets reutilizables en toda la aplicación.
+Contiene widgets reutilizables organizados por funcionalidad.
+
+- `finance_metrics.dart`: **Actualizado** - Ahora incluye dos widgets:
+  - `FinanceMetricsWidget`: Widget original que muestra la distribución financiera estática
+  - `FinanceMetricsWithPeriod`: **Nuevo** - Widget dinámico que incluye selector de período y obtiene datos del backend automáticamente
+
+**Características del nuevo widget `FinanceMetricsWithPeriod`:**
+- **Selector de período integrado**: Permite cambiar entre diferentes períodos de tiempo
+- **Fetching automático**: Obtiene datos del backend cuando cambia el período o fecha
+- **Estados de carga**: Muestra indicadores de carga, errores y datos vacíos
+- **Sincronización con dashboard**: Notifica cambios de período al componente padre
+- **Manejo de errores**: Incluye botón de reintento en caso de errores de conexión
+
+**Flujo de datos del widget:**
+1. Usuario selecciona un período (daily, weekly, monthly, etc.)
+2. Widget llama a `DashboardService.fetchBudgetOverview()` con los parámetros seleccionados
+3. Servicio hace petición HTTP POST a `http://localhost:8097/budget-overview`
+4. Backend devuelve datos agregados del período solicitado
+5. Servicio convierte los datos a modelo `FinanceMetrics`
+6. Widget actualiza la visualización con los nuevos datos
+7. Se muestra la distribución porcentual de ingresos, gastos y facturas
+
+**Integración en el Dashboard:**
+El dashboard principal (`dashboard_screen.dart`) ahora utiliza `FinanceMetricsWithPeriod` en lugar del widget estático, proporcionando:
+- Datos en tiempo real desde la base de datos
+- Sincronización automática entre componentes
+- Experiencia de usuario mejorada con datos actualizados
 
 #### 6. Utils (`lib/utils/`)
 Contiene utilidades y funciones helper.
