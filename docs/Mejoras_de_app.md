@@ -1,5 +1,5 @@
 Mejoras_de_app.md
-1) Asegurarse que todos los idiomas tienen todas las traducciones en /assets/l10n
+✅ 1) Asegurarse que todos los idiomas tienen todas las traducciones en /assets/l10n
 2) Cuando cantidad restante es negativa el gráfico de budget overview se tiene que mostrar al 100% rojo, lo mismo que cuando los gastos comibnados hacen que el dinero restante sea 0 o menos.
 3) Por defecto quiero que se muestre el modo oscuro de la APP.
 4) Quiero que se incluya el boton de cmabio de modo claro/oscuro en las primeras paginas de onboarding/inicio sesión/registro
