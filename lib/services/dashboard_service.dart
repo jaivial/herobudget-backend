@@ -547,7 +547,7 @@ class DashboardService {
       );
 
       // Make HTTP request to our new budget overview endpoint
-      final apiUrl = '${moneyFlowCalculationUrl}/budget-overview';
+      final apiUrl = moneyFlowCalculationUrl;
       print('💰 Requesting budget overview from: $apiUrl');
 
       final response = await http.post(

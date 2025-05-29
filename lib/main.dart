@@ -26,6 +26,10 @@ import 'services/dashboard_service.dart';
 import 'services/auth_service.dart';
 import 'utils/app_localizations.dart';
 import 'screens/category/fix_emoji_screen.dart';
+import 'config/environment.dart';
+import 'config/api_config.dart';
+import 'config/app_config.dart';
+import 'services/api_helper.dart';
 
 // Language change notifier singleton
 class LanguageChangeNotifier {
@@ -54,9 +58,25 @@ class LanguageChangeNotifier {
 // Create a single instance to be used throughout the app
 final languageChangeNotifier = LanguageChangeNotifier();
 
-void main() {
+void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize environment configuration
+  // En debug mode, puedes cambiar esto manualmente para testing:
+  EnvironmentConfig.setEnvironment(Environment.production);
+
+  // Initialize API helper with environment configuration
+  ApiHelper.initialize();
+
+  // Print environment and API configuration for debugging
+  if (EnvironmentConfig.enableLogging) {
+    print('=== HERO BUDGET APP STARTUP ===');
+    EnvironmentConfig.printEnvironmentInfo();
+    ApiConfig.printCurrentConfig();
+    AppConfig.printAppConfig();
+    print('==============================');
+  }
 
   // Initialize platform channel fixes for macOS
   if (Platform.isMacOS) {

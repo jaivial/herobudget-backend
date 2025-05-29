@@ -222,36 +222,47 @@ class LanguageService {
     BuildContext context,
     String languageCode,
   ) {
-    // Obtener el nombre del idioma para mostrar en la notificación
-    final String languageName =
-        supportedLanguages[languageCode]?.split(' ')[0] ?? 'Unknown';
+    try {
+      // Verificar si hay un ScaffoldMessenger disponible
+      final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
+      if (scaffoldMessenger == null) {
+        print('No ScaffoldMessenger available in context');
+        return;
+      }
 
-    // Obtener traducciones
-    final localizations = AppLocalizations.of(context);
+      // Obtener el nombre del idioma para mostrar en la notificación
+      final String languageName =
+          supportedLanguages[languageCode]?.split(' ')[0] ?? 'Unknown';
 
-    // Buscar la clave "language_changed" que debería estar traducida a cada idioma
-    String notificationText = localizations.translate('language_changed');
+      // Obtener traducciones
+      final localizations = AppLocalizations.of(context);
 
-    // Mostrar SnackBar con animación
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Text(getLanguageFlag(languageCode)),
-            const SizedBox(width: 8),
-            Text(notificationText),
-          ],
+      // Buscar la clave "language_changed" que debería estar traducida a cada idioma
+      String notificationText = localizations.translate('language_changed');
+
+      // Mostrar SnackBar con animación
+      scaffoldMessenger.clearSnackBars();
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Text(getLanguageFlag(languageCode)),
+              const SizedBox(width: 8),
+              Text(notificationText),
+            ],
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(
+            label: 'OK',
+            onPressed: () {
+              scaffoldMessenger.hideCurrentSnackBar();
+            },
+          ),
         ),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
+      );
+    } catch (e) {
+      print('Error showing language change notification: $e');
+    }
   }
 }

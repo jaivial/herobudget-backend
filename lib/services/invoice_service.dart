@@ -23,9 +23,11 @@ class InvoiceService {
         throw Exception('User not authenticated');
       }
 
+      final fullUrl = '$baseUrl?user_id=$userId';
+
       // Realizar la petición HTTP
       final response = await http.get(
-        Uri.parse('$baseUrl/bills?user_id=$userId'),
+        Uri.parse(fullUrl),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -100,9 +102,11 @@ class InvoiceService {
         invoiceData['regularity'] = regularity;
       }
 
+      final fullUrl = '$baseUrl/add';
+
       // Realizar la petición HTTP
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/add'),
+        Uri.parse(fullUrl),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(invoiceData),
       );
@@ -133,7 +137,7 @@ class InvoiceService {
 
       // Realizar la petición HTTP
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/pay'),
+        Uri.parse('$baseUrl/pay'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,
@@ -205,7 +209,7 @@ class InvoiceService {
 
       // Realizar la petición HTTP
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/update'),
+        Uri.parse('$baseUrl/update'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(invoiceData),
       );
@@ -236,7 +240,7 @@ class InvoiceService {
 
       // Realizar la petición HTTP
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/delete'),
+        Uri.parse('$baseUrl/delete'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': userId, 'bill_id': invoiceId}),
       );
@@ -267,7 +271,7 @@ class InvoiceService {
 
       // Realizar la petición HTTP
       final response = await http.get(
-        Uri.parse('$baseUrl/bills/upcoming?user_id=$userId'),
+        Uri.parse('$baseUrl/upcoming?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 

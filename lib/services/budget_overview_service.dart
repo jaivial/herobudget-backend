@@ -32,14 +32,12 @@ class BudgetOverviewService {
         requestBody['end_date'] = endDate;
       }
 
-      print(
-        '🔄 BudgetOverviewService: Making request to $baseUrl/budget-overview',
-      );
+      print('🔄 BudgetOverviewService: Making request to $baseUrl');
       print('📋 Request body: ${json.encode(requestBody)}');
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/budget-overview'),
+        Uri.parse(baseUrl),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );

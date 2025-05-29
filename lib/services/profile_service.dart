@@ -6,11 +6,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../services/signin_service.dart';
+import '../config/api_config.dart';
 
 /// Servicio para manejar las operaciones relacionadas con el perfil del usuario
 class ProfileService {
   // URL base del servicio de gestión de perfiles
-  static const String _baseUrl = 'http://localhost:8092';
+  static String get _baseUrl => ApiConfig.profileManagementUrl;
 
   /// Actualiza el perfil del usuario con nueva información
   ///

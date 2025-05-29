@@ -9,7 +9,7 @@ class VerificationService {
     try {
       // Make an API call to check verification status
       final response = await http.post(
-        Uri.parse('${ApiConfig.signupServiceUrl}/signup/check-verification'),
+        Uri.parse('${ApiConfig.signupServiceUrl}/check-verification'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
       );
@@ -50,7 +50,7 @@ class VerificationService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.signupServiceUrl}/signup/resend-verification'),
+        Uri.parse('${ApiConfig.signupServiceUrl}/resend-verification'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId, 'email': email}),
       );
@@ -102,13 +102,9 @@ class VerificationService {
       }
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.signupServiceUrl}/signup/verify-email'),
+        Uri.parse('${ApiConfig.signupServiceUrl}/verify-email'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'code': code,
-          'user_id': userId, // Include user_id if available
-          'email': email, // Include email if available
-        }),
+        body: jsonEncode({'code': code, 'user_id': userId, 'email': email}),
       );
 
       print(

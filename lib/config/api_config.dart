@@ -1,26 +1,29 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'environment.dart';
 
 class ApiConfig {
-  // Usar siempre localhost para los servicios locales
-  static String get baseApiUrl {
-    return 'http://localhost';
-  }
+  // URL base según el ambiente (usa EnvironmentConfig)
+  static String get baseApiUrl => EnvironmentConfig.baseUrl;
+
+  // Verificar si estamos en producción
+  static bool get isProduction => EnvironmentConfig.isProduction;
 
   // Helper method to detect if we're running on a simulator
   static bool isRunningOnSimulator() {
     try {
-      // This is a simple way to detect simulator - not completely reliable but works for most cases
       return Platform.isIOS &&
           !Platform.environment.containsKey('FLUTTER_TEST') &&
           Platform.operatingSystemVersion.toLowerCase().contains('simulator');
     } catch (e) {
-      print('Error detecting simulator: $e');
+      if (EnvironmentConfig.enableLogging) {
+        print('Error detecting simulator: $e');
+      }
       return false;
     }
   }
 
-  // Service ports
+  // Service ports (solo usados en desarrollo)
   static const int signupServicePort = 8082;
   static const int languageServicePort = 8083;
   static const int signinServicePort = 8084;
@@ -35,39 +38,99 @@ class ApiConfig {
   static const int incomeManagementServicePort = 8093;
   static const int expenseManagementServicePort = 8094;
   static const int categoriesManagementServicePort = 8095;
+  static const int moneyFlowSyncServicePort = 8096;
   static const int budgetOverviewFetchServicePort = 8097;
+  static const int profileManagementServicePort = 8092;
 
-  // Service endpoints
-  static String get signupServiceUrl => '$baseApiUrl:$signupServicePort';
-  static String get languageServiceUrl => '$baseApiUrl:$languageServicePort';
-  static String get signinServiceUrl => '$baseApiUrl:$signinServicePort';
-  static String get googleAuthServiceUrl =>
-      '$baseApiUrl:$googleAuthServicePort';
+  // Helper para construir URLs según el ambiente
+  static String _buildServiceUrl(String path, int port) {
+    if (isProduction) {
+      return '$baseApiUrl$path';
+    } else {
+      return '$baseApiUrl:$port';
+    }
+  }
+
+  // URLs base para servicios (sin endpoints específicos)
+  static String get signupBaseUrl =>
+      _buildServiceUrl('/signup', signupServicePort);
+  static String get languageServiceUrl =>
+      _buildServiceUrl('/language', languageServicePort);
+  static String get signinServiceUrl =>
+      _buildServiceUrl('/signin', signinServicePort);
+  static String get googleAuthBaseUrl =>
+      _buildServiceUrl('/auth/google', googleAuthServicePort);
   static String get fetchDashboardServiceUrl =>
-      '$baseApiUrl:$fetchDashboardServicePort';
+      _buildServiceUrl('/fetch-dashboard', fetchDashboardServicePort);
   static String get resetPasswordServiceUrl =>
-      '$baseApiUrl:$resetPasswordServicePort';
+      _buildServiceUrl('/reset-password', resetPasswordServicePort);
   static String get dashboardDataServiceUrl =>
-      '$baseApiUrl:$dashboardDataServicePort';
+      _buildServiceUrl('/dashboard-data', dashboardDataServicePort);
   static String get budgetManagementUrl =>
-      '$baseApiUrl:$budgetManagementServicePort';
+      _buildServiceUrl('/budget', budgetManagementServicePort);
   static String get savingsManagementUrl =>
-      '$baseApiUrl:$savingsManagementServicePort';
+      _buildServiceUrl('/savings', savingsManagementServicePort);
   static String get cashBankManagementUrl =>
-      '$baseApiUrl:$cashBankManagementServicePort';
+      _buildServiceUrl('/cash-bank', cashBankManagementServicePort);
   static String get billsManagementUrl =>
-      '$baseApiUrl:$billsManagementServicePort';
+      _buildServiceUrl('/bills', billsManagementServicePort);
   static String get incomeManagementServiceUrl =>
-      '$baseApiUrl:$incomeManagementServicePort';
+      _buildServiceUrl('/income', incomeManagementServicePort);
   static String get expenseManagementServiceUrl =>
-      '$baseApiUrl:$expenseManagementServicePort';
+      _buildServiceUrl('/expense', expenseManagementServicePort);
   static String get categoriesEndpoint =>
-      '$baseApiUrl:$categoriesManagementServicePort/categories';
+      isProduction
+          ? '$baseApiUrl/categories'
+          : '$baseApiUrl:$categoriesManagementServicePort/categories';
+  static String get profileManagementUrl =>
+      _buildServiceUrl('/profile', profileManagementServicePort);
 
-  // Money Flow Sync Service (8096)
-  static String get moneyFlowSyncServiceUrl => '$baseApiUrl:8096';
+  // URLs específicas manteniendo compatibilidad
+  static String get signupServiceUrl => signupBaseUrl;
+  static String get googleAuthServiceUrl => googleAuthBaseUrl;
 
-  // Budget Overview Fetch Service (8097) - Updated from Money Flow Calculation
+  // Money Flow Sync Service
+  static String get moneyFlowSyncServiceUrl =>
+      _buildServiceUrl('/money-flow-sync', moneyFlowSyncServicePort);
+
+  // Budget Overview Fetch Service
   static String get budgetOverviewFetchServiceUrl =>
-      '$baseApiUrl:$budgetOverviewFetchServicePort';
+      isProduction
+          ? '$baseApiUrl/budget-overview'
+          : '$baseApiUrl:$budgetOverviewFetchServicePort';
+
+  // Método para debug - mostrar configuración actual
+  static void printCurrentConfig() {
+    if (!EnvironmentConfig.enableLogging) return;
+
+    print('=== API Configuration ===');
+    EnvironmentConfig.printEnvironmentInfo();
+    print('Signup URL: $signupServiceUrl');
+    print('Signin URL: $signinServiceUrl');
+    print('Google Auth URL: $googleAuthServiceUrl');
+    print('Dashboard URL: $fetchDashboardServiceUrl');
+    print('Budget Management URL: $budgetManagementUrl');
+    print('========================');
+  }
+
+  // Endpoints completos para referencia rápida
+  static Map<String, String> get allEndpoints => {
+    'signup': signupServiceUrl,
+    'signin': signinServiceUrl,
+    'googleAuth': googleAuthServiceUrl,
+    'language': languageServiceUrl,
+    'fetchDashboard': fetchDashboardServiceUrl,
+    'resetPassword': resetPasswordServiceUrl,
+    'dashboardData': dashboardDataServiceUrl,
+    'budget': budgetManagementUrl,
+    'savings': savingsManagementUrl,
+    'cashBank': cashBankManagementUrl,
+    'bills': billsManagementUrl,
+    'income': incomeManagementServiceUrl,
+    'expense': expenseManagementServiceUrl,
+    'categories': categoriesEndpoint,
+    'moneyFlowSync': moneyFlowSyncServiceUrl,
+    'budgetOverview': budgetOverviewFetchServiceUrl,
+    'profile': profileManagementUrl,
+  };
 }

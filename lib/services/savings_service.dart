@@ -5,7 +5,7 @@ import '../config/api_config.dart';
 import '../models/dashboard_model.dart';
 
 class SavingsService {
-  static const String baseUrl = 'http://localhost:8089';
+  static String get baseUrl => ApiConfig.savingsManagementUrl;
 
   // Cache interno para datos de ahorros
   static final Map<String, SavingsData> _cache = {};
@@ -14,7 +14,7 @@ class SavingsService {
   Future<SavingsData> getSavingsData(String userId) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/savings/fetch?user_id=$userId'),
+        Uri.parse('$baseUrl/fetch?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -41,19 +41,13 @@ class SavingsService {
   Future<SavingsData> setSavingsGoal(
     String userId,
     double goal, {
-    String? period,
+    String period = 'monthly',
   }) async {
     try {
-      final requestBody = {
-        'user_id': userId,
-        'goal': goal,
-        if (period != null) 'period': period,
-      };
-
       final response = await http.post(
-        Uri.parse('$baseUrl/savings/update'),
+        Uri.parse('$baseUrl/update'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(requestBody),
+        body: jsonEncode({'user_id': userId, 'goal': goal, 'period': period}),
       );
 
       if (response.statusCode == 200) {
@@ -93,7 +87,7 @@ class SavingsService {
       final requestBody = {'user_id': userId, 'available': available};
 
       final response = await http.post(
-        Uri.parse('$baseUrl/savings/update'),
+        Uri.parse('$baseUrl/update'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );
@@ -122,12 +116,10 @@ class SavingsService {
   /// Delete savings goal for a user
   Future<bool> deleteSavingsGoal(String userId) async {
     try {
-      final requestBody = {'user_id': userId};
-
       final response = await http.delete(
-        Uri.parse('$baseUrl/savings/delete'),
+        Uri.parse('$baseUrl/delete'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode(requestBody),
+        body: jsonEncode({'user_id': userId}),
       );
 
       if (response.statusCode == 200) {

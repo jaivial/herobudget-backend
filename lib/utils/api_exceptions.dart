@@ -1,8 +1,17 @@
+// Importar la nueva ApiException
+import '../services/api_helper.dart';
+
 // Clase base para excepciones de la API
 class ApiException implements Exception {
   final String message;
+  final int statusCode;
+  final String url;
 
-  ApiException(this.message);
+  ApiException({
+    required this.statusCode,
+    required this.message,
+    required this.url,
+  });
 
   @override
   String toString() => message;
@@ -10,20 +19,24 @@ class ApiException implements Exception {
 
 // Excepción para usuario no autenticado
 class NotAuthenticatedException extends ApiException {
-  NotAuthenticatedException(String message) : super(message);
+  NotAuthenticatedException({required String message, required String url})
+    : super(statusCode: 401, message: message, url: url);
 }
 
 // Excepción para recurso no encontrado
 class ResourceNotFoundException extends ApiException {
-  ResourceNotFoundException(String message) : super(message);
+  ResourceNotFoundException({required String message, required String url})
+    : super(statusCode: 404, message: message, url: url);
 }
 
 // Excepción para errores de validación
 class ValidationException extends ApiException {
-  ValidationException(String message) : super(message);
+  ValidationException({required String message, required String url})
+    : super(statusCode: 400, message: message, url: url);
 }
 
 // Excepción para errores de conexión
 class ConnectionException extends ApiException {
-  ConnectionException(String message) : super(message);
+  ConnectionException({required String message, required String url})
+    : super(statusCode: 0, message: message, url: url);
 }

@@ -4,9 +4,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/category_model.dart';
 import '../config/api_config.dart';
-import '../utils/api_exceptions.dart';
 import '../utils/emoji_utils.dart';
-import './api_helper.dart';
+import 'api_helper.dart';
+
+// Excepciones específicas para este servicio
+class NotAuthenticatedException implements Exception {
+  final String message;
+  NotAuthenticatedException(this.message);
+  @override
+  String toString() => message;
+}
 
 class CategoryService {
   // URL base para el servicio de categorías
@@ -50,7 +57,9 @@ class CategoryService {
         return categoriesJson.map((json) => Category.fromJson(json)).toList();
       } else {
         throw ApiException(
-          jsonData['message'] ?? 'Error al obtener categorías',
+          statusCode: 400,
+          message: jsonData['message'] ?? 'Error al obtener categorías',
+          url: url,
         );
       }
     } catch (e) {
@@ -59,7 +68,11 @@ class CategoryService {
       if (e is ApiException || e is NotAuthenticatedException) {
         rethrow;
       }
-      throw ApiException('Error de conexión: $e');
+      throw ApiException(
+        statusCode: 0,
+        message: 'Error de conexión: $e',
+        url: _baseUrl,
+      );
     }
   }
 
@@ -99,14 +112,22 @@ class CategoryService {
       if (jsonData['success'] == true) {
         return Category.fromJson(jsonData['data']);
       } else {
-        throw ApiException(jsonData['message'] ?? 'Error al añadir categoría');
+        throw ApiException(
+          statusCode: 400,
+          message: jsonData['message'] ?? 'Error al añadir categoría',
+          url: url,
+        );
       }
     } catch (e) {
       print('DEBUG - Add category exception: $e');
       if (e is ApiException || e is NotAuthenticatedException) {
         rethrow;
       }
-      throw ApiException('Error de conexión: $e');
+      throw ApiException(
+        statusCode: 0,
+        message: 'Error de conexión: $e',
+        url: _baseUrl,
+      );
     }
   }
 
@@ -114,7 +135,11 @@ class CategoryService {
   Future<Category> updateCategory(Category category) async {
     try {
       if (category.id == null) {
-        throw ApiException('ID de categoría no proporcionado');
+        throw ApiException(
+          statusCode: 400,
+          message: 'ID de categoría no proporcionado',
+          url: _baseUrl,
+        );
       }
 
       // Obtener el ID de usuario almacenado
@@ -170,7 +195,9 @@ class CategoryService {
         return updatedCategory;
       } else {
         throw ApiException(
-          jsonData['message'] ?? 'Error al actualizar categoría',
+          statusCode: 400,
+          message: jsonData['message'] ?? 'Error al actualizar categoría',
+          url: url,
         );
       }
     } catch (e) {
@@ -178,7 +205,11 @@ class CategoryService {
       if (e is ApiException || e is NotAuthenticatedException) {
         rethrow;
       }
-      throw ApiException('Error de conexión: $e');
+      throw ApiException(
+        statusCode: 0,
+        message: 'Error de conexión: $e',
+        url: _baseUrl,
+      );
     }
   }
 
@@ -208,7 +239,9 @@ class CategoryService {
       // Verificar el código de éxito
       if (jsonData['success'] != true) {
         throw ApiException(
-          jsonData['message'] ?? 'Error al eliminar categoría',
+          statusCode: 400,
+          message: jsonData['message'] ?? 'Error al eliminar categoría',
+          url: url,
         );
       }
     } catch (e) {
@@ -216,7 +249,11 @@ class CategoryService {
       if (e is ApiException || e is NotAuthenticatedException) {
         rethrow;
       }
-      throw ApiException('Error de conexión: $e');
+      throw ApiException(
+        statusCode: 0,
+        message: 'Error de conexión: $e',
+        url: _baseUrl,
+      );
     }
   }
 }

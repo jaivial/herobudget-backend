@@ -28,13 +28,13 @@ class AuthService {
     }
 
     try {
-      final url = '${ApiConfig.signupServiceUrl}/signup/check-email';
+      final url = '${ApiConfig.signupServiceUrl}/check-email';
       print("Checking email at URL: $url");
 
       // First try to ping the service to check if it's reachable
       try {
         final pingResponse = await http
-            .get(Uri.parse('${ApiConfig.signupServiceUrl}/ping'))
+            .get(Uri.parse('${ApiConfig.signupServiceUrl}'))
             .timeout(const Duration(seconds: 5));
         print('Ping response: ${pingResponse.statusCode}');
       } catch (pingError) {
@@ -64,7 +64,7 @@ class AuthService {
       // For debugging connectivity issues - this is redundant but kept for back-compatibility
       try {
         final pingResponse = await http
-            .get(Uri.parse('${ApiConfig.signupServiceUrl}/ping'))
+            .get(Uri.parse('${ApiConfig.signupServiceUrl}'))
             .timeout(const Duration(seconds: 3));
         print('Secondary ping response: ${pingResponse.statusCode}');
       } catch (pingError) {
@@ -115,12 +115,12 @@ class AuthService {
     }
 
     print('Prepared signup data with email: $email, name: $fullName');
-    print('Sending to URL: ${ApiConfig.signupServiceUrl}/signup/register');
+    print('Sending to URL: ${ApiConfig.signupServiceUrl}/register');
 
     try {
       print('Making HTTP POST request to register user...');
       final response = await http.post(
-        Uri.parse('${ApiConfig.signupServiceUrl}/signup/register'),
+        Uri.parse('${ApiConfig.signupServiceUrl}/register'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(signupData),
       );
@@ -164,7 +164,7 @@ class AuthService {
       try {
         print('Attempting to ping server to check connectivity...');
         final pingResponse = await http
-            .get(Uri.parse('${ApiConfig.signupServiceUrl}/ping'))
+            .get(Uri.parse('${ApiConfig.signupServiceUrl}'))
             .timeout(const Duration(seconds: 3));
         print(
           'Ping response: ${pingResponse.statusCode} - ${pingResponse.body}',
@@ -199,7 +199,7 @@ class AuthService {
       print('Detected device locale: $normalizedLocale');
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.googleAuthServiceUrl}/auth/google'),
+        Uri.parse('${ApiConfig.googleAuthServiceUrl}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'idToken': googleAuth.idToken,
