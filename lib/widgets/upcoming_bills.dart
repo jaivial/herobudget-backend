@@ -792,7 +792,7 @@ class TransactionBillItem extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    context.tr.formatDate(
+                                    context.tr.formatDateWithTranslatedMonths(
                                       DateTime.parse(transaction.date),
                                       pattern: 'MMM d',
                                     ),

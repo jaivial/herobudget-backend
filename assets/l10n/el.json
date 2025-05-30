@@ -349,5 +349,19 @@
     "welcome": "Καλώς ήρθατε στο Hero Budget",
     "welcome_desc": "Ο έξυπνος τρόπος διαχείρισης των οικονομικών σας",
     "yearly": "Ετήσια",
-    "your_email_address": "Η διεύθυνση email σας"
+    "your_email_address": "Η διεύθυνση email σας",
+    "no_bills_this_period": "Δεν υπάρχουν λογαριασμοί για αυτή την περίοδο",
+    "view_bill_details": "Προβολή λεπτομερειών λογαριασμού",
+    "january": "Ιανουάριος",
+    "february": "Φεβρουάριος",
+    "march": "Μάρτιος",
+    "april": "Απρίλιος",
+    "may": "Μάιος",
+    "june": "Ιούνιος",
+    "july": "Ιούλιος",
+    "august": "Αύγουστος",
+    "september": "Σεπτέμβριος",
+    "october": "Οκτώβριος",
+    "november": "Νοέμβριος",
+    "december": "Δεκέμβριος"
 }

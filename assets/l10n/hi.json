@@ -349,5 +349,19 @@
     "welcome": "हीरो बजट में आपका स्वागत है",
     "welcome_desc": "अपने वित्त को प्रबंधित करने का स्मार्ट तरीका",
     "yearly": "वार्षिक",
-    "your_email_address": "आपका ईमेल पता"
+    "your_email_address": "आपका ईमेल पता",
+    "no_bills_this_period": "इस अवधि के लिए कोई बिल नहीं",
+    "view_bill_details": "बिल विवरण देखें",
+    "january": "जनवरी",
+    "february": "फरवरी",
+    "march": "मार्च",
+    "april": "अप्रैल",
+    "may": "मई",
+    "june": "जून",
+    "july": "जुलाई",
+    "august": "अगस्त",
+    "september": "सितंबर",
+    "october": "अक्टूबर",
+    "november": "नवंबर",
+    "december": "दिसंबर"
 }

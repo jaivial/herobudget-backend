@@ -351,5 +351,19 @@
     "welcome": "Welkom bij Hero Budget",
     "welcome_desc": "De slimme manier om je financiën te beheren",
     "yearly": "Jaarlijks",
-    "your_email_address": "Je e-mailadres"
+    "your_email_address": "Je e-mailadres",
+    "no_bills_this_period": "Geen rekeningen voor deze periode",
+    "view_bill_details": "Bekijk rekeningdetails",
+    "january": "Januari",
+    "february": "Februari",
+    "march": "Maart",
+    "april": "April",
+    "may": "Mei",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "Augustus",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "December"
 }

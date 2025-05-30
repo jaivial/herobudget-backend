@@ -151,7 +151,16 @@ class Transaction {
     return description ?? category;
   }
 
-  /// Get bill status text
+  /// Get bill status text key for translation
+  String get billStatusTextKey {
+    if (!isBill) return '';
+    if (overdue == true) return 'overdue';
+    if (paid == true) return 'paid';
+    return 'pending';
+  }
+
+  /// Get bill status text (deprecated - use billStatusTextKey with translation)
+  @Deprecated('Use billStatusTextKey with translation instead')
   String get billStatusText {
     if (!isBill) return '';
     if (overdue == true) return 'Overdue';

@@ -627,7 +627,7 @@ class TransactionListItem extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                transaction.paymentMethod.value.toUpperCase(),
+                context.tr.translate(transaction.paymentMethod.value),
                 style: TextStyle(
                   fontSize: 10,
                   color:
@@ -639,7 +639,7 @@ class TransactionListItem extends StatelessWidget {
               const Spacer(),
               // Date
               Text(
-                context.tr.formatDate(
+                context.tr.formatDateWithTranslatedMonths(
                   DateTime.parse(transaction.date),
                   pattern: 'MMM d, yyyy',
                 ),
@@ -668,7 +668,7 @@ class TransactionListItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    transaction.billStatusText,
+                    context.tr.translate(transaction.billStatusTextKey),
                     style: TextStyle(
                       fontSize: 10,
                       color: color,

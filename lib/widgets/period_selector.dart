@@ -69,8 +69,6 @@ class _PeriodSelectorState extends State<PeriodSelector> {
 
   // Get the title for the current period
   String get periodTitle {
-    final DateFormat formatter = DateFormat.yMMM();
-
     switch (_currentPeriod) {
       case 'daily':
         return DateFormat.yMd().format(_currentDate);
@@ -78,9 +76,12 @@ class _PeriodSelectorState extends State<PeriodSelector> {
         // Calculate the start and end of the week (Monday to Sunday)
         final startOfWeek = getStartOfWeek(_currentDate);
         final endOfWeek = getEndOfWeek(_currentDate);
-        return '${DateFormat.MMMd().format(startOfWeek)} - ${DateFormat.MMMd().format(endOfWeek)}';
+        return '${context.tr.formatDateWithTranslatedMonths(startOfWeek, pattern: 'MMM d')} - ${context.tr.formatDateWithTranslatedMonths(endOfWeek, pattern: 'MMM d')}';
       case 'monthly':
-        return formatter.format(_currentDate);
+        return context.tr.formatDateWithTranslatedMonths(
+          _currentDate,
+          pattern: 'MMM yyyy',
+        );
       case 'quarterly':
         final quarter = ((_currentDate.month - 1) ~/ 3) + 1;
         return 'Q$quarter ${_currentDate.year}';
@@ -92,7 +93,10 @@ class _PeriodSelectorState extends State<PeriodSelector> {
       case 'custom':
         return context.tr.translate('custom_period');
       default:
-        return formatter.format(_currentDate);
+        return context.tr.formatDateWithTranslatedMonths(
+          _currentDate,
+          pattern: 'MMM yyyy',
+        );
     }
   }
 
@@ -409,7 +413,10 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                       ),
                     ),
                     subtitle: Text(
-                      DateFormat.yMMMd().format(startDate),
+                      context.tr.formatDateWithTranslatedMonths(
+                        startDate,
+                        pattern: 'MMM d, yyyy',
+                      ),
                       style: TextStyle(
                         color:
                             isDarkMode ? Colors.white.withOpacity(0.7) : null,
@@ -447,7 +454,10 @@ class _PeriodSelectorState extends State<PeriodSelector> {
                       ),
                     ),
                     subtitle: Text(
-                      DateFormat.yMMMd().format(endDate),
+                      context.tr.formatDateWithTranslatedMonths(
+                        endDate,
+                        pattern: 'MMM d, yyyy',
+                      ),
                       style: TextStyle(
                         color:
                             isDarkMode ? Colors.white.withOpacity(0.7) : null,

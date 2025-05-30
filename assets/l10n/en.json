@@ -477,5 +477,22 @@
     "yesterday": "Yesterday",
     "yearly": "Yearly",
     "your_email_address": "Your email address",
-    "your_selected_language": "Your Selected Language"
+    "your_selected_language": "Your Selected Language",
+    "days_overdue": "days overdue",
+    "no_bills_this_period": "No bills for this period",
+    "view_bill_details": "View bill details",
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December",
+    "quarterly": "Quarterly",
+    "end_date": "End Date"
 }

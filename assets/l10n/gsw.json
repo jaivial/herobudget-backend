@@ -349,5 +349,19 @@
     "welcome": "Willkomme bi Hero Budget",
     "welcome_desc": "D'clever Art, diini Finanzen z'verwalte",
     "yearly": "Jährlich",
-    "your_email_address": "Diini E-Mail-Adresse"
+    "your_email_address": "Diini E-Mail-Adresse",
+    "no_bills_this_period": "Kei Rechnige für die Periode",
+    "view_bill_details": "Rechnigs-Details aluege",
+    "january": "Januar",
+    "february": "Februar",
+    "march": "März",
+    "april": "April",
+    "may": "Mai",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "August",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "Dezember"
 }

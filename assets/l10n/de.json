@@ -388,5 +388,19 @@
     "please_enter_valid_email": "Bitte geben Sie eine gültige E-Mail ein",
     "please_enter_valid_email_address": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "please_enter_your_password": "Bitte geben Sie Ihr Passwort ein",
-    "an_error_occurred_try_again": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    "an_error_occurred_try_again": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "january": "Januar",
+    "february": "Februar",
+    "march": "März",
+    "april": "April",
+    "may": "Mai",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "August",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "Dezember",
+    "no_bills_this_period": "Keine Rechnungen für diesen Zeitraum",
+    "view_bill_details": "Rechnungsdetails anzeigen"
 }

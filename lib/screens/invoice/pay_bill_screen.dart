@@ -412,7 +412,7 @@ class _PayBillScreenState extends State<PayBillScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${context.tr.translate('due_date')}: ${invoice.dueDate}',
+                          '${context.tr.translate('due_date')}: ${context.tr.formatDateWithTranslatedMonths(DateTime.parse(invoice.dueDate), pattern: 'MMM d, yyyy')}',
                           style: TextStyle(
                             fontSize: 12,
                             color:
@@ -495,7 +495,13 @@ class _PayBillScreenState extends State<PayBillScreen> {
             '\$${invoice.amount.toStringAsFixed(2)}',
           ),
           _buildDetailRow(context.tr.translate('category'), invoice.category),
-          _buildDetailRow(context.tr.translate('due_date'), invoice.dueDate),
+          _buildDetailRow(
+            context.tr.translate('due_date'),
+            context.tr.formatDateWithTranslatedMonths(
+              DateTime.parse(invoice.dueDate),
+              pattern: 'MMM d, yyyy',
+            ),
+          ),
           if (invoice.description != null && invoice.description!.isNotEmpty)
             _buildDetailRow(
               context.tr.translate('description'),

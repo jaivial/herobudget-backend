@@ -351,5 +351,19 @@
     "welcome": "Hero Budgetへようこそ",
     "welcome_desc": "あなたの財務を管理するスマートな方法",
     "yearly": "年次",
-    "your_email_address": "あなたのメールアドレス"
+    "your_email_address": "あなたのメールアドレス",
+    "no_bills_this_period": "この期間の請求書はありません",
+    "view_bill_details": "請求書の詳細を表示",
+    "january": "1月",
+    "february": "2月",
+    "march": "3月",
+    "april": "4月",
+    "may": "5月",
+    "june": "6月",
+    "july": "7月",
+    "august": "8月",
+    "september": "9月",
+    "october": "10月",
+    "november": "11月",
+    "december": "12月"
 }

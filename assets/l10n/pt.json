@@ -373,7 +373,6 @@
     "password_min_6_chars": "A senha deve ter pelo menos 6 caracteres",
     "password_strength": "Força da Senha:",
     "please_confirm_password": "Por favor, confirme sua senha",
-    "passwords_do_not_match": "As senhas não coincidem",
     "verify_email_agreement": "Concordo em verificar meu e-mail após o registro",
     "password_guidelines": "Diretrizes da Senha",
     "at_least_6_chars": "Pelo menos 6 caracteres de comprimento",
@@ -388,5 +387,19 @@
     "please_enter_valid_email": "Por favor, digite um e-mail válido",
     "please_enter_valid_email_address": "Por favor, digite um endereço de e-mail válido",
     "please_enter_your_password": "Por favor, digite sua senha",
-    "an_error_occurred_try_again": "Ocorreu um erro. Por favor, tente novamente."
+    "an_error_occurred_try_again": "Ocorreu um erro. Por favor, tente novamente.",
+    "no_bills_this_period": "Nenhuma conta para este período",
+    "view_bill_details": "Ver detalhes da conta",
+    "january": "Janeiro",
+    "february": "Fevereiro",
+    "march": "Março",
+    "april": "Abril",
+    "may": "Maio",
+    "june": "Junho",
+    "july": "Julho",
+    "august": "Agosto",
+    "september": "Setembro",
+    "october": "Outubro",
+    "november": "Novembro",
+    "december": "Dezembro"
 }

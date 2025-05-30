@@ -373,7 +373,6 @@
     "password_min_6_chars": "[Russian translation for: Password must be at least 6 characters]",
     "password_strength": "[Russian translation for: Password Strength:]",
     "please_confirm_password": "[Russian translation for: Please confirm your password]",
-    "passwords_do_not_match": "[Russian translation for: Passwords do not match]",
     "verify_email_agreement": "[Russian translation for: I agree to verify my email after registration]",
     "password_guidelines": "[Russian translation for: Password Guidelines]",
     "at_least_6_chars": "[Russian translation for: At least 6 characters long]",
@@ -388,5 +387,19 @@
     "please_enter_valid_email": "[Russian translation for: Please enter a valid email]",
     "please_enter_valid_email_address": "[Russian translation for: Please enter a valid email address]",
     "please_enter_your_password": "[Russian translation for: Please enter your password]",
-    "an_error_occurred_try_again": "[Russian translation for: An error occurred. Please try again.]"
+    "an_error_occurred_try_again": "[Russian translation for: An error occurred. Please try again.]",
+    "no_bills_this_period": "Нет счетов за этот период",
+    "view_bill_details": "Посмотреть детали счета",
+    "january": "Январь",
+    "february": "Февраль",
+    "march": "Март",
+    "april": "Апрель",
+    "may": "Май",
+    "june": "Июнь",
+    "july": "Июль",
+    "august": "Август",
+    "september": "Сентябрь",
+    "october": "Октябрь",
+    "november": "Ноябрь",
+    "december": "Декабрь"
 }

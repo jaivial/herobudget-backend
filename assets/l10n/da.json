@@ -351,5 +351,19 @@
     "welcome": "Velkommen til Hero Budget",
     "welcome_desc": "Den smarte måde at administrere dine finanser på",
     "yearly": "Årlig",
-    "your_email_address": "Din e-mailadresse"
+    "your_email_address": "Din e-mailadresse",
+    "no_bills_this_period": "Ingen regninger for denne periode",
+    "view_bill_details": "Se regningsdetaljer",
+    "january": "Januar",
+    "february": "Februar",
+    "march": "Marts",
+    "april": "April",
+    "may": "Maj",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "August",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "December"
 }

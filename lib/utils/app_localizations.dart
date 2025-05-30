@@ -376,6 +376,73 @@ class AppLocalizations {
     }
   }
 
+  // Format date with translated month names
+  String formatDateWithTranslatedMonths(DateTime date, {String? pattern}) {
+    try {
+      String formattedDate;
+
+      if (pattern != null && pattern.contains('MMM')) {
+        // Handle patterns with month abbreviations
+        final monthName = getTranslatedMonthName(date.month);
+        final dayAndYear = DateFormat(
+          pattern.replaceAll('MMM', ''),
+          'en_US',
+        ).format(date);
+
+        if (pattern == 'MMM d, yyyy') {
+          formattedDate = '$monthName ${date.day}, ${date.year}';
+        } else if (pattern == 'MMM yyyy') {
+          formattedDate = '$monthName ${date.year}';
+        } else if (pattern == 'MMM d') {
+          formattedDate = '$monthName ${date.day}';
+        } else {
+          // Fallback to regular formatting
+          formattedDate = DateFormat(pattern, 'en_US').format(date);
+        }
+      } else {
+        // Use regular formatting for other patterns
+        formattedDate = formatDate(date, pattern: pattern);
+      }
+
+      return formattedDate;
+    } catch (e) {
+      // Fallback to regular formatting
+      return formatDate(date, pattern: pattern);
+    }
+  }
+
+  // Get translated month name
+  String getTranslatedMonthName(int month) {
+    switch (month) {
+      case 1:
+        return translate('january');
+      case 2:
+        return translate('february');
+      case 3:
+        return translate('march');
+      case 4:
+        return translate('april');
+      case 5:
+        return translate('may');
+      case 6:
+        return translate('june');
+      case 7:
+        return translate('july');
+      case 8:
+        return translate('august');
+      case 9:
+        return translate('september');
+      case 10:
+        return translate('october');
+      case 11:
+        return translate('november');
+      case 12:
+        return translate('december');
+      default:
+        return 'Unknown';
+    }
+  }
+
   // Relative time formatting (e.g. "2 days ago", "in 3 hours")
   String formatRelativeTime(DateTime dateTime) {
     final now = DateTime.now();

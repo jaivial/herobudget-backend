@@ -388,5 +388,19 @@
     "please_enter_valid_email": "Per favore inserisci un'email valida",
     "please_enter_valid_email_address": "Per favore inserisci un indirizzo email valido",
     "please_enter_your_password": "Per favore inserisci la tua password",
-    "an_error_occurred_try_again": "Si è verificato un errore. Per favore riprova."
+    "an_error_occurred_try_again": "Si è verificato un errore. Per favore riprova.",
+    "no_bills_this_period": "Nessuna bolletta per questo periodo",
+    "view_bill_details": "Visualizza dettagli bolletta",
+    "january": "Gennaio",
+    "february": "Febbraio",
+    "march": "Marzo",
+    "april": "Aprile",
+    "may": "Maggio",
+    "june": "Giugno",
+    "july": "Luglio",
+    "august": "Agosto",
+    "september": "Settembre",
+    "october": "Ottobre",
+    "november": "Novembre",
+    "december": "Dicembre"
 }

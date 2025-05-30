@@ -357,7 +357,6 @@
     "password_min_6_chars": "[Chinese (Simplified) translation for: Password must be at least 6 characters]",
     "password_strength": "[Chinese (Simplified) translation for: Password Strength:]",
     "please_confirm_password": "[Chinese (Simplified) translation for: Please confirm your password]",
-    "passwords_do_not_match": "[Chinese (Simplified) translation for: Passwords do not match]",
     "verify_email_agreement": "[Chinese (Simplified) translation for: I agree to verify my email after registration]",
     "password_guidelines": "[Chinese (Simplified) translation for: Password Guidelines]",
     "at_least_6_chars": "[Chinese (Simplified) translation for: At least 6 characters long]",
@@ -375,5 +374,19 @@
     "an_error_occurred_try_again": "[Chinese (Simplified) translation for: An error occurred. Please try again.]",
     "failed_to_send_reset_email": "重置邮件发送失败",
     "failed_to_update_password": "密码更新失败",
-    "valid_email_required": "请输入有效的邮箱地址"
+    "valid_email_required": "请输入有效的邮箱地址",
+    "no_bills_this_period": "本期没有账单",
+    "view_bill_details": "查看账单详情",
+    "january": "一月",
+    "february": "二月",
+    "march": "三月",
+    "april": "四月",
+    "may": "五月",
+    "june": "六月",
+    "july": "七月",
+    "august": "八月",
+    "september": "九月",
+    "october": "十月",
+    "november": "十一月",
+    "december": "十二月"
 }
