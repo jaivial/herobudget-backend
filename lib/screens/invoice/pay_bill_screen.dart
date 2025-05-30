@@ -166,7 +166,7 @@ class _PayBillScreenState extends State<PayBillScreen> {
 
   Widget _buildPayBillForm() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -468,66 +468,201 @@ class _PayBillScreenState extends State<PayBillScreen> {
     final invoice = _selectedInvoice!;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Theme.of(context).colorScheme.surface,
+            Theme.of(context).colorScheme.surface.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Encabezado
-          Text(
-            context.tr.translate('bill_details'),
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-
-          // Detalles
-          _buildDetailRow(context.tr.translate('bill_name'), invoice.name),
-          _buildDetailRow(
-            context.tr.translate('amount'),
-            '\$${invoice.amount.toStringAsFixed(2)}',
-          ),
-          _buildDetailRow(context.tr.translate('category'), invoice.category),
-          _buildDetailRow(
-            context.tr.translate('due_date'),
-            context.tr.formatDateWithTranslatedMonths(
-              DateTime.parse(invoice.dueDate),
-              pattern: 'MMM d, yyyy',
-            ),
-          ),
-          if (invoice.description != null && invoice.description!.isNotEmpty)
-            _buildDetailRow(
-              context.tr.translate('description'),
-              invoice.description!,
-            ),
-
-          // Estado
-          const SizedBox(height: 12),
+          // Header con icono y título
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color:
-                  invoice.overdue
-                      ? Colors.red.withOpacity(0.1)
-                      : Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              invoice.overdue
-                  ? '${context.tr.translate('overdue')}: ${invoice.overdueDays} ${context.tr.translate('days')}'
-                  : context.tr.translate('pending'),
-              style: TextStyle(
-                color: invoice.overdue ? Colors.red : Colors.green,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+              gradient: LinearGradient(
+                colors: [
+                  _getColorForCategory(invoice.category).withOpacity(0.1),
+                  _getColorForCategory(invoice.category).withOpacity(0.05),
+                ],
               ),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Row(
+              children: [
+                // Icono de categoría
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _getColorForCategory(invoice.category),
+                        _getColorForCategory(invoice.category).withOpacity(0.8),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _getColorForCategory(
+                          invoice.category,
+                        ).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _getIconForCategory(invoice.category),
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Título y estado
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.tr.translate('bill_details'),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Indicador de estado moderno
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors:
+                                invoice.overdue
+                                    ? [Colors.red, Colors.red.withOpacity(0.8)]
+                                    : [
+                                      Colors.green,
+                                      Colors.green.withOpacity(0.8),
+                                    ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (invoice.overdue
+                                      ? Colors.red
+                                      : Colors.green)
+                                  .withOpacity(0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              invoice.overdue
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.schedule_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              invoice.overdue
+                                  ? '${context.tr.translate('overdue')}: ${invoice.overdueDays} ${context.tr.translate('days')}'
+                                  : context.tr.translate('pending'),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Contenido de detalles
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                _buildModernDetailRow(
+                  context.tr.translate('bill_name'),
+                  invoice.name,
+                  Icons.receipt_long_rounded,
+                  Colors.blue,
+                ),
+                const SizedBox(height: 16),
+                _buildModernDetailRow(
+                  context.tr.translate('amount'),
+                  '\$${invoice.amount.toStringAsFixed(2)}',
+                  Icons.attach_money_rounded,
+                  Colors.green,
+                  isHighlighted: true,
+                ),
+                const SizedBox(height: 16),
+                _buildModernDetailRow(
+                  context.tr.translate('category'),
+                  invoice.category,
+                  _getIconForCategory(invoice.category),
+                  _getColorForCategory(invoice.category),
+                ),
+                const SizedBox(height: 16),
+                _buildModernDetailRow(
+                  context.tr.translate('due_date'),
+                  context.tr.formatDateWithTranslatedMonths(
+                    DateTime.parse(invoice.dueDate),
+                    pattern: 'MMM d, yyyy',
+                  ),
+                  Icons.calendar_today_rounded,
+                  Colors.orange,
+                ),
+                if (invoice.description != null &&
+                    invoice.description!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _buildModernDetailRow(
+                    context.tr.translate('description'),
+                    invoice.description!,
+                    Icons.description_rounded,
+                    Colors.purple,
+                  ),
+                ],
+              ],
             ),
           ),
         ],
@@ -535,25 +670,77 @@ class _PayBillScreenState extends State<PayBillScreen> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+  Widget _buildModernDetailRow(
+    String label,
+    String value,
+    IconData icon,
+    Color accentColor, {
+    bool isHighlighted = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color:
+              isHighlighted
+                  ? accentColor.withOpacity(0.3)
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.1),
+        ),
+        boxShadow:
+            isHighlighted
+                ? [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                : null,
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-              ),
+          // Icono
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, color: accentColor, size: 20),
           ),
+          const SizedBox(width: 16),
+          // Contenido
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontWeight:
+                        isHighlighted ? FontWeight.bold : FontWeight.w600,
+                    fontSize: isHighlighted ? 18 : 16,
+                    color:
+                        isHighlighted
+                            ? accentColor
+                            : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -777,120 +964,313 @@ class _PayBillScreenState extends State<PayBillScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Resumen del pago
+        // Resumen del pago mejorado
         Container(
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).colorScheme.surface,
+                Theme.of(context).colorScheme.surface.withOpacity(0.9),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).shadowColor.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Theme.of(context).shadowColor.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
             ),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                context.tr.translate('payment_summary'),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              // Header del resumen
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primary,
+                            Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.summarize_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      context.tr.translate('payment_summary'),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
 
-              // Detalles del resumen
-              _buildSummaryRow(
-                context.tr.translate('bill'),
-                _selectedInvoice!.name,
-              ),
-              _buildSummaryRow(
-                context.tr.translate('amount'),
-                '\$${_selectedInvoice!.amount.toStringAsFixed(2)}',
-                isHighlighted: true,
-              ),
-              _buildSummaryRow(
-                context.tr.translate('payment_method'),
-                _paymentMethod == 'cash'
-                    ? context.tr.translate('cash')
-                    : context.tr.translate('bank'),
-              ),
-              _buildSummaryRow(
-                context.tr.translate('date'),
-                DateTime.now().toString().split(' ')[0],
+              // Contenido del resumen
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildModernSummaryRow(
+                      context.tr.translate('bill'),
+                      _selectedInvoice!.name,
+                      Icons.receipt_long_rounded,
+                      Colors.blue,
+                    ),
+                    const SizedBox(height: 12),
+                    // Separador visual
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Theme.of(
+                              context,
+                            ).colorScheme.outline.withOpacity(0.2),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildModernSummaryRow(
+                      context.tr.translate('amount'),
+                      '\$${_selectedInvoice!.amount.toStringAsFixed(2)}',
+                      Icons.attach_money_rounded,
+                      Colors.green,
+                      isHighlighted: true,
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Theme.of(
+                              context,
+                            ).colorScheme.outline.withOpacity(0.2),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildModernSummaryRow(
+                      context.tr.translate('payment_method'),
+                      _paymentMethod == 'cash'
+                          ? context.tr.translate('cash')
+                          : context.tr.translate('bank'),
+                      _paymentMethod == 'cash'
+                          ? Icons.payments_rounded
+                          : Icons.account_balance_rounded,
+                      _paymentMethod == 'cash' ? Colors.green : Colors.blue,
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Theme.of(
+                              context,
+                            ).colorScheme.outline.withOpacity(0.2),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildModernSummaryRow(
+                      context.tr.translate('date'),
+                      DateTime.now().toString().split(' ')[0],
+                      Icons.calendar_today_rounded,
+                      Colors.orange,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
-        // Botón para confirmar el pago
-        ElevatedButton(
-          onPressed: _processingPayment ? null : _processPayment,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        // Botón para confirmar el pago con más padding
+        Container(
+          margin: const EdgeInsets.only(
+            bottom: 40,
+          ), // Margen adicional del bottom
+          child: ElevatedButton(
+            onPressed: _processingPayment ? null : _processPayment,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 8,
+              shadowColor: Theme.of(
+                context,
+              ).colorScheme.primary.withOpacity(0.3),
             ),
-            elevation: 0,
-          ),
-          child:
-              _processingPayment
-                  ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
+            child:
+                _processingPayment
+                    ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(context.tr.translate('processing')),
-                    ],
-                  )
-                  : Text(
-                    context.tr.translate('confirm_payment'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        Text(context.tr.translate('processing')),
+                      ],
+                    )
+                    : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.payment_rounded, size: 24),
+                        const SizedBox(width: 12),
+                        Text(
+                          context.tr.translate('confirm_payment'),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSummaryRow(
+  Widget _buildModernSummaryRow(
     String label,
-    String value, {
+    String value,
+    IconData icon,
+    Color accentColor, {
     bool isHighlighted = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color:
+              isHighlighted
+                  ? accentColor.withOpacity(0.3)
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.08),
+        ),
+        boxShadow:
+            isHighlighted
+                ? [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                : null,
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            '$label:',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              fontWeight: FontWeight.w400,
+          // Icono
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(icon, color: accentColor, size: 18),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
-              fontSize: isHighlighted ? 16 : null,
-              color:
-                  isHighlighted
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface,
+          const SizedBox(width: 16),
+          // Contenido
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '$label:',
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontWeight:
+                        isHighlighted ? FontWeight.bold : FontWeight.w600,
+                    fontSize: isHighlighted ? 18 : 16,
+                    color:
+                        isHighlighted
+                            ? accentColor
+                            : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

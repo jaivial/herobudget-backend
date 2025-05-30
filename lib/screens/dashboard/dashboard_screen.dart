@@ -371,65 +371,66 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  void _refreshDashboard({bool useCache = false}) {
-    // Log para diagnóstico antes de refrescar
+  Future<void> _refreshDashboard() async {
     print(
-      '🔄 Refreshing dashboard - Period: $_currentPeriod, Date: ${_selectedDate?.toString() ?? "now"}',
+      '🔄 Refreshing dashboard - Period: $_currentPeriod, Date: $_selectedDate',
     );
 
+    // Use setState to trigger a rebuild of the dashboard
     setState(() {
-      _isDashboardLoading = true;
-      _refreshCounter++; // Incrementar counter para forzar rebuild
-
-      // Usar datos locales simulados en lugar de hacer llamadas API
-      _dashboardModel = _createMockDashboardData(_currentPeriod);
-      _isDashboardLoading = false;
-
-      print('✅ Dashboard refrescado con datos simulados locales');
+      _isLoading = true;
     });
 
-    // Refrescar todos los widgets hijos
-    _refreshAllWidgets();
-  }
+    try {
+      // Refresh budget overview
+      final budgetOverviewState = _budgetOverviewKey.currentState;
+      if (budgetOverviewState != null) {
+        print('🔄 Refreshing BudgetOverviewWithPeriod...');
+        final dynamic state = budgetOverviewState;
+        if (state.mounted) {
+          await state.fetchData();
+        }
+      }
 
-  // Método para refrescar todos los widgets hijos
-  Future<void> _refreshAllWidgets() async {
-    print('🔄 Refreshing all dashboard widgets...');
+      // Refresh transaction overview
+      final transactionOverviewState = _transactionOverviewKey.currentState;
+      if (transactionOverviewState != null) {
+        print('🔄 Refreshing TransactionOverviewWidget...');
+        final dynamic state = transactionOverviewState;
+        if (state.mounted) {
+          try {
+            state.refreshData(); // Usar el método público
+            print(
+              '🔄 Dashboard: TransactionOverviewWidget refreshed successfully',
+            );
+          } catch (e) {
+            print('Error refreshing transaction overview: $e');
+          }
+        }
+      }
 
-    // Refrescar BudgetOverviewWithPeriod
-    await _refreshBudgetOverview();
+      print('🔄 Refreshing all dashboard widgets...');
 
-    // Refrescar FinanceMetricsWithPeriod (se actualiza automáticamente por didUpdateWidget)
-    // Refrescar TransactionOverviewWidget
-    _refreshTransactionOverview();
+      // Small delay to allow all widgets to process
+      await Future.delayed(const Duration(milliseconds: 500));
 
-    print('✅ All dashboard widgets refreshed');
-  }
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
 
-  // Método para refrescar el BudgetOverviewWithPeriod
-  Future<void> _refreshBudgetOverview() async {
-    final budgetOverviewState = _budgetOverviewKey.currentState;
-    if (budgetOverviewState != null) {
-      // Usar dynamic para acceder al método público
-      try {
-        await (budgetOverviewState as dynamic).refreshBudgetData();
-      } catch (e) {
-        print('Error refreshing budget overview: $e');
+      print('✅ All dashboard widgets refreshed');
+    } catch (e) {
+      print('❌ Error during dashboard refresh: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
-  }
 
-  // Método para refrescar el TransactionOverviewWidget
-  void _refreshTransactionOverview() {
-    final transactionOverviewState = _transactionOverviewKey.currentState;
-    if (transactionOverviewState != null) {
-      try {
-        // Usar dynamic para acceder al método público
-        (transactionOverviewState as dynamic)._handleRefresh();
-      } catch (e) {
-        print('Error refreshing transaction overview: $e');
-      }
-    }
+    print('✅ Dashboard refrescado con datos simulados locales');
   }
 
   void _onPeriodChanged(String period) {
@@ -873,6 +874,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                 _showAddBillDialog();
               },
               onRefresh: () {
+                print(
+                  '📋 Dashboard: Received refresh request from TransactionOverviewWidget',
+                );
                 _refreshDashboard();
               },
             ),
@@ -1079,11 +1083,20 @@ class _DashboardScreenState extends State<DashboardScreen>
             (context) => AddInvoiceScreen(
               onSuccess: () {
                 // Cuando se añade una factura correctamente, actualizamos los datos del dashboard
+                print(
+                  '📋 Dashboard: Invoice added via callback, refreshing...',
+                );
                 _refreshDashboard();
               },
             ),
       ),
-    );
+    ).then((result) {
+      // También manejar el resultado si regresa true
+      if (result == true) {
+        print('📋 Dashboard: Invoice screen returned success, refreshing...');
+        _refreshDashboard();
+      }
+    });
   }
 
   // Dialog to add income
@@ -1148,11 +1161,20 @@ class _DashboardScreenState extends State<DashboardScreen>
             (context) => AddInvoiceScreen(
               onSuccess: () {
                 // Cuando se añade una factura correctamente, actualizamos los datos del dashboard
+                print(
+                  '📋 Dashboard: Invoice added via callback, refreshing...',
+                );
                 _refreshDashboard();
               },
             ),
       ),
-    );
+    ).then((result) {
+      // También manejar el resultado si regresa true
+      if (result == true) {
+        print('📋 Dashboard: Invoice screen returned success, refreshing...');
+        _refreshDashboard();
+      }
+    });
   }
 
   // Dialog to add category

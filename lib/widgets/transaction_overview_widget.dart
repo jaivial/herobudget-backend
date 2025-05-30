@@ -103,10 +103,25 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
   Future<void> _handleAddBill() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddInvoiceScreen()),
+      MaterialPageRoute(
+        builder:
+            (context) => AddInvoiceScreen(
+              onSuccess: () {
+                // Cuando se añade una factura correctamente, refrescar los datos
+                print(
+                  '🔄 TransactionOverviewWidget: Invoice added successfully, refreshing...',
+                );
+                _handleRefresh();
+              },
+            ),
+      ),
     );
 
+    // También manejar el resultado si regresa true
     if (result == true) {
+      print(
+        '🔄 TransactionOverviewWidget: Invoice screen returned success, refreshing...',
+      );
       _handleRefresh();
     }
   }
@@ -329,31 +344,43 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
     );
 
     try {
+      // Refresh upcoming bills widget
       final upcomingBillsState = _upcomingBillsKey.currentState;
       if (upcomingBillsState != null) {
         final dynamic state = upcomingBillsState;
         if (state.mounted) {
           try {
             state.refreshData();
+            print(
+              '🔄 TransactionOverviewWidget: UpcomingBillsWidget refreshed',
+            );
           } catch (e) {
             print('Error refreshing upcoming bills: $e');
           }
         }
       }
 
+      // Refresh transaction history widget
       final transactionHistoryState = _transactionHistoryKey.currentState;
       if (transactionHistoryState != null) {
         final dynamic state = transactionHistoryState;
         if (state.mounted) {
           try {
             state.refreshData();
+            print(
+              '🔄 TransactionOverviewWidget: TransactionHistoryTable refreshed',
+            );
           } catch (e) {
             print('Error refreshing transaction history: $e');
           }
         }
       }
 
+      // Notify parent widget (Dashboard) to refresh
       if (widget.onRefresh != null) {
+        print(
+          '🔄 TransactionOverviewWidget: Notifying parent widget to refresh',
+        );
         widget.onRefresh!();
       }
     } finally {
@@ -362,6 +389,12 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
         _isRefreshing = false;
       });
     }
+  }
+
+  // Método público para ser llamado desde el dashboard
+  void refreshData() {
+    print('🔄 TransactionOverviewWidget: External refresh requested');
+    _handleRefresh();
   }
 }
 

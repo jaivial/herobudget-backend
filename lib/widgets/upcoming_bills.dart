@@ -99,6 +99,7 @@ class _UpcomingBillsWidgetState extends State<UpcomingBillsWidget> {
 
   // Método público para refrescar los datos desde el widget padre
   Future<void> refreshData() async {
+    print('🔄 UpcomingBillsWidget: External refresh requested');
     await _fetchUpcomingBills();
   }
 
@@ -355,6 +356,10 @@ class _UpcomingBillsWidgetState extends State<UpcomingBillsWidget> {
 
   Future<void> _handlePayBill(Transaction bill) async {
     try {
+      print(
+        '💳 UpcomingBillsWidget: Starting payment process for bill ${bill.id}',
+      );
+
       // Convert Transaction to Invoice for PayBillScreen compatibility
       final invoice = _convertTransactionToInvoice(bill);
 
@@ -366,9 +371,18 @@ class _UpcomingBillsWidgetState extends State<UpcomingBillsWidget> {
         ),
       );
 
+      print('💳 UpcomingBillsWidget: Payment result: $result');
+
       // If payment was successful, refresh the data
       if (result == true) {
+        print('💳 UpcomingBillsWidget: Payment successful, refreshing data...');
         await _fetchUpcomingBills();
+
+        // Notify parent widget to refresh
+        if (widget.onRefresh != null) {
+          print('💳 UpcomingBillsWidget: Notifying parent widget to refresh');
+          widget.onRefresh!();
+        }
 
         // Show success message
         if (mounted) {
@@ -380,8 +394,12 @@ class _UpcomingBillsWidgetState extends State<UpcomingBillsWidget> {
             ),
           );
         }
+      } else {
+        print('💳 UpcomingBillsWidget: Payment was cancelled or failed');
       }
     } catch (e) {
+      print('💳 UpcomingBillsWidget: Error in payment process: $e');
+
       // Handle navigation error
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -715,29 +733,32 @@ class TransactionBillItem extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Status badges row
-                            Row(
-                              children: [
-                                if (isOverdue)
-                                  _StatusBadge(
-                                    label: context.tr.translate('overdue'),
-                                    color: Colors.red,
-                                    icon: Icons.warning_rounded,
-                                  ),
-                                if (isPaid)
-                                  _StatusBadge(
-                                    label: context.tr.translate('paid'),
-                                    color: Colors.green,
-                                    icon: Icons.check_circle_rounded,
-                                  ),
-                                if (isDueSoon && !isOverdue && !isPaid)
-                                  _StatusBadge(
-                                    label: context.tr.translate('due_soon'),
-                                    color: Colors.orange,
-                                    icon: Icons.schedule_rounded,
-                                  ),
-                              ],
-                            ),
+                            // Status badges row - usando Wrap para evitar overflow
+                            if (isOverdue || isPaid || isDueSoon)
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
+                                children: [
+                                  if (isOverdue)
+                                    _StatusBadge(
+                                      label: context.tr.translate('overdue'),
+                                      color: Colors.red,
+                                      icon: Icons.warning_rounded,
+                                    ),
+                                  if (isPaid)
+                                    _StatusBadge(
+                                      label: context.tr.translate('paid'),
+                                      color: Colors.green,
+                                      icon: Icons.check_circle_rounded,
+                                    ),
+                                  if (isDueSoon && !isOverdue && !isPaid)
+                                    _StatusBadge(
+                                      label: context.tr.translate('due_soon'),
+                                      color: Colors.orange,
+                                      icon: Icons.schedule_rounded,
+                                    ),
+                                ],
+                              ),
 
                             if (isOverdue || isPaid || isDueSoon)
                               const SizedBox(height: 8),
@@ -800,6 +821,7 @@ class TransactionBillItem extends StatelessWidget {
                     children: [
                       // Due date info (expanded to take more space)
                       Expanded(
+                        flex: 2,
                         child: _InfoChip(
                           icon: Icons.schedule_rounded,
                           label: context.tr.formatDateWithTranslatedMonths(
@@ -811,15 +833,18 @@ class TransactionBillItem extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 8),
 
                       // Action button
                       if (showPayButton && onPayBill != null && !isPaid)
-                        _PayButton(
-                          onPressed: onPayBill!,
-                          isOverdue: isOverdue,
-                          isDarkMode: isDarkMode,
-                          context: context,
+                        Flexible(
+                          flex: 1,
+                          child: _PayButton(
+                            onPressed: onPayBill!,
+                            isOverdue: isOverdue,
+                            isDarkMode: isDarkMode,
+                            context: context,
+                          ),
                         ),
                     ],
                   ),
@@ -892,11 +917,11 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      margin: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: color.withOpacity(0.3),
@@ -908,13 +933,13 @@ class _StatusBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.white),
-          const SizedBox(width: 4),
+          Icon(icon, size: 10, color: Colors.white),
+          const SizedBox(width: 3),
           Text(
             label,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -944,11 +969,11 @@ class _InfoChip extends StatelessWidget {
         color ?? (isDarkMode ? Colors.white70 : Colors.grey.shade600);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color:
             isDarkMode ? Colors.white.withOpacity(0.1) : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border:
             color != null
                 ? Border.all(color: color!.withOpacity(0.3), width: 1)
@@ -957,13 +982,13 @@ class _InfoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: effectiveColor),
-          const SizedBox(width: 6),
+          Icon(icon, size: 14, color: effectiveColor),
+          const SizedBox(width: 4),
           Flexible(
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: effectiveColor,
               ),
@@ -1002,12 +1027,12 @@ class _PayButton extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: buttonColor.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -1015,22 +1040,24 @@ class _PayButton extends StatelessWidget {
         onPressed: onPressed,
         icon: Icon(
           isOverdue ? Icons.priority_high_rounded : Icons.payment_rounded,
-          size: 18,
+          size: 16,
         ),
         label: Text(
           isOverdue
               ? context.tr.translate('pay_now')
               : context.tr.translate('pay'),
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: buttonColor,
           foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           elevation: 0,
+          minimumSize: const Size(0, 0),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
     );
