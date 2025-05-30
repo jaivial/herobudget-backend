@@ -345,14 +345,29 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                 ),
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey.shade600
+                              : Colors.grey.shade300,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    color:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Colors
+                                .grey
+                                .shade800 // Fondo oscuro para modo oscuro
+                            : Colors
+                                .grey
+                                .shade50, // Fondo claro para modo claro
                   ),
                   child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.spaceEvenly,
                     children:
                         _emojis.map((emoji) {
                           return _buildEmojiButton(emoji);
@@ -390,7 +405,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
 
                 if (_errorMessage != null)
                   Padding(
@@ -403,20 +418,22 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     ),
                   ),
 
-                // Save button
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _saveCategory,
-                    child:
-                        _isLoading
-                            ? const CircularProgressIndicator()
-                            : Text(
-                              _isEditMode
-                                  ? context.tr.translate('update')
-                                  : context.tr.translate('save'),
-                            ),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _saveCategory,
+                      child:
+                          _isLoading
+                              ? const CircularProgressIndicator()
+                              : Text(
+                                _isEditMode
+                                    ? context.tr.translate('update')
+                                    : context.tr.translate('save'),
+                              ),
+                    ),
                   ),
                 ),
               ],
@@ -469,9 +486,25 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                     colors: gradientColors,
                   )
                   : null,
-          color: isSelected ? null : Colors.grey.shade50,
+          color:
+              isSelected
+                  ? null
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors
+                          .grey
+                          .shade800 // Fondo oscuro para modo oscuro cuando no está seleccionado
+                      : Colors
+                          .grey
+                          .shade50), // Fondo claro para modo claro cuando no está seleccionado
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+            color:
+                isSelected
+                    ? Colors.transparent
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? Colors
+                            .grey
+                            .shade600 // Borde más claro en modo oscuro
+                        : Colors.grey.shade300), // Borde original en modo claro
             width: isSelected ? 0 : 1,
           ),
           borderRadius: BorderRadius.circular(16),
@@ -516,7 +549,15 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
             Text(
               displayLabel,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey.shade700,
+                color:
+                    isSelected
+                        ? Colors.white
+                        : (Theme.of(context).brightness == Brightness.dark
+                            ? Colors
+                                .white // Texto blanco en modo oscuro cuando no está seleccionado
+                            : Colors
+                                .grey
+                                .shade700), // Texto gris en modo claro cuando no está seleccionado
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                 fontSize: 16,
               ),

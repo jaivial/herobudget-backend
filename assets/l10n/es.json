@@ -389,5 +389,9 @@
     "november": "Noviembre",
     "december": "Diciembre",
     "next_period": "Período Siguiente",
-    "select_date_range": "Seleccionar Rango de Fechas"
+    "select_date_range": "Seleccionar Rango de Fechas",
+    "category_type": "Tipo de Categoría",
+    "custom_emoji": "Emoji Personalizado",
+    "select_emoji": "Seleccionar Emoji",
+    "selected_emoji": "Emoji Seleccionado"
 }
