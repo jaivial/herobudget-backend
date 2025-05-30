@@ -113,10 +113,10 @@ class EmailStep extends StatelessWidget {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
+                    return context.tr.translate('please_enter_email');
                   }
                   if (!value.contains('@') || !value.contains('.')) {
-                    return 'Please enter a valid email';
+                    return context.tr.translate('please_enter_valid_email');
                   }
                   if (emailError != null) {
                     return emailError;

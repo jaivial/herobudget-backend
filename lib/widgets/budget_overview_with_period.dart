@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../services/budget_overview_service.dart';
 import '../models/dashboard_model.dart' show CashBankDistribution;
 import 'budget_overview.dart';
@@ -266,7 +266,7 @@ class _BudgetOverviewWithPeriodState extends State<BudgetOverviewWithPeriod>
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
+    final localizations = context.tr;
 
     return Container(
       width: double.infinity,

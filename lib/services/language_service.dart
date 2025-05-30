@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import 'package:flutter/material.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import 'language_update_service.dart';
 
 // Notificador para cambios en el idioma
@@ -235,7 +235,7 @@ class LanguageService {
           supportedLanguages[languageCode]?.split(' ')[0] ?? 'Unknown';
 
       // Obtener traducciones
-      final localizations = AppLocalizations.of(context);
+      final localizations = context.tr;
 
       // Buscar la clave "language_changed" que debería estar traducida a cada idioma
       String notificationText = localizations.translate('language_changed');

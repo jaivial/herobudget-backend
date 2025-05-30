@@ -99,8 +99,7 @@ class ApiConfig {
       _buildServiceUrl('/signup', signupServicePort);
   static String get languageServiceUrl =>
       _buildServiceUrl('/language', languageServicePort);
-  static String get signinServiceUrl =>
-      _buildServiceUrl('/signin', signinServicePort);
+  static String get signinServiceUrl => _buildServiceUrl('', signinServicePort);
   static String get googleAuthBaseUrl =>
       _buildServiceUrl('/auth/google', googleAuthServicePort);
   static String get fetchDashboardServiceUrl =>
@@ -343,6 +342,39 @@ class ApiConfig {
     );
     print(
       '  curl -X POST "$baseApiUrl/transactions/history" -d \'{"user_id":"test","limit":10}\'',
+    );
+    print('========================\n');
+  }
+
+  /// Método específico para debug de reset password URLs
+  static void printResetPasswordUrls() {
+    print('\n🔐 RESET PASSWORD URLs DEBUG:');
+    print('Environment: ${EnvironmentConfig.currentEnvironment}');
+    print('Base URL: $baseApiUrl');
+    print('Is Production: $isProduction');
+
+    print('\nReset Password Service Configuration:');
+    print('  Port: $resetPasswordServicePort');
+    print('  Base URL: $resetPasswordServiceUrl');
+
+    print('\nExpected Endpoints:');
+    print('  Check Email: $resetPasswordServiceUrl/check-email');
+    print('  Request Reset: $resetPasswordServiceUrl/request');
+    print('  Validate Token: $resetPasswordServiceUrl/validate-token');
+    print('  Update Password: $resetPasswordServiceUrl/update');
+
+    print('\n🧪 Test Commands:');
+    print(
+      '  curl -X POST "$resetPasswordServiceUrl/check-email" -H "Content-Type: application/json" -d \'{"email":"test@example.com"}\'',
+    );
+    print(
+      '  curl -X POST "$resetPasswordServiceUrl/request" -H "Content-Type: application/json" -d \'{"email":"test@example.com"}\'',
+    );
+    print(
+      '  curl -X POST "$resetPasswordServiceUrl/validate-token" -H "Content-Type: application/json" -d \'{"token":"test-token"}\'',
+    );
+    print(
+      '  curl -X POST "$resetPasswordServiceUrl/update" -H "Content-Type: application/json" -d \'{"token":"test-token","user_id":1,"new_password":"newpass"}\'',
     );
     print('========================\n');
   }

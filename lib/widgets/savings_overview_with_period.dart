@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../theme/app_theme.dart';
 import 'period_selector.dart';
 import 'savings_overview.dart';

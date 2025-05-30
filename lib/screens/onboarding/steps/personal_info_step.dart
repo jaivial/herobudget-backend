@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/extensions.dart';
 
 class PersonalInfoStep extends StatelessWidget {
   final TextEditingController givenNameController;
@@ -39,7 +40,7 @@ class PersonalInfoStep extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Personal Information',
+                context.tr.translate('personal_information'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -49,11 +50,11 @@ class PersonalInfoStep extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.only(left: 46),
+          Padding(
+            padding: const EdgeInsets.only(left: 46),
             child: Text(
-              'Tell us more about yourself',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              context.tr.translate('tell_us_about_yourself'),
+              style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ),
           const SizedBox(height: 24),
@@ -63,10 +64,10 @@ class PersonalInfoStep extends StatelessWidget {
             controller: givenNameController,
             focusNode: firstNameFocusNode,
             autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'First Name',
-              prefixIcon: Icon(Icons.person_outline),
-              hintText: 'Enter your first name',
+            decoration: InputDecoration(
+              labelText: context.tr.translate('first_name'),
+              prefixIcon: const Icon(Icons.person_outline),
+              hintText: context.tr.translate('enter_first_name'),
             ),
             textInputAction: TextInputAction.next,
             onFieldSubmitted: (_) {
@@ -74,7 +75,7 @@ class PersonalInfoStep extends StatelessWidget {
             },
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your first name';
+                return context.tr.translate('please_enter_first_name');
               }
               return null;
             },
@@ -85,14 +86,14 @@ class PersonalInfoStep extends StatelessWidget {
           TextFormField(
             controller: familyNameController,
             focusNode: lastNameFocusNode,
-            decoration: const InputDecoration(
-              labelText: 'Last Name',
-              prefixIcon: Icon(Icons.person_outline),
-              hintText: 'Enter your last name',
+            decoration: InputDecoration(
+              labelText: context.tr.translate('last_name'),
+              prefixIcon: const Icon(Icons.person_outline),
+              hintText: context.tr.translate('enter_last_name'),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your last name';
+                return context.tr.translate('please_enter_last_name');
               }
               return null;
             },
@@ -125,9 +126,9 @@ class PersonalInfoStep extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
-                      'Privacy Information',
-                      style: TextStyle(
+                    Text(
+                      context.tr.translate('privacy_information'),
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: AppTheme.secondaryColor,
@@ -137,7 +138,7 @@ class PersonalInfoStep extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'We use your name to personalize your experience in the app. This information is never shared with third parties without your consent.',
+                  context.tr.translate('privacy_info_text'),
                   style: TextStyle(
                     color: Colors.grey.shade700,
                     fontSize: 14,

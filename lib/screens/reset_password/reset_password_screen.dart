@@ -343,7 +343,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
       ToastUtil.showWarningToast(
         context,
-        'Note: ${response['message'] ?? 'There may be an issue with your reset link'}, but you can still try to reset your password.',
+        context.tr.translate('token_validation_warning') ??
+            'Note: ${response['message'] ?? context.tr.translate('reset_link_issue')}, but you can still try to reset your password.',
       );
     }
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/language_service.dart';
 import '../services/app_service.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
@@ -103,7 +103,7 @@ class _LanguageSelectorModalState extends State<LanguageSelectorModal> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
+    final localizations = context.tr;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

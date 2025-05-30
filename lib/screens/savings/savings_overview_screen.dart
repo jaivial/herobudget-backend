@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../utils/app_localizations.dart';
+import '../../utils/extensions.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/savings_overview_with_period.dart';
 

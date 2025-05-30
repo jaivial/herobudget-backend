@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../theme/app_theme.dart';
 import 'budget_overview.dart'; // Import para usar PeriodSavingsData
 import '../screens/savings/set_savings_goal_screen.dart';

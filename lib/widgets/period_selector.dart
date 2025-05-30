@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 
 class PeriodSelector extends StatefulWidget {
   final String initialPeriod;

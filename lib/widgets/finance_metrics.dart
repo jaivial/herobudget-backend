@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/dashboard_model.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../theme/app_theme.dart';
 import '../services/dashboard_service.dart';
 
@@ -38,7 +38,7 @@ class FinanceMetricsWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).translate('finance_distribution'),
+            context.tr.translate('finance_distribution'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -135,7 +135,7 @@ class FinanceMetricsWidget extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         Text(
-          AppLocalizations.of(context).translate(label),
+          context.tr.translate(label),
           style: TextStyle(
             fontWeight: FontWeight.w500,
             color: isDarkMode ? Colors.white.withOpacity(0.9) : null,

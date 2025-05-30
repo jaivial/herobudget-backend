@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../theme/app_theme.dart';
 import '../services/cash_bank_service.dart';
 import '../models/dashboard_model.dart';

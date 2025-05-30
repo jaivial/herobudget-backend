@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../theme/app_theme.dart';
 
 // Modelo local para desacoplar del backend
@@ -108,7 +108,7 @@ class BudgetOverviewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
+    final localizations = context.tr;
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Container(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../screens/category/categories_list_screen.dart';
 import '../screens/invoice/pay_bill_screen.dart';
 

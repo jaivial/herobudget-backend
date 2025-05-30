@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import '../services/language_service.dart';
 import '../services/app_service.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import 'language_selector_modal.dart';
 import '../main.dart';
 

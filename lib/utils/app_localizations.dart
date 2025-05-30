@@ -445,8 +445,3 @@ class _AppLocalizationsDelegate
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
-
-// Extension to make it easier to use AppLocalizations
-extension AppLocalizationsExtension on BuildContext {
-  AppLocalizations get tr => AppLocalizations.of(this);
-}

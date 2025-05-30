@@ -1340,30 +1340,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Expanded(
                           child: ProfileImageStep(
                             profileImageFile: _profileImageFile,
-                            onPickImage: (ImageSource source) async {
-                              try {
-                                final picker = ImagePicker();
-                                final XFile? pickedFile = await picker
-                                    .pickImage(
-                                      source: source,
-                                      maxWidth: 600,
-                                      maxHeight: 600,
-                                      imageQuality: 80,
-                                    );
-
-                                if (pickedFile != null) {
-                                  setState(() {
-                                    _profileImageFile = File(pickedFile.path);
-                                  });
-                                  // Also update parent state
-                                  this.setState(() {});
-                                }
-                              } catch (e) {
-                                ToastUtil.showErrorToast(
-                                  context,
-                                  'Error picking image: $e',
-                                );
-                              }
+                            onImageSelected: (File imageFile) {
+                              setState(() {
+                                _profileImageFile = imageFile;
+                              });
                             },
                             selectedLocale: _selectedLocale,
                             showLanguageInfo: false,

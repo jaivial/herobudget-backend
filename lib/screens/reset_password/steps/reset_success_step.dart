@@ -21,12 +21,12 @@ class ResetSuccessStep extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+                color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_circle_outline,
-                color: AppTheme.primaryColor,
+                color: AppTheme.getPrimaryColor(context),
                 size: 60,
               ),
             ),
@@ -35,10 +35,10 @@ class ResetSuccessStep extends StatelessWidget {
             // Success text
             Text(
               context.tr.translate('password_reset_successful'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
+                color: AppTheme.getPrimaryColor(context),
               ),
               textAlign: TextAlign.center,
             ),
@@ -85,7 +85,7 @@ class ResetSuccessStep extends StatelessWidget {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: AppTheme.getPrimaryColor(context),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"text/template"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -27,6 +29,9 @@ var (
 	fromEmail    string
 	appBaseURL   string
 	resetPage    string
+
+	// Email templates for different languages
+	emailTemplates EmailTemplates
 )
 
 // Configuration structure
@@ -42,6 +47,28 @@ type Config struct {
 		BaseURL   string `json:"base_url"`
 		ResetPage string `json:"reset_page"`
 	} `json:"app"`
+}
+
+// Email template structure
+type EmailTemplate struct {
+	Subject      string `json:"subject"`
+	Greeting     string `json:"greeting"`
+	Message      string `json:"message"`
+	ButtonText   string `json:"button_text"`
+	ExpiryNotice string `json:"expiry_notice"`
+	Footer       string `json:"footer"`
+}
+
+// Email templates collection
+type EmailTemplates struct {
+	Templates map[string]EmailTemplate `json:"templates"`
+}
+
+// Template data for email generation
+type EmailTemplateData struct {
+	UserName  string
+	ResetLink string
+	Template  EmailTemplate
 }
 
 type User struct {
@@ -63,7 +90,8 @@ type User struct {
 }
 
 type ResetRequest struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
+	Language string `json:"language"` // Added language field
 }
 
 type ValidateTokenRequest struct {
@@ -148,9 +176,67 @@ func loadConfig() {
 	log.Println("Configuration loaded successfully")
 }
 
+func loadEmailTemplates() {
+	// Get the current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current directory: %v", err)
+	}
+
+	// Construct path to the email templates file
+	templatesPath := filepath.Join(cwd, "email_templates.json")
+
+	// Check if templates file exists
+	if _, err := os.Stat(templatesPath); os.IsNotExist(err) {
+		log.Fatalf("Email templates file not found at: %s", templatesPath)
+	}
+
+	// Read and parse the templates file
+	templatesFile, err := os.ReadFile(templatesPath)
+	if err != nil {
+		log.Fatalf("Error reading email templates file: %v", err)
+	}
+
+	if err := json.Unmarshal(templatesFile, &emailTemplates); err != nil {
+		log.Fatalf("Error parsing email templates file: %v", err)
+	}
+
+	log.Printf("Email templates loaded for %d languages", len(emailTemplates.Templates))
+}
+
+// Get template for language, fallback to English if not found
+func getEmailTemplate(language string) EmailTemplate {
+	// Normalize language code (e.g., "en-US" -> "en")
+	lang := strings.Split(language, "-")[0]
+
+	if template, exists := emailTemplates.Templates[lang]; exists {
+		return template
+	}
+
+	// Fallback to English
+	if template, exists := emailTemplates.Templates["en"]; exists {
+		log.Printf("Language '%s' not found, using English fallback", language)
+		return template
+	}
+
+	// If even English is not found, use hardcoded fallback
+	log.Printf("No templates found, using hardcoded English fallback")
+	return EmailTemplate{
+		Subject:      "Hero Budget - Reset Your Password",
+		Greeting:     "Hello {{.UserName}},",
+		Message:      "We received a request to reset your password for Hero Budget. Click the button below to create a new password:",
+		ButtonText:   "Reset Password",
+		ExpiryNotice: "This link will expire in 24 hours. If you did not request a password reset, please ignore this email.",
+		Footer:       "If you did not request a password reset, please ignore this email or contact support if you have concerns.",
+	}
+}
+
 func init() {
 	// Load configuration
 	loadConfig()
+
+	// Load email templates
+	loadEmailTemplates()
 
 	var err error
 
@@ -268,21 +354,27 @@ func handleCheckEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if email exists
-	var exists bool
+	// Check if email exists and get user details
 	var userID int
 	var name string
 
-	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = ?), id, name FROM users WHERE email = ?", req.Email, req.Email).Scan(&exists, &userID, &name)
-	if err != nil && err != sql.ErrNoRows {
+	err := db.QueryRow("SELECT id, name FROM users WHERE email = ?", req.Email).Scan(&userID, &name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Email doesn't exist
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(EmailCheckResponse{Exists: false, UserID: 0, Name: ""})
+			return
+		}
+		// Database error
 		log.Printf("Database error: %v", err)
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
-	// Return response
+	// Email exists, return user details
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(EmailCheckResponse{Exists: exists, UserID: userID, Name: name})
+	json.NewEncoder(w).Encode(EmailCheckResponse{Exists: true, UserID: userID, Name: name})
 }
 
 // Helper function to generate a random reset token
@@ -292,8 +384,8 @@ func generateResetToken() string {
 	return fmt.Sprintf("%x", b)
 }
 
-// Send reset password email
-func sendResetEmail(toEmail, resetToken, userName string, userID int) error {
+// Send reset password email with language support
+func sendResetEmail(toEmail, resetToken, userName string, userID int, language string) error {
 	// Validate email before attempting to send
 	if toEmail == "" {
 		return fmt.Errorf("cannot send reset email: email address is empty")
@@ -304,8 +396,16 @@ func sendResetEmail(toEmail, resetToken, userName string, userID int) error {
 		userName = "there" // Default fallback if name is empty
 	}
 
+	// Default to English if no language specified
+	if language == "" {
+		language = "en"
+	}
+
+	// Get the email template for the specified language
+	emailTemplate := getEmailTemplate(language)
+
 	// Log the values for debugging
-	log.Printf("Sending reset email - Email: %s, Token: %s, Name: %s, UserID: %d", toEmail, resetToken, userName, userID)
+	log.Printf("Sending reset email - Email: %s, Token: %s, Name: %s, UserID: %d, Language: %s", toEmail, resetToken, userName, userID, language)
 
 	// Format a deep link URL that will be handled by the app
 	// The format should be: herobudget://reset-password?token=RESET_TOKEN&user_id=USER_ID
@@ -324,7 +424,7 @@ func sendResetEmail(toEmail, resetToken, userName string, userID int) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", fromEmail)
 	m.SetHeader("To", toEmail)
-	m.SetHeader("Subject", "Hero Budget - Reset Your Password")
+	m.SetHeader("Subject", emailTemplate.Subject)
 
 	// Create HTML with or without image
 	var imageTag string
@@ -337,36 +437,65 @@ func sendResetEmail(toEmail, resetToken, userName string, userID int) error {
 		imageTag = ""
 	}
 
-	// Build the email HTML body manually to avoid formatting issues
-	emailBody := `
+	// Parse and execute the email template
+	templateData := EmailTemplateData{
+		UserName:  userName,
+		ResetLink: resetLink,
+		Template:  emailTemplate,
+	}
+
+	// Parse the greeting template
+	greetingTmpl, err := template.New("greeting").Parse(emailTemplate.Greeting)
+	if err != nil {
+		log.Printf("Error parsing greeting template: %v", err)
+		return fmt.Errorf("failed to parse greeting template: %v", err)
+	}
+
+	var greetingBuf bytes.Buffer
+	if err := greetingTmpl.Execute(&greetingBuf, templateData); err != nil {
+		log.Printf("Error executing greeting template: %v", err)
+		return fmt.Errorf("failed to execute greeting template: %v", err)
+	}
+
+	// Build the email HTML body with the template data
+	emailBody := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Your Password</title>
+    <title>%s</title>
 </head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333333;">
-    <div style="background-color: #F8E7FA; background: linear-gradient(135deg, #F8E7FA 0%, #E6D0F0 100%); border-radius: 12px; padding: 35px; text-align: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-        ` + (func() string {
-		if imageTag != "" {
-			return `<div style="filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));">` + imageTag + `</div>`
-		}
-		return ""
-	})() + `
-        <p style="margin-bottom: 20px; font-size: 18px; color: #4A154B; font-weight: 500;">Hello ` + userName + `,</p>
-        <p style="margin-bottom: 30px; color: #4A154B;">We received a request to reset your password for Hero Budget. Click the button below to create a new password:</p>
+    <div style="background-color: #F8E7FA; background: linear-gradient(135deg, #F8E7FA 0%%, #E6D0F0 100%%); border-radius: 12px; padding: 35px; text-align: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+        %s
+        <p style="margin-bottom: 20px; font-size: 18px; color: #4A154B; font-weight: 500;">%s</p>
+        <p style="margin-bottom: 30px; color: #4A154B;">%s</p>
         <p style="text-align: center; margin: 30px 0;">
-            <a href="` + resetLink + `" style="background-color: #6A1B9A; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 3px 5px rgba(106, 27, 154, 0.3);">Reset Password</a>
+            <a href="%s" style="background-color: #6A1B9A; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; box-shadow: 0 3px 5px rgba(106, 27, 154, 0.3);">%s</a>
         </p>
-        <p style="color: #4A154B; font-size: 14px;">This link will expire in 24 hours. If you did not request a password reset, please ignore this email.</p>
+        <p style="color: #4A154B; font-size: 14px;">%s</p>
     </div>
     <p style="color: #777777; font-size: 12px; text-align: center; margin-top: 20px;">
-        If you did not request a password reset, please ignore this email or contact support if you have concerns.
+        %s
     </p>
 </body>
 </html>
-`
+`,
+		emailTemplate.Subject,
+		func() string {
+			if imageTag != "" {
+				return `<div style="filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));">` + imageTag + `</div>`
+			}
+			return ""
+		}(),
+		greetingBuf.String(),
+		emailTemplate.Message,
+		resetLink,
+		emailTemplate.ButtonText,
+		emailTemplate.ExpiryNotice,
+		emailTemplate.Footer,
+	)
 
 	// Set the email body
 	m.SetBody("text/html", emailBody)
@@ -379,7 +508,7 @@ func sendResetEmail(toEmail, resetToken, userName string, userID int) error {
 		return fmt.Errorf("failed to send reset email: %v", err)
 	}
 
-	log.Printf("Reset email sent successfully to %s", toEmail)
+	log.Printf("Reset email sent successfully to %s in language: %s", toEmail, language)
 	return nil
 }
 
@@ -421,23 +550,21 @@ func handleResetRequest(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Checking if email exists: %s", req.Email)
 
-	// Check if email exists
+	// Check if email exists and get user details
 	var userID int
 	var name string
-	var exists bool
 
-	err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE email = ?), id, name FROM users WHERE email = ?", req.Email, req.Email).Scan(&exists, &userID, &name)
-	if err != nil && err != sql.ErrNoRows {
+	err = db.QueryRow("SELECT id, name FROM users WHERE email = ?", req.Email).Scan(&userID, &name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("No user found with email: %s", req.Email)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{"error": "User with this email does not exist"})
+			return
+		}
 		log.Printf("Database error checking email: %v", err)
 		http.Error(w, "Database error", http.StatusInternalServerError)
-		return
-	}
-
-	if !exists {
-		log.Printf("No user found with email: %s", req.Email)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]string{"error": "User with this email does not exist"})
 		return
 	}
 
@@ -461,7 +588,7 @@ func handleResetRequest(w http.ResponseWriter, r *http.Request) {
 
 	// Send reset email
 	if smtpHost != "smtp.example.com" { // Only send if SMTP is configured
-		err = sendResetEmail(req.Email, resetToken, name, userID)
+		err = sendResetEmail(req.Email, resetToken, name, userID, req.Language)
 		if err != nil {
 			log.Printf("Warning: Failed to send reset email: %v", err)
 			http.Error(w, "Failed to send reset email", http.StatusInternalServerError)

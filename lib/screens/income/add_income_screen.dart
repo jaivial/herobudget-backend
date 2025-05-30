@@ -4,7 +4,7 @@ import '../../models/income_model.dart';
 import '../../models/category_model.dart';
 import '../../services/income_service.dart';
 import '../../services/category_service.dart';
-import '../../utils/app_localizations.dart';
+import '../../utils/extensions.dart';
 import '../../utils/currency_utils.dart';
 import '../category/add_category_screen.dart';
 

@@ -6,7 +6,7 @@ import '../services/language_service.dart';
 import '../services/auth_service.dart';
 import '../services/app_service.dart';
 import '../theme/app_theme.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../main.dart';
 import 'language_selector_widget.dart';
 import 'language_selector_button.dart';

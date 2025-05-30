@@ -4,20 +4,43 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../../services/language_service.dart';
+import '../../../utils/extensions.dart';
 
 class ProfileImageStep extends StatelessWidget {
   final File? profileImageFile;
-  final Function(ImageSource) onPickImage;
+  final Function(File) onImageSelected;
   final String selectedLocale;
   final bool showLanguageInfo;
 
   const ProfileImageStep({
     super.key,
     this.profileImageFile,
-    required this.onPickImage,
+    required this.onImageSelected,
     required this.selectedLocale,
-    this.showLanguageInfo = false,
+    this.showLanguageInfo = true,
   });
+
+  Future<void> _pickImage(ImageSource source, BuildContext context) async {
+    try {
+      final picker = ImagePicker();
+      final XFile? pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        onImageSelected(File(pickedFile.path));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.tr.translate('error_picking_image'))),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +66,7 @@ class ProfileImageStep extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Profile Picture',
+                context.tr.translate('profile_picture'),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -53,11 +76,11 @@ class ProfileImageStep extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.only(left: 46),
+          Padding(
+            padding: const EdgeInsets.only(left: 46),
             child: Text(
-              'Add a photo to personalize your account',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              context.tr.translate('add_photo_to_personalize'),
+              style: const TextStyle(color: Colors.grey, fontSize: 14),
             ),
           ),
           const SizedBox(height: 32),
@@ -106,8 +129,8 @@ class ProfileImageStep extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   profileImageFile == null
-                      ? 'Tap to add a photo'
-                      : 'Tap to change photo',
+                      ? context.tr.translate('tap_to_add_photo')
+                      : context.tr.translate('tap_to_change_photo'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -116,7 +139,7 @@ class ProfileImageStep extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'You can update your profile picture anytime.',
+                  context.tr.translate('update_profile_picture_anytime'),
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
@@ -152,9 +175,9 @@ class ProfileImageStep extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Your Selected Language',
-                        style: TextStyle(
+                      Text(
+                        context.tr.translate('your_selected_language'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: AppTheme.secondaryColor,
@@ -284,7 +307,7 @@ class ProfileImageStep extends StatelessWidget {
                   subtitle: const Text('Choose from your gallery'),
                   onTap: () {
                     Navigator.pop(context);
-                    onPickImage(ImageSource.gallery);
+                    _pickImage(ImageSource.gallery, context);
                   },
                 ),
                 const SizedBox(height: 8),
@@ -304,7 +327,7 @@ class ProfileImageStep extends StatelessWidget {
                   subtitle: const Text('Take a new photo'),
                   onTap: () {
                     Navigator.pop(context);
-                    onPickImage(ImageSource.camera);
+                    _pickImage(ImageSource.camera, context);
                   },
                 ),
               ],

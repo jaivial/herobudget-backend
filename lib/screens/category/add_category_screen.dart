@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/category_model.dart';
 import '../../services/category_service.dart';
-import '../../utils/app_localizations.dart';
+import '../../utils/extensions.dart';
 import '../../utils/string_extensions.dart';
 import '../../utils/emoji_utils.dart';
 

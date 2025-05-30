@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
+import 'language_service.dart';
 
 class ResetPasswordService {
   static String get baseUrl => ApiConfig.resetPasswordServiceUrl;
@@ -10,7 +11,7 @@ class ResetPasswordService {
   static Future<Map<String, dynamic>> checkEmail(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/reset-password/check-email'),
+        Uri.parse('$baseUrl/check-email'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -38,13 +39,20 @@ class ResetPasswordService {
     }
   }
 
-  // Step 2: Request password reset
+  // Step 2: Request password reset with user language
   static Future<Map<String, dynamic>> requestReset(String email) async {
     try {
+      // Get the current user's language preference
+      final userLanguage =
+          await LanguageService.getLanguagePreference() ?? 'en';
+
       final response = await http.post(
-        Uri.parse('$baseUrl/reset-password/request'),
+        Uri.parse('$baseUrl/request'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email}),
+        body: jsonEncode({
+          'email': email,
+          'language': userLanguage, // Include user's language
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -78,7 +86,7 @@ class ResetPasswordService {
   static Future<Map<String, dynamic>> validateToken(String token) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/reset-password/validate-token'),
+        Uri.parse('$baseUrl/validate-token'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'token': token}),
       );
@@ -120,7 +128,7 @@ class ResetPasswordService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/reset-password/update'),
+        Uri.parse('$baseUrl/update'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'token': token,

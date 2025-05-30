@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../widgets/language_selector_button.dart';
 import '../widgets/localized_screen_wrapper.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../services/language_service.dart';
 
 /// A service class with static methods to help with common app-wide functionality

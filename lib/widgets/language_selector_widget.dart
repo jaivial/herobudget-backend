@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/language_service.dart';
 import '../theme/app_theme.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 
 class LanguageSelectorWidget extends StatefulWidget {
   final Function(String)? onLocaleSelected;
@@ -101,7 +101,7 @@ class _LanguageSelectorWidgetState extends State<LanguageSelectorWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final translate = AppLocalizations.of(context).translate;
+    final translate = context.tr.translate;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     if (_isLoading) {

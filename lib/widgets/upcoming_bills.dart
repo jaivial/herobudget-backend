@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/transaction_models.dart';
 import '../services/transaction_service.dart';
-import '../utils/app_localizations.dart';
+import '../utils/extensions.dart';
 import '../utils/icon_utils.dart';
 import '../utils/emoji_utils.dart';
 import '../theme/app_theme.dart';

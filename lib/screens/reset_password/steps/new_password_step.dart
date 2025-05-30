@@ -40,10 +40,10 @@ class NewPasswordStep extends StatelessWidget {
             // Heading
             Text(
               context.tr.translate('new_password_title'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
+                color: AppTheme.getPrimaryColor(context),
               ),
             ),
             const SizedBox(height: 12),
@@ -59,22 +59,24 @@ class NewPasswordStep extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.lock_outline,
-                    color: AppTheme.primaryColor,
+                    color: AppTheme.getPrimaryColor(context),
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  context.tr.translate('new_password'),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
+                Expanded(
+                  child: Text(
+                    context.tr.translate('new_password'),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.getPrimaryColor(context),
+                    ),
                   ),
                 ),
               ],
@@ -113,22 +115,24 @@ class NewPasswordStep extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.lock_outline,
-                    color: AppTheme.primaryColor,
+                    color: AppTheme.getPrimaryColor(context),
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  context.tr.translate('confirm_password'),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryColor,
+                Expanded(
+                  child: Text(
+                    context.tr.translate('confirm_password'),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.getPrimaryColor(context),
+                    ),
                   ),
                 ),
               ],
@@ -168,7 +172,7 @@ class NewPasswordStep extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: isLoading ? null : onSubmit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: AppTheme.getPrimaryColor(context),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

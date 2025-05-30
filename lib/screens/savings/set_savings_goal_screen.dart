@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/savings_service.dart';
-import '../../utils/app_localizations.dart';
+import '../../utils/extensions.dart';
 import '../../utils/savings_period_calculator.dart';
 import '../../theme/app_theme.dart';
 
