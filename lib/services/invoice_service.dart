@@ -35,9 +35,22 @@ class InvoiceService {
       if (response.statusCode == 200) {
         // Parsear la respuesta JSON
         final Map<String, dynamic> responseData = json.decode(response.body);
-        if (responseData['success'] == true && responseData['data'] != null) {
-          final List<dynamic> data = responseData['data'];
-          return data.map((invoice) => Invoice.fromJson(invoice)).toList();
+
+        if (responseData['success'] == true) {
+          final data = responseData['data'];
+
+          // Handle case when there are no invoices (data is null or empty)
+          if (data == null || (data is List && data.isEmpty)) {
+            print('✅ No invoices found - returning empty list');
+            return <Invoice>[];
+          }
+
+          // The 'data' field contains the array of invoices
+          if (data is List) {
+            return data.map((invoice) => Invoice.fromJson(invoice)).toList();
+          } else {
+            throw Exception('Invoices data is not an array');
+          }
         } else {
           throw Exception(
             'Failed to fetch invoices: ${responseData['message']}',

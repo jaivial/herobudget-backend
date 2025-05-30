@@ -149,14 +149,18 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text(
-                        context.tr.translate('transactions'),
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : null,
+                      Flexible(
+                        child: Text(
+                          context.tr.translate('transactions'),
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : null,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ],
@@ -192,18 +196,18 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                             : Colors.grey.shade700,
                     labelStyle: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 11,
+                      fontSize: 10,
                     ),
                     unselectedLabelStyle: const TextStyle(
                       fontWeight: FontWeight.normal,
-                      fontSize: 11,
+                      fontSize: 10,
                     ),
                     tabs: [
                       Tab(
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 4,
-                            vertical: 8,
+                            vertical: 6,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -211,7 +215,7 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                             children: [
                               Icon(
                                 Icons.receipt_long,
-                                size: 14,
+                                size: 12,
                                 color:
                                     _currentTabIndex == 0
                                         ? Colors.white
@@ -223,9 +227,10 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                               Flexible(
                                 child: Text(
                                   context.tr.translate('upcoming_bills'),
-                                  style: const TextStyle(fontSize: 10),
+                                  style: const TextStyle(fontSize: 9),
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ],
@@ -236,7 +241,7 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 4,
-                            vertical: 8,
+                            vertical: 6,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -244,7 +249,7 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                             children: [
                               Icon(
                                 Icons.history,
-                                size: 14,
+                                size: 12,
                                 color:
                                     _currentTabIndex == 1
                                         ? Colors.white
@@ -256,9 +261,10 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
                               Flexible(
                                 child: Text(
                                   context.tr.translate('transaction_history'),
-                                  style: const TextStyle(fontSize: 10),
+                                  style: const TextStyle(fontSize: 9),
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
+                                  textAlign: TextAlign.center,
                                 ),
                               ),
                             ],

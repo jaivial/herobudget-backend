@@ -79,8 +79,13 @@ class _DashboardScreenState extends State<DashboardScreen>
   // Cache para almacenar datos por periodo y fecha
   final Map<String, DashboardModel> _dashboardModelCache = {};
 
-  // Key para refrescar el BudgetOverviewWithPeriod
+  // Keys para refrescar los widgets
   final GlobalKey _budgetOverviewKey = GlobalKey();
+  final GlobalKey _financeMetricsKey = GlobalKey();
+  final GlobalKey _transactionOverviewKey = GlobalKey();
+
+  // Counter para forzar rebuild de widgets
+  int _refreshCounter = 0;
 
   @override
   void initState() {
@@ -374,6 +379,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     setState(() {
       _isDashboardLoading = true;
+      _refreshCounter++; // Incrementar counter para forzar rebuild
 
       // Usar datos locales simulados en lugar de hacer llamadas API
       _dashboardModel = _createMockDashboardData(_currentPeriod);
@@ -381,6 +387,23 @@ class _DashboardScreenState extends State<DashboardScreen>
 
       print('✅ Dashboard refrescado con datos simulados locales');
     });
+
+    // Refrescar todos los widgets hijos
+    _refreshAllWidgets();
+  }
+
+  // Método para refrescar todos los widgets hijos
+  Future<void> _refreshAllWidgets() async {
+    print('🔄 Refreshing all dashboard widgets...');
+
+    // Refrescar BudgetOverviewWithPeriod
+    await _refreshBudgetOverview();
+
+    // Refrescar FinanceMetricsWithPeriod (se actualiza automáticamente por didUpdateWidget)
+    // Refrescar TransactionOverviewWidget
+    _refreshTransactionOverview();
+
+    print('✅ All dashboard widgets refreshed');
   }
 
   // Método para refrescar el BudgetOverviewWithPeriod
@@ -392,6 +415,19 @@ class _DashboardScreenState extends State<DashboardScreen>
         await (budgetOverviewState as dynamic).refreshBudgetData();
       } catch (e) {
         print('Error refreshing budget overview: $e');
+      }
+    }
+  }
+
+  // Método para refrescar el TransactionOverviewWidget
+  void _refreshTransactionOverview() {
+    final transactionOverviewState = _transactionOverviewKey.currentState;
+    if (transactionOverviewState != null) {
+      try {
+        // Usar dynamic para acceder al método público
+        (transactionOverviewState as dynamic)._handleRefresh();
+      } catch (e) {
+        print('Error refreshing transaction overview: $e');
       }
     }
   }
@@ -790,11 +826,8 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildDashboardMainContent(DashboardModel dashboardData) {
     return RefreshIndicator(
       onRefresh: () async {
-        // Recargar con datos simulados en lugar de API
-        setState(() {
-          _dashboardModel = _createMockDashboardData(_currentPeriod);
-          _isDashboardLoading = false;
-        });
+        // Usar el método de refresh mejorado
+        _refreshDashboard();
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -823,6 +856,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             // Finance metrics with dynamic period selection
             FinanceMetricsWithPeriod(
+              key: ValueKey('finance_metrics_$_refreshCounter'),
               currentPeriod: _currentPeriod,
               currentDate: _selectedDate,
             ),
@@ -831,6 +865,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
             // Transaction Overview (Bills + History)
             TransactionOverviewWidget(
+              key: _transactionOverviewKey,
               period: _currentPeriod,
               date: _formatDateForPeriod(_selectedDate, _currentPeriod),
               onAddBill: () {

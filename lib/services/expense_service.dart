@@ -22,7 +22,7 @@ class ExpenseService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/expenses/add'),
+        Uri.parse('$baseUrl/add'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(expense.toJson()),
       );
@@ -53,7 +53,7 @@ class ExpenseService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/expenses?user_id=$userId'),
+        Uri.parse('$baseUrl?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -81,7 +81,7 @@ class ExpenseService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/expenses/update'),
+        Uri.parse('$baseUrl/update'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': expense.userId,
@@ -124,7 +124,7 @@ class ExpenseService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/expenses/delete'),
+        Uri.parse('$baseUrl/delete'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId, 'expense_id': expenseId}),
       );

@@ -62,9 +62,25 @@ void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize environment configuration
-  // En debug mode, puedes cambiar esto manualmente para testing:
-  EnvironmentConfig.setEnvironment(Environment.production);
+  // ==========================================
+  // 🔧 CONFIGURACIÓN DE AMBIENTE
+  // ==========================================
+  //
+  // OPCIÓN 1: Configuración manual para desarrollo
+  // Descomenta la línea que necesites:
+
+  // Para usar servicios locales (localhost) - requiere start_services.sh
+  ApiConfig.useLocalhost();
+
+  // Para usar servicios de producción
+  // ApiConfig.useProduction();
+
+  // OPCIÓN 2: Configuración automática (recomendada)
+  // Usar la configuración por defecto basada en el modo de compilación:
+  // - DEBUG mode = development (localhost)
+  // - RELEASE mode = production
+  // EnvironmentConfig.setEnvironment(Environment.development); // Forzar localhost
+  // EnvironmentConfig.setEnvironment(Environment.production);  // Forzar producción
 
   // Initialize API helper with environment configuration
   ApiHelper.initialize();
@@ -74,7 +90,27 @@ void main() async {
     print('=== HERO BUDGET APP STARTUP ===');
     EnvironmentConfig.printEnvironmentInfo();
     ApiConfig.printCurrentConfig();
+    ApiConfig.printAllEndpoints();
     AppConfig.printAppConfig();
+
+    // Mostrar información adicional sobre los endpoints
+    print('\n🔗 Available API Endpoints:');
+    final endpoints = ApiConfig.allEndpoints;
+    endpoints.forEach((key, value) {
+      print('  $key: $value');
+    });
+
+    print('\n💡 Quick Setup Tips:');
+    if (EnvironmentConfig.isDevelopment) {
+      print('  • You are in DEVELOPMENT mode');
+      print('  • Make sure to run: ./start_services.sh');
+      print('  • Services should be running on localhost ports');
+      print('  • To switch to production: ApiConfig.useProduction()');
+    } else {
+      print('  • You are in PRODUCTION mode');
+      print('  • Using: ${EnvironmentConfig.baseUrl}');
+      print('  • To switch to localhost: ApiConfig.useLocalhost()');
+    }
     print('==============================');
   }
 

@@ -6,7 +6,12 @@ import '../models/transaction_models.dart';
 import '../models/dashboard_model.dart';
 
 class TransactionService {
-  static String get baseUrl => ApiConfig.budgetOverviewFetchServiceUrl;
+  static String get baseUrl {
+    return ApiConfig.isProduction
+        ? ApiConfig.baseApiUrl
+        : '${ApiConfig.baseApiUrl}:${ApiConfig.budgetOverviewFetchServicePort}';
+  }
+
   static String get billsBaseUrl => ApiConfig.billsManagementUrl;
 
   /// Fetch transaction history with filters and pagination
@@ -143,8 +148,22 @@ class TransactionService {
 
         // The bills service returns: {"success": true, "message": "...", "data": [...]}
         if (responseData is Map<String, dynamic>) {
-          if (responseData['success'] == true && responseData['data'] != null) {
+          if (responseData['success'] == true) {
             final data = responseData['data'];
+
+            // Handle case when there are no bills (data is null or empty)
+            if (data == null || (data is List && data.isEmpty)) {
+              print('✅ No bills found - returning empty response');
+
+              return UpcomingBillsResponse(
+                bills: [],
+                total: 0,
+                overdue: 0,
+                upcoming: 0,
+                thisWeek: 0,
+                thisMonth: 0,
+              );
+            }
 
             // The 'data' field contains the array of bills
             if (data is List) {

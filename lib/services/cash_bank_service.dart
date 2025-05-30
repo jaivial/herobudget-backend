@@ -20,7 +20,7 @@ class CashBankService {
 
       // Make HTTP request
       final response = await http.get(
-        Uri.parse('$baseUrl/cash-bank/distribution?user_id=$userId'),
+        Uri.parse('$baseUrl/distribution?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -128,9 +128,14 @@ class CashBankService {
         '🔄 Transferring \$${amount.toStringAsFixed(2)} from cash to bank for user: $userId',
       );
 
-      // Make HTTP request
+      // Make HTTP request - Use ApiConfig directly for transfer endpoints
+      final transferUrl =
+          ApiConfig.isProduction
+              ? '${ApiConfig.baseApiUrl}/transfer/cash-to-bank'
+              : '${ApiConfig.baseApiUrl}:${ApiConfig.cashBankManagementServicePort}/transfer/cash-to-bank';
+
       final response = await http.post(
-        Uri.parse('$baseUrl/transfer/cash-to-bank'),
+        Uri.parse(transferUrl),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,
@@ -188,9 +193,14 @@ class CashBankService {
         '🔄 Transferring \$${amount.toStringAsFixed(2)} from bank to cash for user: $userId',
       );
 
-      // Make HTTP request
+      // Make HTTP request - Use ApiConfig directly for transfer endpoints
+      final transferUrl =
+          ApiConfig.isProduction
+              ? '${ApiConfig.baseApiUrl}/transfer/bank-to-cash'
+              : '${ApiConfig.baseApiUrl}:${ApiConfig.cashBankManagementServicePort}/transfer/bank-to-cash';
+
       final response = await http.post(
-        Uri.parse('$baseUrl/transfer/bank-to-cash'),
+        Uri.parse(transferUrl),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,

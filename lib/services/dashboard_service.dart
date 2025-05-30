@@ -380,7 +380,7 @@ class DashboardService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/income/add'),
+        Uri.parse('${ApiConfig.incomeManagementServiceUrl}/add'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': userId,
@@ -421,7 +421,7 @@ class DashboardService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/expense/add'),
+        Uri.parse('${ApiConfig.expenseManagementServiceUrl}/add'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': userId,
