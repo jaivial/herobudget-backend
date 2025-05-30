@@ -12,6 +12,7 @@ import '../../services/language_service.dart';
 import '../../services/signin_service.dart';
 import '../../services/app_service.dart';
 import '../../widgets/language_selector_button.dart';
+import '../../widgets/theme_toggle_button.dart';
 import '../dashboard/dashboard_screen.dart';
 import 'steps/language_step.dart';
 import 'steps/auth_options_step.dart';
@@ -232,26 +233,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       });
     }
 
-    // Crear un AppBar personalizado con el botón selector de idioma
+    // Crear un AppBar personalizado con el botón selector de idioma y cambio de tema
     final appBar = AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 30, // Reduced height for the AppBar
-      actions:
-          _currentStep == 1 && !isDesktop
-              ? []
-              : [
-                // Don't show language selector in app bar for auth options screen (step 1) on mobile
-                Container(
-                  margin: const EdgeInsets.only(top: 8.0, right: 16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: LanguageSelectorButton(),
-                ),
-              ],
+      toolbarHeight: 60, // Altura mayor para acomodar ambos botones
+      leading: Container(
+        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
+        child: const ThemeToggleButton(),
+      ),
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
+        ),
+      ],
     );
 
     // Desktop layout with split screen design
@@ -332,11 +333,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ],
                           ),
                         ),
-                      ),
-                      // Language selector at the bottom
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 30.0),
-                        child: LanguageSelectorButton(),
                       ),
                     ],
                   ),
@@ -487,12 +483,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                           ),
                         ),
-                        // Navigation buttons with fixed width
-                        Container(
-                          width: 450,
-                          padding: const EdgeInsets.symmetric(vertical: 30.0),
-                          child: _buildNavButtons(),
-                        ),
                       ],
                     ),
                   ),
@@ -641,23 +631,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Stack(
-            children: [
-              // Centered logo
-              Center(
-                child: Image.asset(
-                  'assets/images/herobudgeticon.png',
-                  height: 60,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              // Absolute positioned language selector at the right
-              Positioned(
-                right: 0,
-                top: 0,
-                child: const LanguageSelectorButton(),
-              ),
-            ],
+          // Centered logo only, buttons are handled by AppBar
+          Center(
+            child: Image.asset(
+              'assets/images/herobudgeticon.png',
+              height: 60,
+              fit: BoxFit.contain,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
@@ -856,7 +836,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 30, // Reduced height for the AppBar
+      toolbarHeight: 60, // Altura mayor para acomodar ambos botones
+      leading: Container(
+        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
+        child: const ThemeToggleButton(),
+      ),
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
+        ),
+      ],
     );
 
     // Navigate to email step directly using a new route instead of PageView
@@ -1112,145 +1106,182 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Helper method to build the password screen
   Widget _buildPasswordScreen() {
-    // Crear un AppBar para la pantalla de contraseña
+    // Crear un AppBar para la pantalla de contraseña con los botones
     final passwordScreenAppBar = AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 30, // Reduced height for the AppBar
+      toolbarHeight: 60, // Altura mayor para acomodar ambos botones
+      leading: Container(
+        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
+        child: const ThemeToggleButton(),
+      ),
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
+        ),
+      ],
     );
 
-    return PasswordStepWrapper(
-      passwordController: _passwordController,
-      confirmPasswordController: _confirmPasswordController,
-      isLoading: _isLoading,
-      onBack: () {
-        // Reset state when going back to email step
-        setState(() {
-          _currentStep = 3; // Reset to email step
-        });
-        Navigator.pop(context);
-      },
-      onNext: () {
-        setState(() {
-          _currentStep = 5;
-        });
+    return Scaffold(
+      appBar: passwordScreenAppBar,
+      body: PasswordStepWrapper(
+        passwordController: _passwordController,
+        confirmPasswordController: _confirmPasswordController,
+        isLoading: _isLoading,
+        onBack: () {
+          // Reset state when going back to email step
+          setState(() {
+            _currentStep = 3; // Reset to email step
+          });
+          Navigator.pop(context);
+        },
+        onNext: () {
+          setState(() {
+            _currentStep = 5;
+          });
 
-        // Crear un AppBar para la pantalla de información personal
-        final personalInfoScreenAppBar = AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          toolbarHeight: 30, // Reduced height for the AppBar
-        );
+          // Crear un AppBar para la pantalla de información personal con botones
+          final personalInfoScreenAppBar = AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            toolbarHeight: 60, // Altura mayor para acomodar ambos botones
+            leading: Container(
+              margin: const EdgeInsets.only(left: 16.0, top: 8.0),
+              child: const ThemeToggleButton(),
+            ),
+            actions: [
+              Container(
+                margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: LanguageSelectorButton(),
+              ),
+            ],
+          );
 
-        // Navigate to the personal info step
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => Scaffold(
-                  appBar: personalInfoScreenAppBar,
-                  body: SafeArea(
-                    child: Form(
-                      key: _personalInfoFormKey,
-                      child: Column(
-                        children: [
-                          _buildHeader(),
-                          Expanded(
-                            child: PersonalInfoStep(
-                              givenNameController: _givenNameController,
-                              familyNameController: _familyNameController,
-                              firstNameFocusNode: _firstNameFocusNode,
-                              lastNameFocusNode: _lastNameFocusNode,
+          // Navigate to the personal info step
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => Scaffold(
+                    appBar: personalInfoScreenAppBar,
+                    body: SafeArea(
+                      child: Form(
+                        key: _personalInfoFormKey,
+                        child: Column(
+                          children: [
+                            _buildHeader(),
+                            Expanded(
+                              child: PersonalInfoStep(
+                                givenNameController: _givenNameController,
+                                familyNameController: _familyNameController,
+                                firstNameFocusNode: _firstNameFocusNode,
+                                lastNameFocusNode: _lastNameFocusNode,
+                              ),
                             ),
-                          ),
-                          // Navigation buttons
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      // Reset state when going back to prevent view stacking issues
-                                      setState(() {
-                                        _currentStep =
-                                            4; // Reset to password step
-                                      });
-                                      Navigator.pop(context);
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      minimumSize: const Size.fromHeight(56),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      context.tr
-                                          .translate('back')
-                                          .toUpperCase(),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      // Validate personal info
-                                      if (_givenNameController.text.isEmpty) {
-                                        ToastUtil.showErrorToast(
-                                          context,
-                                          'First name is required',
-                                        );
-                                        return;
-                                      }
-                                      if (_familyNameController.text.isEmpty) {
-                                        ToastUtil.showErrorToast(
-                                          context,
-                                          'Last name is required',
-                                        );
-                                        return;
-                                      }
-
-                                      setState(() {
-                                        _currentStep = 6;
-                                      });
-
-                                      // Navigate to profile image step
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) =>
-                                                  _buildProfileImageScreen(),
+                            // Navigation buttons
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        // Reset state when going back to prevent view stacking issues
+                                        setState(() {
+                                          _currentStep =
+                                              4; // Reset to password step
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        minimumSize: const Size.fromHeight(56),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      minimumSize: const Size.fromHeight(56),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        context.tr
+                                            .translate('back')
+                                            .toUpperCase(),
                                       ),
                                     ),
-                                    child: Text(
-                                      context.tr
-                                          .translate('next')
-                                          .toUpperCase(),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        // Validate personal info
+                                        if (_givenNameController.text.isEmpty) {
+                                          ToastUtil.showErrorToast(
+                                            context,
+                                            'First name is required',
+                                          );
+                                          return;
+                                        }
+                                        if (_familyNameController
+                                            .text
+                                            .isEmpty) {
+                                          ToastUtil.showErrorToast(
+                                            context,
+                                            'Last name is required',
+                                          );
+                                          return;
+                                        }
+
+                                        setState(() {
+                                          _currentStep = 6;
+                                        });
+
+                                        // Navigate to profile image step
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) =>
+                                                    _buildProfileImageScreen(),
+                                          ),
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize: const Size.fromHeight(56),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        context.tr
+                                            .translate('next')
+                                            .toUpperCase(),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-          ),
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1272,12 +1303,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       print("Confirmed email value before profile screen: '$_signupEmail'");
     }
 
-    // Crear un AppBar para la pantalla de imagen de perfil
+    // Crear un AppBar para la pantalla de imagen de perfil con botones
     final profileImageScreenAppBar = AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
-      toolbarHeight: 30, // Reduced height for the AppBar
+      toolbarHeight: 60, // Altura mayor para acomodar ambos botones
+      leading: Container(
+        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
+        child: const ThemeToggleButton(),
+      ),
+      actions: [
+        Container(
+          margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: LanguageSelectorButton(),
+        ),
+      ],
     );
 
     return StatefulBuilder(

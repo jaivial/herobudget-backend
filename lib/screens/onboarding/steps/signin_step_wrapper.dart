@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/extensions.dart';
 import '../../../widgets/language_selector_button.dart';
+import '../../../widgets/theme_toggle_button.dart';
 import 'signin_step.dart';
 
 class SignInStepWrapper extends StatefulWidget {
@@ -123,23 +124,13 @@ class _SignInStepWrapperState extends State<SignInStepWrapper> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Stack(
-            children: [
-              // Centered logo
-              Center(
-                child: Image.asset(
-                  'assets/images/herobudgeticon.png',
-                  height: 60,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              // Absolute positioned language selector at the right
-              Positioned(
-                right: 0,
-                top: 0,
-                child: const LanguageSelectorButton(),
-              ),
-            ],
+          // Solo logo centrado, botones manejados por AppBar principal
+          Center(
+            child: Image.asset(
+              'assets/images/herobudgeticon.png',
+              height: 60,
+              fit: BoxFit.contain,
+            ),
           ),
           const SizedBox(height: 10),
           Text(

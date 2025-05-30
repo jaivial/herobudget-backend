@@ -167,7 +167,7 @@ class _MyAppState extends State<MyApp> {
   bool _isLoading = true;
   Locale? _appLocale;
   bool _isLocaleSupported = true;
-  ThemeMode _themeMode = ThemeMode.light;
+  ThemeMode _themeMode = ThemeMode.dark;
 
   // Flag to prevent concurrent navigation
   bool _isHandlingDeepLink = false;

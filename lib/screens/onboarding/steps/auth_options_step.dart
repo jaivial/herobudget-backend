@@ -195,13 +195,7 @@ class AuthOptionsStep extends StatelessWidget {
                   ),
                 ),
               ),
-              // Hide language selector on desktop since it's already in the left panel
-              if (!isDesktop)
-                Positioned(
-                  right: 24,
-                  top: 15,
-                  child: const LanguageSelectorButton(),
-                ),
+              // Selector de idioma ahora manejado por el AppBar principal
             ],
           );
         } catch (e) {

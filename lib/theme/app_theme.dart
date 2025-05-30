@@ -115,7 +115,7 @@ class AppTheme {
   static Future<ThemeMode> getThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
     final index = prefs.getInt(themePreferenceKey);
-    return index != null ? ThemeMode.values[index] : ThemeMode.light;
+    return index != null ? ThemeMode.values[index] : ThemeMode.dark;
   }
 }
 

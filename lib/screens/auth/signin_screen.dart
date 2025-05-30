@@ -5,6 +5,7 @@ import '../../services/app_service.dart';
 import '../../utils/toast_util.dart';
 import '../../utils/extensions.dart';
 import '../../widgets/language_selector_button.dart';
+import '../../widgets/theme_toggle_button.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../reset_password/reset_password_screen.dart';
 import '../verification/email_verification_screen.dart';
@@ -168,12 +169,16 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Crear un AppBar personalizado con el botón selector de idioma
+    // Crear un AppBar personalizado con el botón selector de idioma y cambio de tema
     final appBar = AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
       automaticallyImplyLeading: false,
       toolbarHeight: 60, // Altura mayor para el AppBar
+      leading: Container(
+        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
+        child: const ThemeToggleButton(),
+      ),
       actions: [
         Container(
           margin: const EdgeInsets.only(top: 8.0, right: 16.0),

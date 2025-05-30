@@ -1,8 +1,8 @@
 Mejoras_de_app.md
 ✅ 1) Asegurarse que todos los idiomas tienen todas las traducciones en /assets/l10n
 ✅ 2) Cuando cantidad restante es negativa el gráfico de budget overview se tiene que mostrar al 100% rojo, lo mismo que cuando los gastos comibnados hacen que el dinero restante sea 0 o menos.
-3) Por defecto quiero que se muestre el modo oscuro de la APP.
-4) Quiero que se incluya el boton de cmabio de modo claro/oscuro en las primeras paginas de onboarding/inicio sesión/registro
+✅ 3) Por defecto quiero que se muestre el modo oscuro de la APP.
+✅ 4) Quiero que se incluya el boton de cmabio de modo claro/oscuro en las primeras paginas de onboarding/inicio sesión/registro
 5) En la ventana de añadir categoría mejorar el tipo de categoría 'Income' 'Expense': mejorar el icono, mejorar la ui de las cards, añadir la traducción para todos los idiomas en /assets/l10n.
 6) El periodo de tiempo weekly no carga los datos correctamente, los datos salen todos a 0: 
 flutter: 📋 Request body: {"user_id":"19","period":"weekly","date":"2025-W22"}
