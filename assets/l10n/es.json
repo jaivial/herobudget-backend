@@ -393,5 +393,7 @@
     "category_type": "Tipo de Categoría",
     "custom_emoji": "Emoji Personalizado",
     "select_emoji": "Seleccionar Emoji",
-    "selected_emoji": "Emoji Seleccionado"
+    "selected_emoji": "Emoji Seleccionado",
+    "due_soon": "Vence Pronto",
+    "pay_now": "Pagar Ahora"
 }

@@ -310,7 +310,7 @@ class _TransferModalState extends State<TransferModal>
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -318,44 +318,45 @@ class _TransferModalState extends State<TransferModal>
                                 accentColor.withOpacity(0.1),
                               ],
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             Icons.swap_horiz_rounded,
                             color: accentColor,
-                            size: 20,
+                            size: 18,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
+                        const SizedBox(width: 10),
+                        Flexible(
                           child: Text(
                             context.tr.translate('transfer_money'),
                             style: TextStyle(
-                              fontSize: 20,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: primaryTextColor,
                               letterSpacing: -0.3,
                             ),
-                            overflow: TextOverflow.ellipsis,
+                            overflow: TextOverflow.fade,
+                            softWrap: false,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Container(
                           decoration: BoxDecoration(
                             color: borderColor.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: IconButton(
                             onPressed: () => Navigator.of(context).pop(),
                             icon: Icon(
                               Icons.close_rounded,
                               color: secondaryTextColor,
-                              size: 20,
+                              size: 18,
                             ),
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(6),
                             constraints: const BoxConstraints(
-                              minWidth: 36,
-                              minHeight: 36,
+                              minWidth: 32,
+                              minHeight: 32,
                             ),
                           ),
                         ),
@@ -869,16 +870,19 @@ class _TransferModalState extends State<TransferModal>
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
                                         children: [
-                                          const Icon(
-                                            Icons.send_rounded,
-                                            size: 20,
+                                          Icon(
+                                            Icons.compare_arrows_rounded,
+                                            size: 22,
+                                            color: Colors.white,
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: 10),
                                           Text(
                                             context.tr.translate('transfer'),
                                             style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
+                                              color: Colors.white,
+                                              letterSpacing: 0.5,
                                             ),
                                           ),
                                         ],

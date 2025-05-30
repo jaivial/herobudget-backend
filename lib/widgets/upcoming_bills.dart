@@ -561,292 +561,269 @@ class TransactionBillItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Determine colors based on status
+    final bool isOverdue = transaction.overdue == true;
+    final bool isPaid = transaction.paid == true;
+
+    // Enhanced color scheme
+    final Color primaryColor =
+        isOverdue
+            ? Colors.red.shade600
+            : isPaid
+            ? Colors.green.shade600
+            : (isDarkMode
+                ? AppTheme.primaryColorDark
+                : Theme.of(context).colorScheme.primary);
+
     final Color borderColor =
-        transaction.overdue == true
+        isOverdue
             ? Colors.red.shade300
+            : isPaid
+            ? Colors.green.shade300
             : isDarkMode
             ? AppTheme.tertiaryColorDark.withOpacity(0.3)
             : Theme.of(context).colorScheme.outline.withOpacity(0.2);
 
     final Color backgroundColor =
-        transaction.overdue == true
+        isOverdue
             ? isDarkMode
-                ? Colors.red.shade900.withOpacity(0.2)
+                ? Colors.red.shade900.withOpacity(0.15)
                 : Colors.red.shade50
+            : isPaid
+            ? isDarkMode
+                ? Colors.green.shade900.withOpacity(0.15)
+                : Colors.green.shade50
             : isDarkMode
-            ? AppTheme.surfaceDark.withOpacity(0.8)
+            ? AppTheme.surfaceDark.withOpacity(0.9)
             : Colors.white;
 
     // Get a user-friendly display name
     String displayName = _getDisplayName();
 
+    // Check if bill is due soon (within 3 days)
+    final DateTime dueDate = DateTime.parse(transaction.date);
+    final DateTime now = DateTime.now();
+    final int daysUntilDue = dueDate.difference(now).inDays;
+    final bool isDueSoon =
+        daysUntilDue <= 3 && daysUntilDue >= 0 && !isOverdue && !isPaid;
+
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor, width: isOverdue ? 2 : 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: primaryColor.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: IntrinsicHeight(
-        child: Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
           children: [
             // Side indicator for overdue bills
-            if (transaction.overdue == true)
-              Container(
-                width: 5,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    bottomLeft: Radius.circular(16),
+            if (isOverdue)
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 6,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.red.shade400, Colors.red.shade600],
+                    ),
+                  ),
+                ),
+              ),
+
+            // Due soon indicator
+            if (isDueSoon)
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.orange.shade400, Colors.orange.shade600],
+                    ),
                   ),
                 ),
               ),
 
             // Main content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        // Bill icon
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color:
-                                isDarkMode
-                                    ? AppTheme.primaryColorDark.withOpacity(0.2)
-                                    : Theme.of(
-                                      context,
-                                    ).colorScheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Center(
-                            child: FittedBox(
-                              fit: BoxFit.contain,
-                              child: Padding(
-                                padding: const EdgeInsets.all(4.0),
-                                child: Text(
-                                  _getTransactionIcon(),
-                                  style: const TextStyle(fontSize: 24),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 16),
-
-                        // Bill details
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Status badge
-                              if (transaction.overdue == true ||
-                                  transaction.paid == true)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 6),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        transaction.overdue == true
-                                            ? Colors.red
-                                            : Colors.green,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    transaction.overdue == true
-                                        ? context.tr.translate('overdue')
-                                        : context.tr.translate('paid'),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-
-                              // Bill name
-                              Text(
-                                displayName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color:
-                                      isDarkMode
-                                          ? Colors.white
-                                          : Colors.black87,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-
-                              const SizedBox(height: 4),
-
-                              // Category with icon
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.category_outlined,
-                                    size: 14,
-                                    color:
-                                        isDarkMode
-                                            ? Colors.white.withOpacity(0.6)
-                                            : Colors.grey.shade600,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      transaction.category,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color:
-                                            isDarkMode
-                                                ? Colors.white.withOpacity(0.6)
-                                                : Colors.grey.shade600,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              // Overdue days info
-                              if (transaction.overdue == true &&
-                                  transaction.overdueDays != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    '${context.tr.translate('overdue_by')} ${transaction.overdueDays} ${context.tr.translate('days')}',
-                                    style: TextStyle(
-                                      color: Colors.red.shade700,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
+            Padding(
+              padding: EdgeInsets.only(
+                left: (isOverdue || isDueSoon) ? 20 : 20,
+                right: 20,
+                top: 20,
+                bottom: 20,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row with icon, title and status badges
+                  Row(
+                    children: [
+                      // Enhanced bill icon
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              primaryColor.withOpacity(0.2),
+                              primaryColor.withOpacity(0.1),
                             ],
                           ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: primaryColor.withOpacity(0.3),
+                            width: 1,
+                          ),
                         ),
+                        child: Center(
+                          child: Text(
+                            _getTransactionIcon(),
+                            style: const TextStyle(fontSize: 28),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
 
-                        // Amount and actions
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                      const SizedBox(width: 16),
+
+                      // Title and status badges
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Amount
+                            // Status badges row
+                            Row(
+                              children: [
+                                if (isOverdue)
+                                  _StatusBadge(
+                                    label: context.tr.translate('overdue'),
+                                    color: Colors.red,
+                                    icon: Icons.warning_rounded,
+                                  ),
+                                if (isPaid)
+                                  _StatusBadge(
+                                    label: context.tr.translate('paid'),
+                                    color: Colors.green,
+                                    icon: Icons.check_circle_rounded,
+                                  ),
+                                if (isDueSoon && !isOverdue && !isPaid)
+                                  _StatusBadge(
+                                    label: context.tr.translate('due_soon'),
+                                    color: Colors.orange,
+                                    icon: Icons.schedule_rounded,
+                                  ),
+                              ],
+                            ),
+
+                            if (isOverdue || isPaid || isDueSoon)
+                              const SizedBox(height: 8),
+
+                            // Bill name
                             Text(
-                              context.tr.formatCurrency(transaction.amount),
+                              displayName,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
                                 color:
-                                    transaction.overdue == true
-                                        ? Colors.red.shade700
-                                        : isDarkMode
-                                        ? Colors.white
-                                        : Colors.black87,
+                                    isDarkMode ? Colors.white : Colors.black87,
+                                height: 1.2,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-
-                            const SizedBox(height: 6),
-
-                            // Due date
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    isDarkMode
-                                        ? Colors.white.withOpacity(0.1)
-                                        : Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.schedule,
-                                    size: 12,
-                                    color:
-                                        isDarkMode
-                                            ? Colors.white.withOpacity(0.7)
-                                            : Colors.grey.shade600,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    context.tr.formatDateWithTranslatedMonths(
-                                      DateTime.parse(transaction.date),
-                                      pattern: 'MMM d',
-                                    ),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          isDarkMode
-                                              ? Colors.white.withOpacity(0.7)
-                                              : Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Pay button
-                            if (showPayButton &&
-                                onPayBill != null &&
-                                transaction.paid != true)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: ElevatedButton(
-                                  onPressed: onPayBill,
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 8,
-                                    ),
-                                    textStyle: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    minimumSize: const Size(70, 32),
-                                    backgroundColor:
-                                        isDarkMode
-                                            ? AppTheme.primaryColorDark
-                                            : Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  child: Text(context.tr.translate('pay')),
-                                ),
-                              ),
                           ],
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+
+                      // Amount column
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            context.tr.formatCurrency(transaction.amount),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color:
+                                  isOverdue
+                                      ? Colors.red.shade700
+                                      : isDarkMode
+                                      ? Colors.white
+                                      : Colors.black87,
+                            ),
+                          ),
+                          if (isOverdue && transaction.overdueDays != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                '${transaction.overdueDays}d ${context.tr.translate('overdue').toLowerCase()}',
+                                style: TextStyle(
+                                  color: Colors.red.shade600,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Details row
+                  Row(
+                    children: [
+                      // Due date info (expanded to take more space)
+                      Expanded(
+                        child: _InfoChip(
+                          icon: Icons.schedule_rounded,
+                          label: context.tr.formatDateWithTranslatedMonths(
+                            DateTime.parse(transaction.date),
+                            pattern: 'MMM d, yyyy',
+                          ),
+                          isDarkMode: isDarkMode,
+                          color: isDueSoon ? Colors.orange : null,
+                        ),
+                      ),
+
+                      const SizedBox(width: 16),
+
+                      // Action button
+                      if (showPayButton && onPayBill != null && !isPaid)
+                        _PayButton(
+                          onPressed: onPayBill!,
+                          isOverdue: isOverdue,
+                          isDarkMode: isDarkMode,
+                          context: context,
+                        ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
@@ -896,6 +873,166 @@ class TransactionBillItem extends StatelessWidget {
     return IconUtils.getAppropriateEmoji(
       categoryName: transaction.category,
       iconName: transaction.icon,
+    );
+  }
+}
+
+// Helper widget for status badges
+class _StatusBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  const _StatusBadge({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Helper widget for info chips
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDarkMode;
+  final Color? color;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.isDarkMode,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveColor =
+        color ?? (isDarkMode ? Colors.white70 : Colors.grey.shade600);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color:
+            isDarkMode ? Colors.white.withOpacity(0.1) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border:
+            color != null
+                ? Border.all(color: color!.withOpacity(0.3), width: 1)
+                : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: effectiveColor),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: effectiveColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Helper widget for pay button
+class _PayButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final bool isOverdue;
+  final bool isDarkMode;
+  final BuildContext context;
+
+  const _PayButton({
+    required this.onPressed,
+    required this.isOverdue,
+    required this.isDarkMode,
+    required this.context,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final Color buttonColor =
+        isOverdue
+            ? Colors.red.shade600
+            : (isDarkMode
+                ? AppTheme.primaryColorDark
+                : Theme.of(context).colorScheme.primary);
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: buttonColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(
+          isOverdue ? Icons.priority_high_rounded : Icons.payment_rounded,
+          size: 18,
+        ),
+        label: Text(
+          isOverdue
+              ? context.tr.translate('pay_now')
+              : context.tr.translate('pay'),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: buttonColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+      ),
     );
   }
 }

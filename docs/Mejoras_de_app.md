@@ -213,8 +213,83 @@ flutter: ✅ Budget data received successfully
 3. ✅ Mantiene compatibilidad con ambos formatos de fecha
 4. ✅ Implementa cálculo correcto de semana ISO 8601
 
-7) En el modal de Transferir dinero mejorar la legibilidad del icono y el texto del botón 'Transferir'. También el título del modal se corta viéndose así 'Transferir Din...'
+✅ 7) En el modal de Transferir dinero mejorar la legibilidad del icono y el texto del botón 'Transferir'. También el título del modal se corta viéndose así 'Transferir Din...'
 
-8) En los archivos de idiomas en /assets/l10n hay muchas claves cuyo valor es un texto entre corechetes como [Portuguese translation for:]. Analizalos, y cambia el valor por la traducción necesaria
-10) Mejora la disposición de la ui de las cards para proximas facturas y overdue bills.
+**TRABAJO COMPLETADO:**
+
+✅ **PROBLEMA DEL TÍTULO CORTADO SOLUCIONADO:**
+- **Optimizado el layout del header**: Reducido padding, espacios y tamaños de elementos laterales para dar más espacio al título
+- **Cambiado `Expanded` por `Flexible`**: Mejor control del espacio disponible para el texto del título
+- **Ajustado fontSize**: Reducido de 20 a 18 píxeles para optimizar el espacio
+- **Mejorado el overflow**: Cambiado de `TextOverflow.ellipsis` a `TextOverflow.fade` para mejor apariencia visual
+- **Resultado**: El título "Transferir Dinero" ahora se muestra completo sin cortarse
+
+✅ **LEGIBILIDAD DEL BOTÓN 'TRANSFERIR' MEJORADA:**
+- **Icono más intuitivo**: Cambiado de `Icons.send_rounded` a `Icons.compare_arrows_rounded` (más apropiado para transferencias)
+- **Mayor visibilidad del icono**: Aumentado tamaño de 20 a 22 píxeles para mejor legibilidad
+- **Contraste mejorado**: Agregado color blanco explícito tanto al icono como al texto para asegurar contraste óptimo
+- **Espaciado optimizado**: Aumentado el espacio entre icono y texto de 8 a 10 píxeles
+- **Legibilidad del texto**: Agregado `letterSpacing: 0.5` para mejorar la claridad del texto
+
+✅ **ARCHIVO MODIFICADO:**
+- `lib/widgets/transfer_modal.dart`: 
+  - Sección del header optimizada (líneas 310-350)
+  - Botón de transferir mejorado (líneas 860-880)
+  - Conservadas todas las animaciones y funcionalidades existentes
+
+**RESULTADO FINAL:** El modal de transferir dinero ahora tiene:
+1. ✅ Título completo visible sin cortarse
+2. ✅ Icono del botón más intuitivo y legible
+3. ✅ Texto del botón con mejor contraste y espaciado
+4. ✅ Layout del header optimizado sin perder funcionalidad
+
+✅ 8) En los archivos de idiomas en /assets/l10n hay muchas claves cuyo valor es un texto entre corechetes como [Portuguese translation for:]. Analizalos, y cambia el valor por la traducción necesaria
+✅ 10) Mejora la disposición de la ui de las cards para proximas facturas y overdue bills.
+
+**TRABAJO COMPLETADO:**
+
+✅ **REDISEÑO COMPLETO DE LAS CARDS DE FACTURAS:**
+- **Layout mejorado**: Cambio de `IntrinsicHeight` + `Row` a estructura más organizada con `Column` y `Rows`
+- **Iconos rediseñados**: Contenedores de 56x56px con gradientes y bordes para mejor visibilidad
+- **Indicadores visuales mejorados**:
+  - Indicador lateral rojo (6px) para facturas vencidas con gradiente
+  - Indicador lateral naranja (4px) para facturas próximas a vencer
+- **Status badges modernos**: Nuevos badges con iconos para estados overdue, paid y due soon
+- **Información reorganizada**: Chips informativos para categoría y fecha de vencimiento
+- **Botones de pago prominentes**: Botones más grandes con iconos y sombras para mejor visibilidad
+- **Esquema de colores mejorado**: Mejor diferenciación entre estados (overdue, paid, upcoming)
+- **Tipografía optimizada**: Mejor jerarquía visual y contraste de colores
+- **Sombras modernas**: Sistema de sombras múltiples para dar profundidad
+- **Espaciado optimizado**: Mejor distribución del espacio entre elementos
+- **Bordes redondeados**: Cambio a 20px para un look más moderno
+
+✅ **NUEVAS FUNCIONALIDADES AGREGADAS:**
+- **Detección de facturas próximas a vencer**: Lógica para detectar facturas que vencen en 3 días o menos
+- **Indicadores de prioridad**: Diferentes colores y estilos según el estado de la factura
+- **Botones contextuales**: "Pay Now" para facturas vencidas, "Pay" para facturas normales
+- **Información de días vencidos**: Muestra cuántos días lleva vencida una factura
+
+✅ **TRADUCCIONES AGREGADAS A TODOS LOS IDIOMAS:**
+- **"due_soon"**: Agregada en 14 idiomas (inglés, español, francés, alemán, italiano, portugués, ruso, chino, japonés, danés, holandés, griego, alemán suizo, hindi)
+- **"pay_now"**: Agregada en 14 idiomas con traducciones apropiadas para cada cultura
+
+✅ **ARCHIVOS MODIFICADOS:**
+- `lib/widgets/upcoming_bills.dart`: Rediseño completo de la clase `TransactionBillItem` y agregado de widgets helper `_StatusBadge`, `_InfoChip`, `_PayButton`
+- `assets/l10n/en.json`: Agregadas traducciones "due_soon": "Due Soon", "pay_now": "Pay Now"
+- `assets/l10n/es.json`: Agregadas traducciones "due_soon": "Vence Pronto", "pay_now": "Pagar Ahora"
+- `assets/l10n/fr.json`: Agregadas traducciones "due_soon": "Échéance Proche", "pay_now": "Payer Maintenant"
+- `assets/l10n/de.json`: Agregadas traducciones "due_soon": "Bald Fällig", "pay_now": "Jetzt Bezahlen"
+- `assets/l10n/it.json`: Agregadas traducciones "due_soon": "In Scadenza", "pay_now": "Paga Ora"
+- `assets/l10n/pt.json`: Agregadas traducciones "due_soon": "Vence Em Breve", "pay_now": "Pagar Agora"
+- `assets/l10n/ru.json`: Agregadas traducciones "due_soon": "Скоро Срок", "pay_now": "Заплатить Сейчас"
+- `assets/l10n/zh.json`: Agregadas traducciones "due_soon": "即将到期", "pay_now": "立即支付"
+- `assets/l10n/ja.json`: Agregadas traducciones "due_soon": "期限間近", "pay_now": "今すぐ支払う"
+- `assets/l10n/da.json`: Agregadas traducciones "due_soon": "Forfald Snart", "pay_now": "Betal Nu"
+- `assets/l10n/nl.json`: Agregadas traducciones "due_soon": "Vervalt Binnenkort", "pay_now": "Nu Betalen"
+- `assets/l10n/el.json`: Agregadas traducciones "due_soon": "Λήγει Σύντομα", "pay_now": "Πληρώστε Τώρα"
+- `assets/l10n/gsw.json`: Agregadas traducciones "due_soon": "Bal Fällig", "pay_now": "Jetz Zahle"
+- `assets/l10n/hi.json`: Agregadas traducciones "due_soon": "जल्द देय", "pay_now": "अभी भुगतान करें"
+
+**RESULTADO FINAL:** Las cards de facturas ahora tienen un diseño moderno, mejor organización visual, indicadores claros de estado y prioridad, y botones de acción más prominentes que mejoran significativamente la experiencia del usuario.
+
 11) En la pantalla pay_bill_screen mejora la ui de 'Detalles de la Factura', mejora la ui de Resumen del Pago, añade más margen entre el bottom de la pantalla y el botón de 'Confirmar Pago'.

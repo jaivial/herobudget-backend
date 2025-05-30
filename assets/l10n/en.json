@@ -494,5 +494,7 @@
     "november": "November",
     "december": "December",
     "quarterly": "Quarterly",
-    "end_date": "End Date"
+    "end_date": "End Date",
+    "due_soon": "Due Soon",
+    "pay_now": "Pay Now"
 }
