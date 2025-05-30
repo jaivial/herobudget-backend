@@ -131,7 +131,7 @@
     "error_deleting_savings_goal": "Errore durante l'eliminazione dell'obiettivo di risparmio",
     "error_loading_data": "Errore nel caricamento dei dati",
     "error_updating_savings_goal": "Errore nell'aggiornamento dell'obiettivo di risparmio",
-    "expense": "[Italian translation for: Expense]",
+    "expense": "Spesa",
     "expense_added_successfully": "Spesa aggiunta con successo",
     "expenses": "Spese",
     "failed_to_send_reset_email": "Impossibile inviare l'email di reimpostazione",

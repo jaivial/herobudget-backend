@@ -131,7 +131,7 @@
     "error_deleting_savings_goal": "Fehler beim Löschen des Sparziels",
     "error_loading_data": "Fehler beim Laden der Daten",
     "error_updating_savings_goal": "Fehler beim Aktualisieren des Sparziels",
-    "expense": "[German translation for: Expense]",
+    "expense": "Ausgabe",
     "expense_added_successfully": "Ausgabe erfolgreich hinzugefügt",
     "expenses": "Ausgaben",
     "failed_to_send_reset_email": "Fehler beim Senden der Rücksetz-E-Mail",

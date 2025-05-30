@@ -131,7 +131,7 @@
     "error_deleting_savings_goal": "Fout bij het verwijderen van het spaardoel",
     "error_loading_data": "Fout bij het laden van gegevens",
     "error_updating_savings_goal": "Fout bij het bijwerken van het spaardoel",
-    "expense": "[Dutch translation for: Expense]",
+    "expense": "Uitgave",
     "expense_added_successfully": "Uitgave succesvol toegevoegd",
     "expenses": "Uitgaven",
     "failed_to_send_reset_email": "Kon geen reset e-mail verzenden",

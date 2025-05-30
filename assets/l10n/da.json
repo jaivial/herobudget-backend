@@ -131,7 +131,7 @@
     "error_deleting_savings_goal": "Fejl ved sletning af opsparingsmål",
     "error_loading_data": "[Danish translation for: Error loading data]",
     "error_updating_savings_goal": "[Danish translation for: Error updating savings goal]",
-    "expense": "[Danish translation for: Expense]",
+    "expense": "Udgift",
     "expense_added_successfully": "[Danish translation for: Expense added successfully]",
     "expenses": "Udgifter",
     "failed_to_send_reset_email": "Kunne ikke sende e-mail til nulstilling",

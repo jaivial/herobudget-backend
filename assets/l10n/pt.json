@@ -131,7 +131,7 @@
     "error_deleting_savings_goal": "Erro ao excluir meta de poupança",
     "error_loading_data": "[Portuguese translation for: Error loading data]",
     "error_updating_savings_goal": "[Portuguese translation for: Error updating savings goal]",
-    "expense": "[Portuguese translation for: Expense]",
+    "expense": "Despesa",
     "expense_added_successfully": "[Portuguese translation for: Expense added successfully]",
     "expenses": "Despesas",
     "failed_to_send_reset_email": "Falha ao enviar email de redefinição",

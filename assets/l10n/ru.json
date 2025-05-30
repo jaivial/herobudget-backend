@@ -131,7 +131,7 @@
     "error_deleting_savings_goal": "Ошибка при удалении цели сбережений",
     "error_loading_data": "[Russian translation for: Error loading data]",
     "error_updating_savings_goal": "[Russian translation for: Error updating savings goal]",
-    "expense": "[Russian translation for: Expense]",
+    "expense": "Расход",
     "expense_added_successfully": "[Russian translation for: Expense added successfully]",
     "expenses": "Расходы",
     "failed_to_send_reset_email": "Не удалось отправить письмо для сброса пароля",

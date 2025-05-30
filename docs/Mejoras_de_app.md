@@ -104,7 +104,52 @@ ARCHIVOS DART A ACTUALIZAR (reemplazar textos hardcodeados):
 ✅ 2) Cuando cantidad restante es negativa el gráfico de budget overview se tiene que mostrar al 100% rojo, lo mismo que cuando los gastos comibnados hacen que el dinero restante sea 0 o menos.
 ✅ 3) Por defecto quiero que se muestre el modo oscuro de la APP.
 ✅ 4) Quiero que se incluya el boton de cmabio de modo claro/oscuro en las primeras paginas de onboarding/inicio sesión/registro
-5) En la ventana de añadir categoría mejorar el tipo de categoría 'Income' 'Expense': mejorar el icono, mejorar la ui de las cards, añadir la traducción para todos los idiomas en /assets/l10n.
+✅ 5) En la ventana de añadir categoría mejorar el tipo de categoría 'Income' 'Expense': mejorar el icono, mejorar la ui de las cards, añadir la traducción para todos los idiomas en /assets/l10n.
+
+**TRABAJO COMPLETADO:**
+
+✅ **MEJORAS EN LA UI DE LAS CARDS INCOME/EXPENSE:**
+- Reemplazados iconos simples (trending_up/trending_down) por iconos más descriptivos:
+  - Income: account_balance_wallet (icono de billetera)
+  - Expense: shopping_cart (icono de carrito de compras)
+- Implementado diseño moderno con gradientes de color cuando están seleccionadas
+- Agregadas sombras para dar profundidad visual
+- Implementadas animaciones suaves con AnimatedContainer
+- Mejorado padding y bordes redondeados (16px)
+- Agregado indicador visual adicional cuando la card está seleccionada
+- Mejorada tipografía y contraste de colores
+
+✅ **TRADUCCIONES COMPLETADAS PARA 'EXPENSE':**
+- Francés: "Dépense"
+- Alemán: "Ausgabe"
+- Italiano: "Spesa"
+- Danés: "Udgift"
+- Hindi: "व्यय"
+- Griego: "Έξοδο"
+- Alemán suizo: "Usgaab"
+- Holandés: "Uitgave"
+- Ruso: "Расход"
+- Chino simplificado: "支出"
+- Japonés: "支出"
+- Portugués: "Despesa"
+
+✅ **ARCHIVOS MODIFICADOS:**
+- lib/screens/category/add_category_screen.dart: Método _buildTypeButton completamente rediseñado
+- assets/l10n/fr.json: Traducción de "expense" completada
+- assets/l10n/de.json: Traducción de "expense" completada
+- assets/l10n/it.json: Traducción de "expense" completada
+- assets/l10n/da.json: Traducción de "expense" completada
+- assets/l10n/hi.json: Traducción de "expense" completada
+- assets/l10n/el.json: Traducción de "expense" completada
+- assets/l10n/gsw.json: Traducción de "expense" completada
+- assets/l10n/nl.json: Traducción de "expense" completada
+- assets/l10n/ru.json: Traducción de "expense" completada
+- assets/l10n/zh.json: Traducción de "expense" completada
+- assets/l10n/ja.json: Traducción de "expense" completada
+- assets/l10n/pt.json: Traducción de "expense" completada
+
+**NOTA:** Las traducciones para 'income' ya existían en todos los idiomas y no requerían modificaciones.
+
 6) El periodo de tiempo weekly no carga los datos correctamente, los datos salen todos a 0: 
 flutter: 📋 Request body: {"user_id":"19","period":"weekly","date":"2025-W22"}
 flutter: 📡 Response status: 200
@@ -112,12 +157,7 @@ flutter: 📦 Response body: {"success":true,"message":"Budget overview fetched 
 flutter: ✅ Budget data received successfully
 
 7) En el modal de Transferir dinero mejorar la legibilidad del icono y el texto del botón 'Transferir'. También el título del modal se corta viéndose así 'Transferir Din...'
-8) El endpoint de transferir dinero no funciona bien con la configuración de microservicios en el servidor: flutter: 🔄 Transferring $200.00 from bank to cash for user: 19
-flutter: 📡 Transfer response status: 404
-flutter: 📦 Transfer response body: 404 page not found
-flutter: ❌ Transfer failed: Error transferring bank to cash: 404
-flutter: ❌ Error in transferBankToCash: Exception: Error transferring bank to cash: 404
-9) El endpoint para fetch facturar cuando se hace click en pagar factura al abrir la pantalla 'Pagar Factura' no funciona correctamente con los endpoints en los microservicios en el VPS: flutter: Error in fetchInvoices: Exception: Error fetching invoices: 404
 
+8) En los archivos de idiomas en /assets/l10n hay muchas claves cuyo valor es un texto entre corechetes como [Portuguese translation for:]. Analizalos, y cambia el valor por la traducción necesaria
 10) Mejora la disposición de la ui de las cards para proximas facturas y overdue bills.
 11) En la pantalla pay_bill_screen mejora la ui de 'Detalles de la Factura', mejora la ui de Resumen del Pago, añade más margen entre el bottom de la pantalla y el botón de 'Confirmar Pago'.

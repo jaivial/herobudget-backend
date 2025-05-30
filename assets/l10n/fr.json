@@ -131,7 +131,7 @@
     "error_deleting_savings_goal": "Erreur lors de la suppression de l'objectif d'épargne",
     "error_loading_data": "Erreur lors du chargement des données",
     "error_updating_savings_goal": "Erreur lors de la mise à jour de l'objectif d'épargne",
-    "expense": "[French translation for: Expense]",
+    "expense": "Dépense",
     "expense_added_successfully": "Dépense ajoutée avec succès",
     "expenses": "Dépenses",
     "failed_to_send_reset_email": "Échec de l'envoi de l'e-mail de réinitialisation",

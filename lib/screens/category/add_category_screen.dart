@@ -307,7 +307,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                       child: _buildTypeButton(
                         'income',
                         context.tr.translate('income'),
-                        Icons.trending_up,
+                        Icons.account_balance_wallet,
                         Colors.green,
                       ),
                     ),
@@ -316,7 +316,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                       child: _buildTypeButton(
                         'expense',
                         context.tr.translate('expense'),
-                        Icons.trending_down,
+                        Icons.shopping_cart,
                         Colors.red,
                       ),
                     ),
@@ -438,33 +438,100 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
     // Capitalizar la primera letra del label
     final String displayLabel = label.capitalize();
 
+    // Iconos mejorados y más descriptivos
+    IconData betterIcon;
+    List<Color> gradientColors;
+
+    if (type == 'income') {
+      betterIcon =
+          Icons.account_balance_wallet; // Icono de billetera para ingresos
+      gradientColors = [Colors.green.shade400, Colors.green.shade600];
+    } else {
+      betterIcon = Icons.shopping_cart; // Icono de carrito para gastos
+      gradientColors = [Colors.red.shade400, Colors.red.shade600];
+    }
+
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedType = type;
         });
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : null,
+          gradient:
+              isSelected
+                  ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: gradientColors,
+                  )
+                  : null,
+          color: isSelected ? null : Colors.grey.shade50,
           border: Border.all(
-            color: isSelected ? color : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+            width: isSelected ? 0 : 1,
           ),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow:
+              isSelected
+                  ? [
+                    BoxShadow(
+                      color: gradientColors.first.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.1),
+                      spreadRadius: 1,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color),
-            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? Colors.white.withOpacity(0.2)
+                        : color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                betterIcon,
+                color: isSelected ? Colors.white : color,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 12),
             Text(
               displayLabel,
               style: TextStyle(
-                color: isSelected ? color : null,
-                fontWeight: isSelected ? FontWeight.bold : null,
+                color: isSelected ? Colors.white : Colors.grey.shade700,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                fontSize: 16,
               ),
             ),
+            if (isSelected) ...[
+              const SizedBox(height: 4),
+              Container(
+                width: 20,
+                height: 2,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            ],
           ],
         ),
       ),

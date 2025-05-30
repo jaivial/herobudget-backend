@@ -130,7 +130,7 @@
     "error_deleting_savings_goal": "[Hindi translation for: Error deleting savings goal]",
     "error_loading_data": "[Hindi translation for: Error loading data]",
     "error_updating_savings_goal": "[Hindi translation for: Error updating savings goal]",
-    "expense": "[Hindi translation for: Expense]",
+    "expense": "व्यय",
     "expense_added_successfully": "[Hindi translation for: Expense added successfully]",
     "expenses": "खर्च",
     "failed_to_send_reset_email": "रीसेट ईमेल भेजने में विफल",

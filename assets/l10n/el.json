@@ -130,7 +130,7 @@
     "error_deleting_savings_goal": "Σφάλμα κατά τη διαγραφή του στόχου αποταμίευσης",
     "error_loading_data": "[Greek translation for: Error loading data]",
     "error_updating_savings_goal": "[Greek translation for: Error updating savings goal]",
-    "expense": "[Greek translation for: Expense]",
+    "expense": "Έξοδο",
     "expense_added_successfully": "[Greek translation for: Expense added successfully]",
     "expenses": "Έξοδα",
     "failed_to_send_reset_email": "Αποτυχία αποστολής email επαναφοράς",

@@ -131,7 +131,7 @@
     "error_deleting_savings_goal": "貯蓄目標の削除中にエラーが発生しました",
     "error_loading_data": "データの読み込みエラー",
     "error_updating_savings_goal": "貯蓄目標の更新中にエラーが発生しました",
-    "expense": "[Japanese translation for: Expense]",
+    "expense": "支出",
     "expense_added_successfully": "支出が正常に追加されました",
     "expenses": "支出",
     "failed_to_send_reset_email": "リセットメールの送信に失敗しました",
