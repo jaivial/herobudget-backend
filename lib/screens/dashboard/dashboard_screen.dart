@@ -909,12 +909,11 @@ class _DashboardScreenState extends State<DashboardScreen>
   List<Widget> _buildQuickActions() {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Radio del semicírculo donde se distribuirán las acciones
-    final double radius = math.min(120, screenWidth * 0.35);
+    // Radio aumentado para mayor distribución horizontal en pantalla
+    final double radius = math.min(360, screenWidth * 0.46);
 
-    // Posición base para las acciones (ajustar según sea necesario)
-    const double baseBottomPosition =
-        100; // Increased to match the taller navigation bar
+    // Posición base aún más baja - realmente en el fondo
+    const double baseBottomPosition = 0;
 
     // Lista para almacenar los widgets de acciones
     List<Widget> actionWidgets = [];
@@ -922,15 +921,53 @@ class _DashboardScreenState extends State<DashboardScreen>
     // Número de acciones
     final int numActions = _quickActions.length;
 
+    // Reorganizar las acciones para que Pay Bill esté en el centro
+    List<Map<String, dynamic>> reorderedActions = [];
+    Map<String, dynamic>? payBillAction;
+    List<Map<String, dynamic>> otherActions = [];
+
+    // Separar Pay Bill del resto
+    for (var action in _quickActions) {
+      if (action['label'] == context.tr.translate('pay_bill')) {
+        payBillAction = action;
+      } else {
+        otherActions.add(action);
+      }
+    }
+
+    // Reorganizar: Pay Bill en el centro, otros distribuidos simétricamente
+    if (payBillAction != null) {
+      // Colocar Pay Bill en el centro (índice 2 de 5)
+      reorderedActions = [
+        otherActions[0], // Izquierda 1
+        otherActions[1], // Izquierda 2
+        payBillAction, // Centro (Pay Bill) - vértice de la pirámide
+        otherActions[2], // Derecha 1
+        otherActions[3], // Derecha 2
+      ];
+    } else {
+      reorderedActions = _quickActions;
+    }
+
+    // Ángulos para forma piramidal con Pay Bill como vértice
+    // 30°, 60°, 90°, 120°, 150° - forma piramidal perfecta
+    final List<double> angles = [
+      math.pi / 6, // 30° (izquierda exterior)
+      math.pi / 3, // 60° (izquierda interior)
+      math.pi / 2, // 90° (vértice - Pay Bill)
+      2 * math.pi / 3, // 120° (derecha interior)
+      5 * math.pi / 6, // 150° (derecha exterior)
+    ];
+
     for (int i = 0; i < numActions; i++) {
-      // Distribuir las acciones en un semicírculo - parte inferior del círculo
-      final double angle = math.pi + (math.pi * i / (numActions - 1));
+      final double angle = angles[i];
 
-      // Calcular la posición en el semicírculo
+      // Calcular posición en coordenadas cartesianas
       final double x = radius * math.cos(angle);
-      final double y = radius * math.sin(angle);
+      final double y =
+          -radius * math.sin(angle); // Negativo para que vaya hacia arriba
 
-      final Map<String, dynamic> action = _quickActions[i];
+      final Map<String, dynamic> action = reorderedActions[i];
 
       actionWidgets.add(
         AnimatedBuilder(
@@ -940,8 +977,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             double adjustedX = x * _animationController.value;
             double adjustedY = y * _animationController.value;
 
-            // Centrar respecto al botón flotante
-            double leftPosition = screenWidth / 2 - 28 + adjustedX;
+            // Centrar exactamente con ajuste fino para corregir asimetría
+            double leftPosition = (screenWidth / 2) + adjustedX - 38;
 
             return Positioned(
               bottom: baseBottomPosition - adjustedY,
@@ -1010,17 +1047,22 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
         const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          width: 80, // Ancho fijo para control de texto
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.7),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             label,
+            textAlign: TextAlign.center,
+            maxLines: 2, // Permitir máximo 2 líneas
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 12,
+              fontSize: 10, // Tamaño de fuente ligeramente menor
               fontWeight: FontWeight.w500,
+              height: 1.2, // Espaciado entre líneas más compacto
             ),
           ),
         ),
