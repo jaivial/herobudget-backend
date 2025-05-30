@@ -277,7 +277,10 @@ class BudgetOverviewWidget extends StatelessWidget {
                     // Barra de gastos realizados
                     FractionallySizedBox(
                       widthFactor:
-                          budgetOverview.totalAmount > 0
+                          // Si remainingAmount <= 0, mostrar al 100% rojo
+                          budgetOverview.remainingAmount <= 0
+                              ? 1.0
+                              : budgetOverview.totalAmount > 0
                               ? (budgetOverview.spentAmount /
                                       budgetOverview.totalAmount)
                                   .clamp(0.0, 1.0)
@@ -286,37 +289,41 @@ class BudgetOverviewWidget extends StatelessWidget {
                         height: 15,
                         decoration: BoxDecoration(
                           color:
-                              budgetOverview.expensePercent >= 100
+                              // Si remainingAmount <= 0 o expense >= 100%, usar rojo
+                              (budgetOverview.remainingAmount <= 0 ||
+                                      budgetOverview.expensePercent >= 100)
                                   ? Colors.red
                                   : Colors.deepPurple,
                           borderRadius: BorderRadius.circular(7.5),
                         ),
                       ),
                     ),
-                    // Barra de facturas pendientes
-                    FractionallySizedBox(
-                      widthFactor:
-                          budgetOverview.totalAmount > 0
-                              ? ((budgetOverview.spentAmount +
-                                              budgetOverview.upcomingAmount) /
-                                          budgetOverview.totalAmount)
-                                      .clamp(0.0, 1.0) -
-                                  (budgetOverview.spentAmount /
-                                          budgetOverview.totalAmount)
-                                      .clamp(0.0, 1.0)
-                              : 0,
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        height: 15,
-                        decoration: BoxDecoration(
-                          color: Colors.orange,
-                          borderRadius: BorderRadius.circular(7.5),
+                    // Barra de facturas pendientes (solo si remainingAmount > 0)
+                    if (budgetOverview.remainingAmount > 0)
+                      FractionallySizedBox(
+                        widthFactor:
+                            budgetOverview.totalAmount > 0
+                                ? ((budgetOverview.spentAmount +
+                                                budgetOverview.upcomingAmount) /
+                                            budgetOverview.totalAmount)
+                                        .clamp(0.0, 1.0) -
+                                    (budgetOverview.spentAmount /
+                                            budgetOverview.totalAmount)
+                                        .clamp(0.0, 1.0)
+                                : 0,
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          height: 15,
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(7.5),
+                          ),
                         ),
                       ),
-                    ),
-                    // Indicador de 100%
+                    // Indicador de 100% - mostrar cuando gastos excedan el presupuesto O cuando remainingAmount <= 0
                     if (budgetOverview.combinedExpense >
-                        budgetOverview.totalAmount)
+                            budgetOverview.totalAmount ||
+                        budgetOverview.remainingAmount <= 0)
                       Positioned(
                         right: 0,
                         child: Container(
@@ -357,6 +364,8 @@ class BudgetOverviewWidget extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: _getSpentColor(
                                     budgetOverview.expensePercent,
+                                    remainingAmount:
+                                        budgetOverview.remainingAmount,
                                   ),
                                   shape: BoxShape.circle,
                                 ),
@@ -388,6 +397,8 @@ class BudgetOverviewWidget extends StatelessWidget {
                                     ? Colors.white
                                     : _getSpentColor(
                                       budgetOverview.expensePercent,
+                                      remainingAmount:
+                                          budgetOverview.remainingAmount,
                                     ),
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -720,7 +731,12 @@ class BudgetOverviewWidget extends StatelessWidget {
     }
   }
 
-  Color _getSpentColor(double percentage) {
+  Color _getSpentColor(double percentage, {double? remainingAmount}) {
+    // Si remainingAmount es proporcionado y es <= 0, usar rojo
+    if (remainingAmount != null && remainingAmount <= 0) {
+      return Colors.red;
+    }
+    // Si el porcentaje es >= 100, usar rojo
     if (percentage >= 100) {
       return Colors.red;
     } else {
