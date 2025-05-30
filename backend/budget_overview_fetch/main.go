@@ -278,7 +278,14 @@ func getTableAndCondition(period, date string) (string, string) {
 	case "daily":
 		return "daily_cash_bank_balance", fmt.Sprintf("date = '%s'", date)
 	case "weekly":
-		return "weekly_cash_bank_balance", fmt.Sprintf("year_week = '%s'", date)
+		// Handle both formats: "2025-W22" and "2025-22"
+		// The database stores the format without 'W' (e.g., "2025-22")
+		weekDate := date
+		if strings.Contains(date, "-W") {
+			// Remove the 'W' to match database format
+			weekDate = strings.Replace(date, "-W", "-", 1)
+		}
+		return "weekly_cash_bank_balance", fmt.Sprintf("year_week = '%s'", weekDate)
 	case "monthly":
 		return "monthly_cash_bank_balance", fmt.Sprintf("year_month = '%s'", date)
 	case "quarterly":
@@ -503,7 +510,8 @@ func formatDateForPeriod(date time.Time, period string) string {
 		return date.Format("2006-01-02")
 	case "weekly":
 		year, week := date.ISOWeek()
-		return fmt.Sprintf("%d-W%02d", year, week)
+		// Return format without 'W' to match database format (e.g., "2025-22")
+		return fmt.Sprintf("%d-%02d", year, week)
 	case "monthly":
 		return date.Format("2006-01")
 	case "quarterly":
@@ -628,11 +636,20 @@ func parseDateString(dateStr, period string) (time.Time, error) {
 	case "daily":
 		return time.Parse("2006-01-02", dateStr)
 	case "weekly":
-		// Parse format like "2024-W03"
-		parts := strings.Split(dateStr, "-W")
+		// Handle both formats: "2024-W03" and "2024-03"
+		// The database stores the format without 'W' (e.g., "2024-03")
+		var parts []string
+		if strings.Contains(dateStr, "-W") {
+			parts = strings.Split(dateStr, "-W")
+		} else {
+			// Already in the database format "2025-22"
+			parts = strings.Split(dateStr, "-")
+		}
+
 		if len(parts) != 2 {
 			return time.Time{}, fmt.Errorf("invalid weekly date format: %s", dateStr)
 		}
+
 		year, err := strconv.Atoi(parts[0])
 		if err != nil {
 			return time.Time{}, fmt.Errorf("invalid year in weekly date: %s", parts[0])
@@ -641,11 +658,21 @@ func parseDateString(dateStr, period string) (time.Time, error) {
 		if err != nil {
 			return time.Time{}, fmt.Errorf("invalid week in weekly date: %s", parts[1])
 		}
-		// Calculate first day of week (Monday)
-		jan1 := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
-		daysToFirstMonday := (8 - int(jan1.Weekday())) % 7
-		firstMonday := jan1.AddDate(0, 0, daysToFirstMonday)
-		return firstMonday.AddDate(0, 0, (week-1)*7), nil
+
+		// Calculate first day of week (Monday) using proper ISO week calculation
+		// Find the first Thursday of the year (it's always in week 1)
+		jan4 := time.Date(year, 1, 4, 0, 0, 0, 0, time.UTC)
+
+		// Find Monday of week 1 (the week containing January 4th)
+		mondayOfWeek1 := jan4.AddDate(0, 0, -(int(jan4.Weekday()) - 1))
+		if jan4.Weekday() == time.Sunday {
+			mondayOfWeek1 = jan4.AddDate(0, 0, -6)
+		}
+
+		// Calculate the target week's Monday
+		targetWeekMonday := mondayOfWeek1.AddDate(0, 0, (week-1)*7)
+
+		return targetWeekMonday, nil
 	case "monthly":
 		return time.Parse("2006-01-02", dateStr+"-01")
 	case "quarterly":

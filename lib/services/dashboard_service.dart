@@ -5,6 +5,8 @@ import '../config/api_config.dart';
 import '../models/user_model.dart';
 import '../models/dashboard_model.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
+import '../utils/date_utils.dart' as AppDateUtils;
 
 class DashboardService {
   static String get baseUrl => ApiConfig.fetchDashboardServiceUrl;
@@ -602,27 +604,7 @@ class DashboardService {
 
   // Helper method to format date according to period type
   String _formatDateForPeriod(DateTime date, String period) {
-    switch (period) {
-      case 'daily':
-        return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      case 'weekly':
-        // Calculate ISO week (without 'W' prefix to match database format)
-        int dayOfYear = int.parse(DateFormat("D").format(date));
-        int woy = ((dayOfYear - date.weekday + 10) / 7).floor();
-        return '${date.year}-${woy.toString().padLeft(2, '0')}';
-      case 'monthly':
-        return '${date.year}-${date.month.toString().padLeft(2, '0')}';
-      case 'quarterly':
-        int quarter = ((date.month - 1) / 3).floor() + 1;
-        return '${date.year}-Q$quarter';
-      case 'semiannual':
-        int half = date.month <= 6 ? 1 : 2;
-        return '${date.year}-H$half';
-      case 'annual':
-        return '${date.year}';
-      default:
-        return '${date.year}-${date.month.toString().padLeft(2, '0')}';
-    }
+    return AppDateUtils.DateUtils.formatDateForPeriod(date, period);
   }
 
   // NEW METHOD: Create FinanceMetrics from BudgetOverview data

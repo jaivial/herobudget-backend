@@ -150,11 +150,68 @@ ARCHIVOS DART A ACTUALIZAR (reemplazar textos hardcodeados):
 
 **NOTA:** Las traducciones para 'income' ya existían en todos los idiomas y no requerían modificaciones.
 
-6) El periodo de tiempo weekly no carga los datos correctamente, los datos salen todos a 0: 
+✅ 6) El periodo de tiempo weekly no carga los datos correctamente, los datos salen todos a 0: 
 flutter: 📋 Request body: {"user_id":"19","period":"weekly","date":"2025-W22"}
 flutter: 📡 Response status: 200
 flutter: 📦 Response body: {"success":true,"message":"Budget overview fetched successfully","data":{"remaining_amount":0,"expense_percent":0,"spent_amount":0,"upcoming_amount":0,"total_amount":0,"total_balance":0,"combined_expense":0,"total_income":0,"daily_rate":0,"high_spending":false,"money_flow":{"from_previous":0},"cash_bank_distribution":{"cash_amount":0,"cash_percent":0,"bank_amount":0,"bank_percent":0,"total_amount":0},"savings_data":{"available":0,"goal":0,"period":"weekly","percent":0,"need_to_save":0,"daily_target":0}}}
 flutter: ✅ Budget data received successfully
+
+**TRABAJO COMPLETADO:**
+
+✅ **PROBLEMA REAL IDENTIFICADO:**
+- **Discrepancia de formatos**: La base de datos almacena semanas como "2025-22" (sin 'W') pero la API buscaba "2025-W22" (con 'W')
+- **Datos existentes en la base de datos**: La consulta SQL confirmó que SÍ hay datos para el usuario 36 en la semana 22:
+  ```sql
+  SELECT * FROM weekly_cash_bank_balance WHERE year_week = '2025-22' AND user_id = '36';
+  -- Resultado: 36|2025-22|100000099.0|0.0|0.0|0.0|100000599.0
+  ```
+- **Query SQL fallido**: El backend buscaba `year_week = '2025-W22'` pero los datos están como `year_week = '2025-22'`
+
+✅ **SOLUCIÓN IMPLEMENTADA (BACKEND):**
+- **Modificada función `getTableAndCondition()`** en `backend/budget_overview_fetch/main.go`
+- **Compatibilidad con ambos formatos**: El backend ahora maneja tanto "2025-W22" como "2025-22"
+- **Lógica agregada**: Si la fecha contiene "-W", se remueve automáticamente para coincidir con el formato de la base de datos
+- **Recompilado y reiniciado** el microservicio `budget_overview_fetch`
+
+✅ **HERENCIA DE BALANCE CORREGIDA:**
+- **Problema adicional identificado**: Las funciones `parseDateString` y `formatDateForPeriod` no manejaban consistentemente el formato weekly
+- **Función `parseDateString` actualizada**: Ahora maneja ambos formatos ("2025-W22" y "2025-22") para weekly
+- **Función `formatDateForPeriod` corregida**: Genera formato consistente sin 'W' ("2025-22") para coincidir con la base de datos
+- **Herencia de balance verificada**: Períodos futuros sin datos (ej: 2025-W23, 2025-W24, 2025-W25) ahora heredan correctamente el balance del período anterior más próximo
+- **Pruebas exitosas**: 
+  - Semana 2025-W23: `remaining_amount: 100000599, money_flow.from_previous: 100000599` ✅
+  - Semana 2025-W25: `remaining_amount: 100000599, money_flow.from_previous: 100000599` ✅
+  - Formato sin W (2025-24): `remaining_amount: 100000599, money_flow.from_previous: 100000599` ✅
+
+✅ **FRONTEND (MEJORAS ADICIONALES):**
+- **Creado archivo de utilidades centralizado**: `lib/utils/date_utils.dart` con implementación estándar ISO 8601
+- **Estandarizado cálculo de semana ISO**: Implementación que sigue el estándar ISO 8601
+- **Actualizado BudgetOverviewService**: Usa la nueva utilidad `AppDateUtils.DateUtils.formatDateForPeriod()`
+- **Actualizado DashboardService**: Corregido formato weekly y actualizado para usar la nueva utilidad
+
+✅ **ARCHIVOS MODIFICADOS:**
+- `backend/budget_overview_fetch/main.go`: 
+  - Función `getTableAndCondition()` corregida para manejar ambos formatos
+  - Función `parseDateString()` actualizada para manejar ambos formatos weekly
+  - Función `formatDateForPeriod()` corregida para generar formato consistente sin 'W'
+- `lib/utils/date_utils.dart`: Nuevo archivo con implementación estándar de cálculo de semana ISO
+- `lib/services/budget_overview_service.dart`: Actualizado para usar la nueva utilidad
+- `lib/services/dashboard_service.dart`: Corregido formato weekly y actualizado para usar la nueva utilidad
+- `lib/utils/date_utils_test.dart`: Archivo de pruebas para verificar el cálculo correcto
+
+✅ **VERIFICACIÓN COMPLETA:**
+- **Base de datos analizada**: Confirmado que existen datos para semanas con formato "2025-22"
+- **Backend corregido**: Ahora remueve la 'W' del formato recibido antes de consultar la base de datos
+- **Formato consistente**: Frontend envía "2025-W22", backend lo convierte a "2025-22" para la consulta
+- **Herencia de balance funcional**: Períodos futuros sin datos heredan correctamente el balance del período anterior
+- **Microservicio reiniciado**: Los cambios están activos en el backend
+- **Compatibilidad total**: Funciona con ambos formatos de entrada ("2025-W22" y "2025-22")
+
+**RESULTADO FINAL:** El período weekly ahora funciona completamente:
+1. ✅ Carga correctamente los datos existentes en la base de datos
+2. ✅ Hereda el balance para períodos futuros sin datos
+3. ✅ Mantiene compatibilidad con ambos formatos de fecha
+4. ✅ Implementa cálculo correcto de semana ISO 8601
 
 7) En el modal de Transferir dinero mejorar la legibilidad del icono y el texto del botón 'Transferir'. También el título del modal se corta viéndose así 'Transferir Din...'
 
