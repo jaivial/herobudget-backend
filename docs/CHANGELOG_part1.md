@@ -36,6 +36,20 @@ Este es el registro detallado de cambios realizados en Hero Budget. Esta parte 1
   - Actualizada importación correspondiente
   - Actualizado comentario de refresh para reflejar nuevo widget
 
+#### Corrección de URLs para Localhost
+- **CORREGIDO:** `lib/config/api_config.dart`
+  - Agregado `transactionHistoryServiceUrl` para usar puerto correcto (8098)
+  - Servicio de transacciones ahora apunta al puerto del `budget_overview_fetch`
+  - Corregido error de conexión rechazada en localhost
+  - Agregado endpoint al mapa `allEndpoints` para referencia
+- **MODIFICADO:** `lib/services/transaction_service.dart`
+  - Actualizado `baseUrl` para usar `ApiConfig.transactionHistoryServiceUrl`
+  - Conexiones ahora funcionan correctamente a `localhost:8098/transactions/history`
+- **MODIFICADO:** `lib/services/language_update_service.dart`
+  - Corregida URL para usar puerto específico del profile management (8092)
+  - Implementada lógica para localhost vs producción
+  - Elimina error de conexión rechazada para updates de idioma
+
 #### Ejemplos Actualizados
 - **MODIFICADO:** `lib/examples/budget_overview_integration_example.dart`
   - Todos los ejemplos ahora usan `BudgetOverviewMonthly`

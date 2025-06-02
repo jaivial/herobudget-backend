@@ -241,6 +241,116 @@ class _BudgetOverviewMonthlyState extends State<BudgetOverviewMonthly>
                 ),
               ),
             ),
+
+          // Spacing between main overview and additional sections
+          if (_budgetOverview != null && !_isLoading)
+            const SizedBox(height: 16),
+
+          // Monthly Savings Overview Section
+          if (_budgetOverview != null && !_isLoading)
+            AnimatedBuilder(
+              animation: slideController,
+              builder: (context, child) {
+                return SlideTransition(
+                  position: slideAnimation,
+                  child: FadeTransition(
+                    opacity: fadeAnimation,
+                    child: ProportionalSavingsOverviewWidget(
+                      key: ValueKey('savings_monthly_$_savingsRefreshCounter'),
+                      currentPeriod: 'monthly',
+                      totalBalance: _budgetOverview!.savingsData.totalBalance,
+                      onGoalUpdated: () async {
+                        print(
+                          '🔄 Monthly savings goal updated, refreshing data...',
+                        );
+                        await _fetchBudgetData();
+                        setState(() {
+                          _savingsRefreshCounter++;
+                        });
+                        print('✅ Monthly savings widget refreshed');
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+
+          // Additional spacing
+          if (_budgetOverview != null && !_isLoading)
+            const SizedBox(height: 16),
+
+          // Monthly Cash/Bank Distribution Section
+          if (_budgetOverview != null && !_isLoading)
+            AnimatedBuilder(
+              animation: slideController,
+              builder: (context, child) {
+                // Debug: Print cash/bank distribution values
+                print('🏦 BudgetOverviewMonthly - CashBankDistribution Debug:');
+                print(
+                  '  - cashAmount: ${_budgetOverview!.cashBankDistribution.cashAmount}',
+                );
+                print(
+                  '  - bankAmount: ${_budgetOverview!.cashBankDistribution.bankAmount}',
+                );
+                print(
+                  '  - totalAmount: ${_budgetOverview!.cashBankDistribution.totalAmount}',
+                );
+
+                return SlideTransition(
+                  position: slideAnimation,
+                  child: FadeTransition(
+                    opacity: fadeAnimation,
+                    child: CashBankDistributionWidget(
+                      distribution: CashBankDistribution(
+                        month: DateTime.now().toString().substring(0, 7),
+                        cashAmount:
+                            _budgetOverview!.cashBankDistribution.cashAmount,
+                        cashPercent:
+                            _budgetOverview!.cashBankDistribution.cashPercent,
+                        bankAmount:
+                            _budgetOverview!.cashBankDistribution.bankAmount,
+                        bankPercent:
+                            _budgetOverview!.cashBankDistribution.bankPercent,
+                        monthlyTotal:
+                            _budgetOverview!.cashBankDistribution.totalAmount,
+                      ),
+                      onTransferTap: () {
+                        showTransferModal(
+                          context,
+                          CashBankDistribution(
+                            month: DateTime.now().toString().substring(0, 7),
+                            cashAmount:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .cashAmount,
+                            cashPercent:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .cashPercent,
+                            bankAmount:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .bankAmount,
+                            bankPercent:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .bankPercent,
+                            monthlyTotal:
+                                _budgetOverview!
+                                    .cashBankDistribution
+                                    .totalAmount,
+                          ),
+                          () async {
+                            // Refresh data after transfer
+                            await _fetchBudgetData(useTransition: true);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );

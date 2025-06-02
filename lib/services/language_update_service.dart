@@ -20,7 +20,10 @@ class LanguageUpdateService {
       }
 
       // Construir la URL para la API de actualización de idioma
-      final url = '${ApiConfig.baseApiUrl}/update/locale';
+      final url =
+          ApiConfig.isProduction
+              ? '${ApiConfig.baseApiUrl}/update/locale'
+              : '${ApiConfig.baseApiUrl}:${ApiConfig.profileManagementServicePort}/update/locale';
 
       print('Actualizando idioma en la base de datos - URL: $url');
       print('Datos: user_id=${currentUser.id}, locale=$locale');

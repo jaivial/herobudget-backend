@@ -31,6 +31,7 @@ type BudgetOverview struct {
 	MoneyFlow            MoneyFlow            `json:"money_flow"`
 	CashBankDistribution CashBankDistribution `json:"cash_bank_distribution"`
 	SavingsData          SavingsData          `json:"savings_data"`
+	AvailableBalance     float64              `json:"available_balance"`
 }
 
 // MoneyFlow represents money flow from previous period
@@ -268,8 +269,8 @@ func fetchBudgetOverview(request BudgetOverviewRequest) (*BudgetOverview, error)
 		return nil, fmt.Errorf("failed to fetch balance data: %v", err)
 	}
 
-	// Calculate budget overview from balance data
-	overview := calculateBudgetOverview(balanceData, request.Period, request.UserID)
+	// Calculate budget overview from balance data, passing the date
+	overview := calculateBudgetOverview(balanceData, request.Period, request.Date, request.UserID)
 
 	return overview, nil
 }
@@ -405,63 +406,72 @@ func extractPeriodAndDateFromCondition(tableName, condition string) (string, str
 }
 
 // calculateBudgetOverview calculates the budget overview from balance data
-func calculateBudgetOverview(data *BalanceData, period, userID string) *BudgetOverview {
-	// Calculate basic amounts
+func calculateBudgetOverview(data *BalanceData, period, date, userID string) *BudgetOverview {
+	// Calculate income from separate cash and bank income amounts
 	totalIncome := data.IncomeBankAmount + data.IncomeCashAmount
+
+	// Calculate spent amount from actual expenses only (not including bills)
 	spentAmount := data.ExpenseBankAmount + data.ExpenseCashAmount
+
+	// Calculate combined expense including both expenses and bills
+	combinedExpense := data.ExpenseBankAmount + data.ExpenseCashAmount + data.BillBankAmount + data.BillCashAmount
+
+	// Calculate available balance
+	availableBalance := totalIncome - combinedExpense
+
+	// Calculate upcoming bills separately for clarity (bills that haven't been paid yet)
 	upcomingAmount := data.BillBankAmount + data.BillCashAmount
-	combinedExpense := spentAmount + upcomingAmount
 
-	// Calculate total amount (current balance + expenses)
-	totalAmount := data.TotalBalance + combinedExpense
+	// Log the calculation breakdown for transparency
+	log.Printf("🧮 Budget calculation breakdown for period %s, date %s:", period, date)
+	log.Printf("   💰 Total Income: %.2f (Bank: %.2f + Cash: %.2f)",
+		totalIncome, data.IncomeBankAmount, data.IncomeCashAmount)
+	log.Printf("   💸 Spent Amount (expenses only): %.2f (Bank: %.2f + Cash: %.2f)",
+		spentAmount, data.ExpenseBankAmount, data.ExpenseCashAmount)
+	log.Printf("   🏷️ Bills Amount: %.2f (Bank: %.2f + Cash: %.2f)",
+		data.BillBankAmount+data.BillCashAmount, data.BillBankAmount, data.BillCashAmount)
+	log.Printf("   📊 Combined Expense (expenses + bills): %.2f", combinedExpense)
+	log.Printf("   💵 Available Balance: %.2f (Income: %.2f - Combined Expenses: %.2f)",
+		availableBalance, totalIncome, combinedExpense)
+	log.Printf("   📋 Upcoming Bills: %.2f", upcomingAmount)
 
-	// Calculate remaining amount: dinero_periodo_anterior + ingresos_periodo - gastos_periodo - facturas_futuras_no_pagadas
-	remainingAmount := data.TotalPreviousBalance + totalIncome - spentAmount - upcomingAmount
+	// Calculate remaining amount (should show real balance, including negative values)
+	remainingAmount := availableBalance
 
 	// Calculate expense percentage
 	var expensePercent float64
-	if totalAmount > 0 {
-		expensePercent = (combinedExpense / totalAmount) * 100
+	if totalIncome > 0 {
+		expensePercent = (combinedExpense / totalIncome) * 100
+		if expensePercent > 100 {
+			expensePercent = 100
+		}
 	}
 
-	// Calculate daily rate based on period
+	// Calculate total amount (could be total income or total available including previous balance)
+	totalAmount := totalIncome + data.TotalPreviousBalance
+
+	// Use the total balance from balance data
+	totalBalance := data.TotalBalance
+
+	// Calculate daily rate
 	dailyRate := calculateDailyRate(spentAmount, period)
 
-	// Determine high spending (if expense percent > 80%)
+	// Determine if spending is high (more than 80% of income)
 	highSpending := expensePercent > 80
 
-	// Detect negative balance (if remaining amount is negative)
-	isNegativeBalance := remainingAmount < 0
+	// Determine if balance is negative
+	isNegativeBalance := availableBalance < 0
 
-	// Money flow from previous period
+	// Calculate money flow from previous period
 	moneyFlow := MoneyFlow{
 		FromPrevious: data.TotalPreviousBalance,
 	}
 
-	// Calculate Cash/Bank Distribution
-	cashAmount := data.CashAmount
-	bankAmount := data.BankAmount
-	totalCashBank := cashAmount + bankAmount
+	// Calculate cash/bank distribution based on current balances
+	cashBankDistribution := calculateCashBankDistribution(data)
 
-	var cashPercent, bankPercent float64
-	if totalCashBank > 0 {
-		cashPercent = (cashAmount / totalCashBank) * 100
-		bankPercent = (bankAmount / totalCashBank) * 100
-	}
-
-	cashBankDistribution := CashBankDistribution{
-		CashAmount:  cashAmount,
-		CashPercent: cashPercent,
-		BankAmount:  bankAmount,
-		BankPercent: bankPercent,
-		TotalAmount: totalCashBank,
-	}
-
-	// First, try to get savings data from the database
+	// Get savings data
 	savingsData := getSavingsDataFromDB(userID, remainingAmount, period)
-
-	log.Printf("💰 Budget Overview calculated: Remaining=%.2f, TotalIncome=%.2f, SpentAmount=%.2f, UpcomingAmount=%.2f, IsNegative=%v",
-		remainingAmount, totalIncome, spentAmount, upcomingAmount, isNegativeBalance)
 
 	return &BudgetOverview{
 		RemainingAmount:      remainingAmount,
@@ -469,7 +479,7 @@ func calculateBudgetOverview(data *BalanceData, period, userID string) *BudgetOv
 		SpentAmount:          spentAmount,
 		UpcomingAmount:       upcomingAmount,
 		TotalAmount:          totalAmount,
-		TotalBalance:         data.TotalBalance,
+		TotalBalance:         totalBalance,
 		CombinedExpense:      combinedExpense,
 		TotalIncome:          totalIncome,
 		DailyRate:            dailyRate,
@@ -478,6 +488,33 @@ func calculateBudgetOverview(data *BalanceData, period, userID string) *BudgetOv
 		MoneyFlow:            moneyFlow,
 		CashBankDistribution: cashBankDistribution,
 		SavingsData:          savingsData,
+		AvailableBalance:     availableBalance,
+	}
+}
+
+// calculateCashBankDistribution calculates the distribution between cash and bank amounts
+func calculateCashBankDistribution(data *BalanceData) CashBankDistribution {
+	// Calculate total available amounts (balance amounts represent current available funds)
+	totalCashAmount := data.BalanceCashAmount
+	totalBankAmount := data.BalanceBankAmount
+	totalAmount := totalCashAmount + totalBankAmount
+
+	var cashPercent, bankPercent float64
+
+	if totalAmount > 0 {
+		cashPercent = (totalCashAmount / totalAmount) * 100
+		bankPercent = (totalBankAmount / totalAmount) * 100
+	}
+
+	log.Printf("💳 Cash/Bank Distribution: Cash=%.2f (%.1f%%), Bank=%.2f (%.1f%%), Total=%.2f",
+		totalCashAmount, cashPercent, totalBankAmount, bankPercent, totalAmount)
+
+	return CashBankDistribution{
+		CashAmount:  totalCashAmount,
+		CashPercent: cashPercent,
+		BankAmount:  totalBankAmount,
+		BankPercent: bankPercent,
+		TotalAmount: totalAmount,
 	}
 }
 
@@ -1028,11 +1065,11 @@ func fetchTransactionHistory(request TransactionRequest) (*TransactionHistoryRes
 		paymentMethodFilter = fmt.Sprintf("payment_method IN (%s)", strings.Join(placeholders, ","))
 	}
 
-	// Build transaction type filter
+	// Build transaction type filter - Only include incomes and expenses, no bills
 	var queries []string
 	includeIncomes := len(request.TransactionTypes) == 0 || contains(request.TransactionTypes, "income")
 	includeExpenses := len(request.TransactionTypes) == 0 || contains(request.TransactionTypes, "expense")
-	includeBills := len(request.TransactionTypes) == 0 || contains(request.TransactionTypes, "bill")
+	// Bills are excluded from transaction history - they are handled separately in upcoming bills
 
 	// Income query
 	if includeIncomes {
@@ -1068,19 +1105,9 @@ func fetchTransactionHistory(request TransactionRequest) (*TransactionHistoryRes
 		queries = append(queries, expenseQuery)
 	}
 
-	// Bills query (only paid bills for history)
-	if includeBills {
-		billWhere := strings.Join(whereConditions, " AND ") + " AND paid = 1"
-		// Note: bills table doesn't have payment_method column, so we use 'cash' as default
-
-		billQuery := fmt.Sprintf(`
-			SELECT 
-				id, 'bill' as type, amount, due_date as date, category, 'cash' as payment_method, NULL as description,
-				name, paid, overdue, overdue_days, recurring, icon
-			FROM bills 
-			WHERE %s`, billWhere)
-		queries = append(queries, billQuery)
-	}
+	// Note: Bills are intentionally excluded from transaction history
+	// Bills represent future obligations and appear only in the upcoming bills endpoint
+	// When bills are paid, they create expense records which appear in this history
 
 	if len(queries) == 0 {
 		return &TransactionHistoryResponse{
@@ -1169,6 +1196,8 @@ func fetchTransactionHistory(request TransactionRequest) (*TransactionHistoryRes
 		log.Printf("Warning: failed to get total count: %v", err)
 		totalCount = len(transactions)
 	}
+
+	log.Printf("📊 Transaction history retrieved: %d transactions (incomes + expenses only, bills excluded)", totalCount)
 
 	return &TransactionHistoryResponse{
 		Transactions: transactions,
@@ -1281,4 +1310,97 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// fetchPaidBillsAmount retrieves the total amount of paid bills for a specific period and date
+func fetchPaidBillsAmount(userID, period, date string) (float64, float64, error) {
+	var bankAmount, cashAmount float64
+	var dateCondition string
+
+	// Build date condition based on period type
+	switch period {
+	case "daily":
+		dateCondition = "due_date = ?"
+	case "weekly":
+		// For weekly, we need to check if due_date falls within the week
+		dateCondition = "strftime('%Y-%W', due_date) = ?"
+	case "monthly":
+		dateCondition = "strftime('%Y-%m', due_date) = ?"
+	case "quarterly":
+		// For quarterly, extract year and quarter from date (format: YYYY-Q)
+		dateCondition = "strftime('%Y', due_date) || '-' || CASE WHEN CAST(strftime('%m', due_date) AS INTEGER) BETWEEN 1 AND 3 THEN '1' WHEN CAST(strftime('%m', due_date) AS INTEGER) BETWEEN 4 AND 6 THEN '2' WHEN CAST(strftime('%m', due_date) AS INTEGER) BETWEEN 7 AND 9 THEN '3' ELSE '4' END = ?"
+	case "semiannual":
+		// For semiannual, extract year and half from date (format: YYYY-H)
+		dateCondition = "strftime('%Y', due_date) || '-' || CASE WHEN CAST(strftime('%m', due_date) AS INTEGER) BETWEEN 1 AND 6 THEN '1' ELSE '2' END = ?"
+	case "annual":
+		dateCondition = "strftime('%Y', due_date) = ?"
+	default:
+		dateCondition = "strftime('%Y-%m', due_date) = ?"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT 
+			COALESCE(SUM(CASE WHEN payment_method = 'bank' THEN amount ELSE 0 END), 0) as bank_amount,
+			COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN amount ELSE 0 END), 0) as cash_amount
+		FROM bills 
+		WHERE user_id = ? AND paid = 1 AND %s
+	`, dateCondition)
+
+	row := db.QueryRow(query, userID, date)
+	err := row.Scan(&bankAmount, &cashAmount)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, 0, nil
+		}
+		return 0, 0, fmt.Errorf("failed to fetch paid bills: %v", err)
+	}
+
+	log.Printf("💳 Paid bills for %s %s: Bank=%.2f, Cash=%.2f", period, date, bankAmount, cashAmount)
+	return bankAmount, cashAmount, nil
+}
+
+// fetchUnpaidBillsAmount retrieves the total amount of unpaid bills for a specific period and date
+func fetchUnpaidBillsAmount(userID, period, date string) (float64, float64, error) {
+	var bankAmount, cashAmount float64
+	var dateCondition string
+
+	// Build date condition based on period type (same logic as paid bills)
+	switch period {
+	case "daily":
+		dateCondition = "due_date = ?"
+	case "weekly":
+		dateCondition = "strftime('%Y-%W', due_date) = ?"
+	case "monthly":
+		dateCondition = "strftime('%Y-%m', due_date) = ?"
+	case "quarterly":
+		dateCondition = "strftime('%Y', due_date) || '-' || CASE WHEN CAST(strftime('%m', due_date) AS INTEGER) BETWEEN 1 AND 3 THEN '1' WHEN CAST(strftime('%m', due_date) AS INTEGER) BETWEEN 4 AND 6 THEN '2' WHEN CAST(strftime('%m', due_date) AS INTEGER) BETWEEN 7 AND 9 THEN '3' ELSE '4' END = ?"
+	case "semiannual":
+		dateCondition = "strftime('%Y', due_date) || '-' || CASE WHEN CAST(strftime('%m', due_date) AS INTEGER) BETWEEN 1 AND 6 THEN '1' ELSE '2' END = ?"
+	case "annual":
+		dateCondition = "strftime('%Y', due_date) = ?"
+	default:
+		dateCondition = "strftime('%Y-%m', due_date) = ?"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT 
+			COALESCE(SUM(CASE WHEN payment_method = 'bank' THEN amount ELSE 0 END), 0) as bank_amount,
+			COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN amount ELSE 0 END), 0) as cash_amount
+		FROM bills 
+		WHERE user_id = ? AND paid = 0 AND %s
+	`, dateCondition)
+
+	row := db.QueryRow(query, userID, date)
+	err := row.Scan(&bankAmount, &cashAmount)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, 0, nil
+		}
+		return 0, 0, fmt.Errorf("failed to fetch unpaid bills: %v", err)
+	}
+
+	log.Printf("⏳ Unpaid bills for %s %s: Bank=%.2f, Cash=%.2f", period, date, bankAmount, cashAmount)
+	return bankAmount, cashAmount, nil
 }

@@ -20,6 +20,12 @@ class CashBankDistributionWidget extends StatelessWidget {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
+    // Check if all amounts are zero
+    final bool hasNoData =
+        distribution.cashAmount == 0 &&
+        distribution.bankAmount == 0 &&
+        distribution.monthlyTotal == 0;
+
     // Improved color scheme for better contrast
     final Color surfaceColor =
         isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
@@ -84,16 +90,17 @@ class CashBankDistributionWidget extends StatelessWidget {
                   ),
                 ),
                 child: TextButton.icon(
-                  onPressed: onTransferTap,
+                  onPressed: hasNoData ? null : onTransferTap,
                   icon: Icon(
                     Icons.swap_horiz,
                     size: 18,
-                    color: transferButtonColor,
+                    color: hasNoData ? secondaryTextColor : transferButtonColor,
                   ),
                   label: Text(
                     context.tr.translate('transfer'),
                     style: TextStyle(
-                      color: transferButtonColor,
+                      color:
+                          hasNoData ? secondaryTextColor : transferButtonColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -113,178 +120,221 @@ class CashBankDistributionWidget extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Cash amount
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: cashColor.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: cashColor.withOpacity(0.3),
-                    width: 1,
-                  ),
+          // Show "No data" message when all values are zero
+          if (hasNoData)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: secondaryTextColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: secondaryTextColor.withOpacity(0.3),
+                  width: 1,
                 ),
-                child: Icon(Icons.attach_money, color: cashColor, size: 22),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.tr.translate('cash'),
-                      style: TextStyle(
-                        color: secondaryTextColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
+              child: Column(
+                children: [
+                  Icon(Icons.info_outline, size: 32, color: secondaryTextColor),
+                  const SizedBox(height: 8),
+                  Text(
+                    context.tr.translate('no_cash_bank_data'),
+                    style: TextStyle(
+                      color: secondaryTextColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      context.tr.formatCurrency(distribution.cashAmount),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        color: primaryTextColor,
-                        letterSpacing: -0.3,
-                      ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    context.tr.translate(
+                      'add_transactions_to_see_distribution',
                     ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: cashColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: cashColor.withOpacity(0.4),
-                    width: 1,
+                    style: TextStyle(color: secondaryTextColor, fontSize: 12),
+                    textAlign: TextAlign.center,
                   ),
-                ),
-                child: Text(
-                  '${distribution.cashPercent.toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    color: cashColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    letterSpacing: 0.2,
-                  ),
-                ),
+                ],
               ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          // Bank amount
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: bankColor.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: bankColor.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Icon(Icons.account_balance, color: bankColor, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.tr.translate('bank'),
-                      style: TextStyle(
-                        color: secondaryTextColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      context.tr.formatCurrency(distribution.bankAmount),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        color: primaryTextColor,
-                        letterSpacing: -0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: bankColor.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: bankColor.withOpacity(0.4),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  '${distribution.bankPercent.toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    color: bankColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          // Total amount
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: borderColor, width: 1.5)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            )
+          else ...[
+            // Cash amount
+            Row(
               children: [
-                Text(
-                  context.tr.translate('total'),
-                  style: TextStyle(
-                    color: secondaryTextColor,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: cashColor.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: cashColor.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(Icons.attach_money, color: cashColor, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.tr.translate('cash'),
+                        style: TextStyle(
+                          color: secondaryTextColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        context.tr.formatCurrency(distribution.cashAmount),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          color: primaryTextColor,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  context.tr.formatCurrency(distribution.monthlyTotal),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 19,
-                    color: primaryTextColor,
-                    letterSpacing: -0.4,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cashColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: cashColor.withOpacity(0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    '${distribution.cashPercent.toStringAsFixed(0)}%',
+                    style: TextStyle(
+                      color: cashColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
+
+            const SizedBox(height: 18),
+
+            // Bank amount
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: bankColor.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: bankColor.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.account_balance,
+                    color: bankColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.tr.translate('bank'),
+                        style: TextStyle(
+                          color: secondaryTextColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        context.tr.formatCurrency(distribution.bankAmount),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          color: primaryTextColor,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: bankColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: bankColor.withOpacity(0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    '${distribution.bankPercent.toStringAsFixed(0)}%',
+                    style: TextStyle(
+                      color: bankColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 18),
+
+            // Total amount
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: borderColor, width: 1.5)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    context.tr.translate('total'),
+                    style: TextStyle(
+                      color: secondaryTextColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  Text(
+                    context.tr.formatCurrency(distribution.monthlyTotal),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 19,
+                      color: primaryTextColor,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

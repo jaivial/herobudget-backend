@@ -83,9 +83,57 @@ Almacena las facturas recurrentes y no recurrentes de los usuarios.
 | updated_at | TIMESTAMP | Fecha de última actualización |
 
 **Uso en el sistema:**
-- Las facturas con `paid = 1` se incluyen en el historial de transacciones
-- Las facturas con `paid = 0` aparecen en la lista de próximas facturas
-- El campo `due_date` se usa como `date` en las consultas de historial de transacciones
+- ❌ **Las facturas YA NO se incluyen** en el historial de transacciones (`/transactions/history`)
+- ✅ **Las facturas con `paid = 0`** aparecen en la lista de próximas facturas (`/transactions/upcoming-bills`)
+- ✅ **Cuando se paga una factura**, se crea automáticamente un registro en la tabla `expenses`
+- 📊 **Separación lógica**: El historial muestra solo transacciones reales (ingresos y gastos), las facturas representan obligaciones futuras
+
+**Flujo de pago actualizado:**
+1. Factura pendiente (`paid = 0`) → Aparece en `/transactions/upcoming-bills`
+2. Se paga la factura → Se actualiza `paid = 1` en tabla `bills`
+3. **🆕 RECLASIFICACIÓN EN `monthly_cash_bank_balance`**: Se transfiere el monto de `bill_xxx_amount` a `expense_xxx_amount`
+4. Se crea registro en tabla `expenses` con el pago realizado
+5. El gasto aparece en `/transactions/history` como tipo `expense`
+6. La factura ya no aparece en upcoming-bills pero tampoco en el historial (evita duplicación)
+
+**Nueva funcionalidad de reclasificación (Enero 2025):**
+- **`bill_cash_amount`** → **`expense_cash_amount`** (para pagos en efectivo)
+- **`bill_bank_amount`** → **`expense_bank_amount`** (para pagos con banco)
+- **Transacciones atómicas**: Garantiza consistencia en los datos
+- **Prevención de negativos**: Evita valores negativos en `bill_xxx_amount`
+- **Logging detallado**: Tracking completo de la reclasificación para auditoría
+
+**Flujo de adición de facturas (Actualizado - Enero 2025):**
+1. **Nueva factura añadida** → Se determina `payment_method` ("cash" o "bank")
+2. **Si factura NO pagada** (`paid = 0`) - CASO MÁS COMÚN:
+   - ✅ **Se suma automáticamente** a `bill_cash_amount` (si payment_method = "cash")
+   - ✅ **Se suma automáticamente** a `bill_bank_amount` (si payment_method = "bank") 
+   - ✅ **🆕 Se resta automáticamente** de `cash_amount` (si payment_method = "cash")
+   - ✅ **🆕 Se resta automáticamente** de `bank_amount` (si payment_method = "bank")
+   - Se actualiza `monthly_cash_bank_balance` para el mes de vencimiento
+   - Se actualiza `daily_cash_bank_balance` para el día de vencimiento
+   - Se resta del `balance_cash_amount`/`balance_bank_amount` (balance final actualizado)
+3. **Si factura pagada** (`paid = 1`) - CASO MENOS COMÚN:
+   - Se ejecuta `updateTimeBalances()` que actualiza todos los balances
+   - Se ejecuta `recalculateAllBalances()` para actualización en cascada
+
+**✅ FUNCIONALIDAD ACTUALIZADA (Enero 2025):**
+- **Actualización automática**: Las facturas nuevas actualizan automáticamente las columnas `bill_cash_amount` y `bill_bank_amount`
+- **🆕 Dinero comprometido**: Las facturas restan automáticamente de `cash_amount` y `bank_amount`
+- **Método de pago respetado**: "cash" → afecta campos cash, "bank" → afecta campos bank
+- **Tablas sincronizadas**: Se actualiza tanto `monthly_cash_bank_balance` como `daily_cash_bank_balance`
+- **Auto-creación**: Crea registros en las tablas de balance si no existen para el período
+- **🆕 Proyección realista**: El balance disponible refleja inmediatamente el dinero comprometido
+
+**💰 Ejemplo de impacto al añadir factura de $100 (payment_method="bank"):**
+- **Antes:** `bank_amount = $500`, `bill_bank_amount = $200`, `balance_bank_amount = $300`
+- **Después:** `bank_amount = $400`, `bill_bank_amount = $300`, `balance_bank_amount = $200`
+- **Resultado:** El usuario ve $100 menos disponible inmediatamente
+
+**🎯 Lógica de negocio:**
+- **Facturas = Compromisos financieros** que reducen el dinero realmente disponible
+- **Transparencia total** entre dinero libre vs dinero comprometido
+- **Prevención de sobregasto** al mostrar balance realista
 
 ### Balances (`balances`)
 
@@ -713,5 +761,201 @@ El sistema registra automáticamente:
 - **Compatibilidad:** No afecta funcionalidad existente para períodos con datos
 - **Escalabilidad:** Funciona independientemente del tipo de período
 
+## 🚨 CORRECCIÓN CRÍTICA: Filtrado de Facturas Pagadas (Enero 2025)
+
+### **PROBLEMA IDENTIFICADO Y RESUELTO**
+
+El microservicio `budget_overview_fetch` tenía un error crítico en el cálculo de gastos que afectaba la precisión de los datos presupuestarios.
+
+#### ❌ **Problema Anterior:**
+- El microservicio utilizaba campos preagregados (`bill_bank_amount`, `bill_cash_amount`) de las tablas de balance
+- **NO** filtraba por el campo `paid = 1` en la tabla `bills`
+- **Resultado:** Todas las facturas (pagadas y pendientes) se contaban como gastos realizados
+
+#### ✅ **Solución Implementada:**
+1. **Consultas directas a la tabla `bills`** con filtros apropiados:
+   - `paid = 1` para gastos reales (expenses)
+   - `paid = 0` para facturas pendientes
+2. **Separación clara** entre gastos realizados y gastos pendientes
+3. **Cálculos corregidos** en el budget overview
+
+### **Archivos Modificados:**
+
+#### `backend/budget_overview_fetch/main.go`
+
+**Nuevas funciones añadidas:**
+- `fetchPaidBillsAmount(userID, period, date)`: Consulta facturas pagadas (`paid = 1`)
+- `fetchUnpaidBillsAmount(userID, period, date)`: Consulta facturas pendientes (`paid = 0`)
+
+**Función modificada:**
+- `calculateBudgetOverview()`: Ahora calcula correctamente:
+  - `spentAmount` = gastos reales (expenses) + facturas pagadas
+  - `upcomingAmount` = solo facturas pendientes (no pagadas)
+
+### **Consultas SQL Corregidas:**
+
+#### ✅ **Facturas Pagadas (Gastos Reales):**
+```sql
+SELECT 
+    COALESCE(SUM(CASE WHEN payment_method = 'bank' THEN amount ELSE 0 END), 0) as bank_amount,
+    COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN amount ELSE 0 END), 0) as cash_amount
+FROM bills 
+WHERE user_id = ? AND paid = 1 AND [filtro_período]
+```
+
+#### ✅ **Facturas Pendientes:**
+```sql
+SELECT 
+    COALESCE(SUM(CASE WHEN payment_method = 'bank' THEN amount ELSE 0 END), 0) as bank_amount,
+    COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN amount ELSE 0 END), 0) as cash_amount
+FROM bills 
+WHERE user_id = ? AND paid = 0 AND [filtro_período]
+```
+
+### **Impacto de la Corrección:**
+
+1. **✅ Precisión Mejorada:**
+   - Los gastos realizados ahora incluyen solo las facturas marcadas como pagadas
+   - Las facturas pendientes se muestran separadamente como "upcoming"
+   - El balance disponible refleja la realidad financiera del usuario
+
+2. **✅ Logs Informativos:**
+   ```
+   💰 Budget Overview calculated (CORRECTED): Period=monthly, Date=2025-01, 
+   SpentAmount=1500.00 (Expenses=800.00 + PaidBills=700.00), 
+   UpcomingAmount=300.00 (UnpaidBills)
+   ```
+
+3. **✅ Compatibilidad Mantenida:**
+   - La API mantiene la misma estructura de respuesta
+   - No se requieren cambios en el frontend Flutter
+   - Retrocompatibilidad completa
+
+### **Campo Crítico en Tabla `bills`:**
+
+| Campo | Valores | Uso en el Sistema |
+|-------|---------|-------------------|
+| `paid` | `0` = No pagada<br>`1` = Pagada | **⚠️ Campo crítico** para separar gastos reales de pendientes |
+
+### **⚠️ Tablas de Balance Preagregadas (ADVERTENCIA):**
+
+Las siguientes tablas contienen campos preagregados que **NO** consideran el estado `paid`:
+- `monthly_cash_bank_balance`
+- `daily_cash_bank_balance`
+- `weekly_cash_bank_balance`
+- `quarterly_cash_bank_balance`
+- `semiannual_cash_bank_balance`
+- `annual_cash_bank_balance`
+
+**Campos problemáticos:**
+- `bill_bank_amount` - Suma TODAS las facturas (pagadas y pendientes)
+- `bill_cash_amount` - Suma TODAS las facturas (pagadas y pendientes)
+
+**⚠️ IMPORTANTE:** NO usar estos campos para cálculos de gastos sin verificar manualmente el estado de pago en la tabla `bills`.
+
+### **Validación Post-Corrección:**
+
+Para verificar que la corrección funciona correctamente:
+
+```sql
+-- Verificar facturas pagadas vs pendientes
+SELECT 
+  paid,
+  COUNT(*) as count_bills,
+  SUM(amount) as total_amount
+FROM bills 
+WHERE user_id = 'usuario_test' 
+GROUP BY paid;
+
+-- Resultado esperado:
+-- paid | count_bills | total_amount
+-- 0    | X           | Y.YY        (pendientes)
+-- 1    | Z           | W.WW        (pagadas)
+```
+
 ---
-Última actualización: 2024-12-19 
+
+**📅 Fecha de actualización:** Enero 2025  
+**🔧 Responsable:** Sistema de corrección automática  
+**✅ Estado:** Implementado y funcionando  
+**📂 Archivos afectados:** `backend/budget_overview_fetch/main.go`
+
+## 🚨 CORRECCIÓN CRÍTICA: Reclasificación de Facturas Pagadas (Enero 2025)
+
+### **SEGUNDO PROBLEMA IDENTIFICADO Y RESUELTO**
+
+Las funciones de reclasificación de facturas pagadas en `bills_management` tenían un error crítico que causaba duplicación de dinero disponible.
+
+#### ❌ **Problema Anterior:**
+- Al pagar una factura, las funciones `removeBillFromXXXBalances` restaban correctamente de `bill_xxx_amount`
+- **PERO** también sumaban incorrectamente de vuelta a `cash_amount` y `bank_amount`
+- **Resultado:** El dinero aparecía duplicado (disponible + como gasto) después del pago
+
+#### ✅ **Solución Implementada:**
+1. **Funciones corregidas en `backend/bills_management/main.go`:**
+   - `removeBillFromDailyBalances()`
+   - `removeBillFromWeeklyBalances()`
+   - `removeBillFromMonthlyBalances()`
+
+2. **Lógica simplificada:** Solo actualizar `bill_xxx_amount`, sin tocar balances disponibles
+
+### **Código Corregido:**
+
+#### ❌ **Antes (Incorrecto):**
+```go
+updateQuery := fmt.Sprintf(`
+    UPDATE monthly_cash_bank_balance 
+    SET %s = ?,
+        cash_amount = cash_amount + ?,        // ❌ INCORRECTO
+        bank_amount = bank_amount + ?,        // ❌ INCORRECTO
+        balance_cash_amount = balance_cash_amount + ?,  // ❌ INCORRECTO
+        balance_bank_amount = balance_bank_amount + ?   // ❌ INCORRECTO
+    WHERE user_id = ? AND year_month = ?
+`, columnName)
+```
+
+#### ✅ **Después (Correcto):**
+```go
+updateQuery := fmt.Sprintf(`
+    UPDATE monthly_cash_bank_balance 
+    SET %s = ?
+    WHERE user_id = ? AND year_month = ?
+`, columnName)
+```
+
+### **Flujo Correcto de Pago de Facturas:**
+
+1. **Factura pendiente:** `bill_bank_amount = 50`, `expense_bank_amount = 0`
+2. **Se paga la factura:**
+   - ✅ `bill_bank_amount = 0` (resta 50)
+   - ✅ `expense_bank_amount = 50` (suma 50) 
+   - ✅ `cash_amount` y `bank_amount` NO se modifican (corrección aplicada)
+3. **Resultado:** Transferencia limpia de bill a expense sin duplicación
+
+### **Impacto de la Corrección:**
+
+1. **✅ Eliminación de Duplicación:**
+   - El dinero ya no aparece duplicado después del pago
+   - Los balances disponibles reflejan correctamente la realidad
+   - Las facturas se reclasifican apropiadamente a gastos
+
+2. **✅ Logs Mejorados:**
+   ```
+   💰 Removed bill from monthly balance (CORRECTED): user=user123, 
+   month=2025-01, amount=50.00→0.00, method=bank
+   ```
+
+3. **✅ Consistencia Restaurada:**
+   - Todas las tablas de balance (daily, weekly, monthly) corregidas
+   - Reclasificación atómica y consistente
+   - Prevención de estados inconsistentes
+
+### **Funciones Afectadas:**
+
+| Función | Archivo | Corrección Aplicada |
+|---------|---------|-------------------|
+| `removeBillFromDailyBalances` | `bills_management/main.go` | ✅ Solo actualiza `bill_xxx_amount` |
+| `removeBillFromWeeklyBalances` | `bills_management/main.go` | ✅ Solo actualiza `bill_xxx_amount` |
+| `removeBillFromMonthlyBalances` | `bills_management/main.go` | ✅ Solo actualiza `bill_xxx_amount` |
+
+**⚠️ IMPORTANTE:** Esta corrección es crítica para la integridad financiera del sistema. Sin ella, los usuarios verían balances incorrectamente inflados después de pagar facturas.

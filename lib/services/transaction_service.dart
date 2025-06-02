@@ -7,7 +7,7 @@ import '../models/dashboard_model.dart';
 
 class TransactionService {
   static String get baseUrl {
-    return ApiConfig.baseApiUrl;
+    return ApiConfig.transactionHistoryServiceUrl;
   }
 
   static String get deleteServiceUrl {

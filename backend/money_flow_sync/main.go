@@ -378,7 +378,7 @@ func getUpcomingBillsAmount(userID, startDate, endDate string) (float64, error) 
 	query := `
 		SELECT amount, due_date, paid, recurring
 		FROM bills
-		WHERE user_id = ? AND due_date BETWEEN ? AND ?
+		WHERE user_id = ? AND due_date BETWEEN ? AND ? AND paid = 0
 	`
 
 	rows, err := db.Query(query, userID, startDate, endDate)
@@ -396,6 +396,7 @@ func getUpcomingBillsAmount(userID, startDate, endDate string) (float64, error) 
 		}
 
 		// Only count bills that haven't been paid yet
+		// (This check is now redundant since we filter in SQL, but keeping for safety)
 		if !bill.Paid {
 			upcomingAmount += bill.Amount
 		}

@@ -138,6 +138,10 @@ class ApiConfig {
   static String get budgetOverviewFetchServiceUrl =>
       _buildServiceUrl('/budget-overview', budgetOverviewFetchServicePort);
 
+  // Transaction History Service - Uses same service as budget overview (port 8098)
+  static String get transactionHistoryServiceUrl =>
+      _buildServiceUrl('', budgetOverviewFetchServicePort);
+
   // ===== MÉTODOS DE DEBUG Y UTILIDAD =====
 
   // Método para debug - mostrar configuración actual
@@ -208,6 +212,7 @@ class ApiConfig {
     'categories': categoriesEndpoint,
     'moneyFlowSync': moneyFlowSyncServiceUrl,
     'budgetOverview': budgetOverviewFetchServiceUrl,
+    'transactionHistory': transactionHistoryServiceUrl,
     'profile': profileManagementUrl,
   };
 

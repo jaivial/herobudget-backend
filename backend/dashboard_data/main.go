@@ -622,11 +622,11 @@ func fetchUpcomingBills(userID string) ([]Bill, error) {
 	// Get the current date
 	currentDate := time.Now().Format("2006-01-02")
 
-	// Query bills that are not paid and due in the future, or recurring bills
+	// Query bills that are not paid and due in the future, or recurring bills (but still not paid)
 	rows, err := db.Query(`
 		SELECT id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon
 		FROM bills
-		WHERE user_id = ? AND ((due_date >= ? AND paid = 0) OR recurring = 1)
+		WHERE user_id = ? AND ((due_date >= ? AND paid = 0) OR recurring = 1) AND paid = 0
 		ORDER BY due_date ASC
 		LIMIT 10
 	`, userID, currentDate)

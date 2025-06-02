@@ -115,5 +115,7 @@
     "cash": "Cash",
     "bank": "Bank",
     "connection_error": "Connection Error",
-    "showing_sample_data": "Showing sample data"
+    "showing_sample_data": "Showing sample data",
+    "no_cash_bank_data": "No distribution data",
+    "add_transactions_to_see_distribution": "Add transactions to see distribution"
 }
