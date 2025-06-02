@@ -77,9 +77,10 @@ class ApiConfig {
   static const int billsManagementServicePort = 8091;
   static const int incomeManagementServicePort = 8093;
   static const int expenseManagementServicePort = 8094;
-  static const int categoriesManagementServicePort = 8095;
-  static const int moneyFlowSyncServicePort = 8096;
-  static const int budgetOverviewFetchServicePort = 8097;
+  static const int transactionDeleteServicePort = 8095;
+  static const int categoriesManagementServicePort = 8096;
+  static const int moneyFlowSyncServicePort = 8097;
+  static const int budgetOverviewFetchServicePort = 8098;
   static const int profileManagementServicePort = 8092;
 
   // ===== CONSTRUCCIÓN DE URLs =====

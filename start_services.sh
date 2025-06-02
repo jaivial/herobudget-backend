@@ -21,9 +21,10 @@ BILLS_MANAGEMENT_PORT=8091
 PROFILE_MANAGEMENT_PORT=8092
 INCOME_MANAGEMENT_PORT=8093
 EXPENSE_MANAGEMENT_PORT=8094
-CATEGORIES_MANAGEMENT_PORT=8095
-MONEY_FLOW_SYNC_PORT=8096
-BUDGET_OVERVIEW_FETCH_PORT=8097
+TRANSACTION_DELETE_PORT=8095
+CATEGORIES_MANAGEMENT_PORT=8096
+MONEY_FLOW_SYNC_PORT=8097
+BUDGET_OVERVIEW_FETCH_PORT=8098
 
 # Function to get service port by name
 get_port() {
@@ -42,6 +43,7 @@ get_port() {
     "profile_management") echo $PROFILE_MANAGEMENT_PORT ;;
     "income_management") echo $INCOME_MANAGEMENT_PORT ;;
     "expense_management") echo $EXPENSE_MANAGEMENT_PORT ;;
+    "transaction_delete_service") echo $TRANSACTION_DELETE_PORT ;;
     "categories_management") echo $CATEGORIES_MANAGEMENT_PORT ;;
     "money_flow_sync") echo $MONEY_FLOW_SYNC_PORT ;;
     "budget_overview_fetch") echo $BUDGET_OVERVIEW_FETCH_PORT ;;
@@ -65,6 +67,7 @@ services=(
   "profile_management"
   "income_management"
   "expense_management"
+  "transaction_delete_service"
   "categories_management"
   "money_flow_sync"
   "budget_overview_fetch"

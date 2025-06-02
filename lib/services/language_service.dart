@@ -152,7 +152,7 @@ class LanguageService {
   // Get language from local storage
   static Future<String?> getLanguagePreference() async {
     try {
-      // Check local storage
+      // Check local storage first
       final prefs = await SharedPreferences.getInstance();
       final storedLocale = prefs.getString(languagePreferenceKey);
 
@@ -160,17 +160,33 @@ class LanguageService {
         // If the stored locale has a country code (old format), extract just the language code
         if (storedLocale.contains('-')) {
           final parts = storedLocale.split('-');
-          return parts[0];
+          final languageCode = parts[0];
+
+          // Update stored preference to new format (language code only)
+          await prefs.setString(languagePreferenceKey, languageCode);
+          return languageCode;
         }
         return storedLocale;
       }
 
-      // If not found, detect device locale
+      // If not found in storage, detect device locale
       final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
-      return deviceLocale.languageCode;
+      final deviceLanguageCode = deviceLocale.languageCode;
+
+      // Check if the device language is supported
+      if (supportedLanguages.containsKey(deviceLanguageCode)) {
+        print('Detected supported device language: $deviceLanguageCode');
+        return deviceLanguageCode;
+      }
+
+      // If device language is not supported, return English as default
+      print(
+        'Device language $deviceLanguageCode not supported, defaulting to English',
+      );
+      return 'en';
     } catch (e) {
       print('Error in getLanguagePreference: $e');
-      return 'en'; // Default to English
+      return 'en'; // Default to English on any error
     }
   }
 

@@ -4,6 +4,8 @@ import '../models/transaction_models.dart';
 import '../services/transaction_service.dart';
 import '../utils/extensions.dart';
 import '../theme/app_theme.dart';
+import 'transaction_list_item.dart';
+import 'transaction_filters_dialog.dart';
 
 class TransactionHistoryTable extends StatefulWidget {
   final String? period;
@@ -225,6 +227,65 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
     }
   }
 
+  Future<void> _deleteTransaction(Transaction transaction) async {
+    try {
+      // Show loading indicator
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+        });
+      }
+
+      // Call delete service
+      await _transactionService.deleteTransaction(
+        transactionId: transaction.id,
+        transactionType: transaction.type.value,
+      );
+
+      // Refresh data from server instead of just removing locally
+      // This ensures we get the updated data including any recalculated balances
+      await _loadInitialData();
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              context.tr.translate('transaction_deleted_successfully'),
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      // Refresh parent widget if callback provided
+      // This will trigger dashboard refresh to update budget overview and finance metrics
+      if (widget.onRefresh != null) {
+        widget.onRefresh!();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.tr.translate('error_deleting_transaction')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -239,7 +300,7 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
               child: Text(
                 context.tr.translate('transaction_history'),
                 style: TextStyle(
-                  fontSize: 18, // Slightly smaller
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: isDarkMode ? Colors.white : null,
                 ),
@@ -252,7 +313,7 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
                 _filters.hasActiveFilters
                     ? Icons.filter_alt
                     : Icons.filter_alt_outlined,
-                size: 20, // Smaller icons
+                size: 20,
                 color:
                     _filters.hasActiveFilters
                         ? (isDarkMode
@@ -264,7 +325,7 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
             ),
             PopupMenuButton<SortOption>(
               onSelected: _updateSort,
-              icon: const Icon(Icons.sort, size: 20), // Smaller icon
+              icon: const Icon(Icons.sort, size: 20),
               tooltip: context.tr.translate('sort'),
               itemBuilder:
                   (context) => [
@@ -496,6 +557,7 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
                     ),
                   )
                   : ListView.separated(
+                    controller: _scrollController,
                     itemCount:
                         _filteredTransactions.length + (_isLoadingMore ? 1 : 0),
                     separatorBuilder:
@@ -514,6 +576,7 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
                         isDarkMode: isDarkMode,
                         color: _getTransactionColor(transaction),
                         icon: _getTransactionIcon(transaction),
+                        onDelete: () => _deleteTransaction(transaction),
                       );
                     },
                   ),
@@ -539,414 +602,6 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
             availableCategories: _availableCategories,
             onFiltersChanged: _updateFilters,
           ),
-    );
-  }
-}
-
-// Transaction list item widget
-class TransactionListItem extends StatelessWidget {
-  final Transaction transaction;
-  final bool isDarkMode;
-  final Color color;
-  final IconData icon;
-
-  const TransactionListItem({
-    super.key,
-    required this.transaction,
-    required this.isDarkMode,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: color, size: 20),
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              transaction.displayName,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : null,
-              ),
-            ),
-          ),
-          Text(
-            context.tr.formatCurrency(transaction.amount),
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: color,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              // Category
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  transaction.category,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Payment method
-              Icon(
-                transaction.paymentMethod == PaymentMethod.cash
-                    ? Icons.money
-                    : Icons.credit_card,
-                size: 12,
-                color:
-                    isDarkMode
-                        ? Colors.white.withOpacity(0.7)
-                        : Colors.grey.shade600,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                context.tr.translate(transaction.paymentMethod.value),
-                style: TextStyle(
-                  fontSize: 10,
-                  color:
-                      isDarkMode
-                          ? Colors.white.withOpacity(0.7)
-                          : Colors.grey.shade600,
-                ),
-              ),
-              const Spacer(),
-              // Date
-              Text(
-                context.tr.formatDateWithTranslatedMonths(
-                  DateTime.parse(transaction.date),
-                  pattern: 'MMM d, yyyy',
-                ),
-                style: TextStyle(
-                  fontSize: 12,
-                  color:
-                      isDarkMode
-                          ? Colors.white.withOpacity(0.7)
-                          : Colors.grey.shade600,
-                ),
-              ),
-            ],
-          ),
-          // Bill status for bills
-          if (transaction.isBill) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    context.tr.translate(transaction.billStatusTextKey),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                if (transaction.overdue == true &&
-                    transaction.overdueDays != null) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    '${transaction.overdueDays} ${context.tr.translate('days_overdue')}',
-                    style: TextStyle(fontSize: 10, color: Colors.red.shade700),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// Filters dialog widget
-class TransactionFiltersDialog extends StatefulWidget {
-  final TransactionFilters currentFilters;
-  final List<String> availableCategories;
-  final Function(TransactionFilters) onFiltersChanged;
-
-  const TransactionFiltersDialog({
-    super.key,
-    required this.currentFilters,
-    required this.availableCategories,
-    required this.onFiltersChanged,
-  });
-
-  @override
-  State<TransactionFiltersDialog> createState() =>
-      _TransactionFiltersDialogState();
-}
-
-class _TransactionFiltersDialogState extends State<TransactionFiltersDialog> {
-  late TransactionFilters _filters;
-
-  @override
-  void initState() {
-    super.initState();
-    _filters = widget.currentFilters;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      height: MediaQuery.of(context).size.height * 0.8,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                context.tr.translate('filters'),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: isDarkMode ? Colors.white : null,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _filters = const TransactionFilters();
-                  });
-                },
-                child: Text(context.tr.translate('clear_all')),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Transaction types
-                  _FilterSection(
-                    title: context.tr.translate('transaction_types'),
-                    child: Wrap(
-                      spacing: 8,
-                      children:
-                          TransactionType.values.map((type) {
-                            final isSelected =
-                                _filters.transactionTypes?.contains(type) ??
-                                false;
-                            return FilterChip(
-                              label: Text(context.tr.translate(type.value)),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                setState(() {
-                                  final types = List<TransactionType>.from(
-                                    _filters.transactionTypes ?? [],
-                                  );
-                                  if (selected) {
-                                    types.add(type);
-                                  } else {
-                                    types.remove(type);
-                                  }
-                                  _filters = _filters.copyWith(
-                                    transactionTypes:
-                                        types.isEmpty ? null : types,
-                                  );
-                                });
-                              },
-                            );
-                          }).toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Payment methods
-                  _FilterSection(
-                    title: context.tr.translate('payment_methods'),
-                    child: Wrap(
-                      spacing: 8,
-                      children:
-                          PaymentMethod.values.map((method) {
-                            final isSelected =
-                                _filters.paymentMethods?.contains(method) ??
-                                false;
-                            return FilterChip(
-                              label: Text(context.tr.translate(method.value)),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                setState(() {
-                                  final methods = List<PaymentMethod>.from(
-                                    _filters.paymentMethods ?? [],
-                                  );
-                                  if (selected) {
-                                    methods.add(method);
-                                  } else {
-                                    methods.remove(method);
-                                  }
-                                  _filters = _filters.copyWith(
-                                    paymentMethods:
-                                        methods.isEmpty ? null : methods,
-                                  );
-                                });
-                              },
-                            );
-                          }).toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Categories
-                  _FilterSection(
-                    title: context.tr.translate('categories'),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children:
-                          widget.availableCategories.map((category) {
-                            final isSelected =
-                                _filters.categories?.contains(category) ??
-                                false;
-                            return FilterChip(
-                              label: Text(category),
-                              selected: isSelected,
-                              onSelected: (selected) {
-                                setState(() {
-                                  final categories = List<String>.from(
-                                    _filters.categories ?? [],
-                                  );
-                                  if (selected) {
-                                    categories.add(category);
-                                  } else {
-                                    categories.remove(category);
-                                  }
-                                  _filters = _filters.copyWith(
-                                    categories:
-                                        categories.isEmpty ? null : categories,
-                                  );
-                                });
-                              },
-                            );
-                          }).toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Bill status (only show if bills are included in transaction types)
-                  if (_filters.transactionTypes?.contains(
-                        TransactionType.bill,
-                      ) ??
-                      true)
-                    _FilterSection(
-                      title: context.tr.translate('bill_status'),
-                      child: Wrap(
-                        spacing: 8,
-                        children:
-                            BillStatusFilter.values.map((status) {
-                              final isSelected = _filters.billStatus == status;
-                              return FilterChip(
-                                label: Text(context.tr.translate(status.name)),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  setState(() {
-                                    _filters = _filters.copyWith(
-                                      billStatus: selected ? status : null,
-                                    );
-                                  });
-                                },
-                              );
-                            }).toList(),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // Action buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(context.tr.translate('cancel')),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton(
-                onPressed: () {
-                  widget.onFiltersChanged(_filters);
-                  Navigator.pop(context);
-                },
-                child: Text(context.tr.translate('apply_filters')),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Helper widget for filter sections
-class _FilterSection extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _FilterSection({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: isDarkMode ? Colors.white : null,
-          ),
-        ),
-        const SizedBox(height: 8),
-        child,
-      ],
     );
   }
 }

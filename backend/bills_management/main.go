@@ -600,7 +600,7 @@ func handleAddBill(w http.ResponseWriter, r *http.Request) {
 
 	// Determinar los montos de cash y bank según el método de pago
 	var cashAmt, bankAmt float64
-	if bill.PaymentMethod == "cash" {
+	if addRequest.PaymentMethod == "cash" {
 		cashAmt = bill.Amount
 		bankAmt = 0
 	} else {
@@ -766,10 +766,10 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	// Get the bill details before updating
 	var bill Bill
 	err = db.QueryRow(`
-		SELECT id, user_id, name, amount, due_date, category, recurring, paid, payment_method, icon
+		SELECT id, user_id, name, amount, due_date, category, recurring, paid, icon
 		FROM bills WHERE id = ? AND user_id = ?
 	`, payRequest.BillID, payRequest.UserID).Scan(
-		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Category, &bill.Recurring, &bill.Paid, &bill.PaymentMethod, &bill.Icon,
+		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Category, &bill.Recurring, &bill.Paid, &bill.Icon,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -790,25 +790,7 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 	// Default payment method to "bank" if not specified
 	paymentMethod := payRequest.PaymentMethod
 	if paymentMethod == "" {
-		// Usar el método de pago almacenado en la factura si no se proporciona uno nuevo
-		if bill.PaymentMethod != "" {
-			paymentMethod = bill.PaymentMethod
-		} else {
-			paymentMethod = "bank"
-		}
-	}
-
-	// Actualizar el método de pago en la factura si es diferente
-	if bill.PaymentMethod != paymentMethod {
-		_, err = db.Exec(`
-			UPDATE bills
-			SET payment_method = ?
-			WHERE id = ? AND user_id = ?
-		`, paymentMethod, payRequest.BillID, payRequest.UserID)
-		if err != nil {
-			log.Printf("Error updating payment method: %v", err)
-			// Continue despite the error
-		}
+		paymentMethod = "bank"
 	}
 
 	// Mark the bill as paid
@@ -877,10 +859,10 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 
 	// Re-fetch the bill to ensure we have the latest data from the database
 	err = db.QueryRow(`
-		SELECT id, user_id, name, amount, due_date, category, recurring, paid, payment_method, icon
+		SELECT id, user_id, name, amount, due_date, category, recurring, paid, icon
 		FROM bills WHERE id = ? AND user_id = ?
 	`, payRequest.BillID, payRequest.UserID).Scan(
-		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Category, &bill.Recurring, &bill.Paid, &bill.PaymentMethod, &bill.Icon,
+		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Category, &bill.Recurring, &bill.Paid, &bill.Icon,
 	)
 
 	if err != nil {
@@ -1267,10 +1249,10 @@ func fetchBills(userID string) ([]Bill, error) {
 func fetchBillByID(billID int, userID string) (*Bill, error) {
 	var bill Bill
 	err := db.QueryRow(`
-		SELECT id, user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, payment_method, created_at, updated_at
+		SELECT id, user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, created_at, updated_at
 		FROM bills WHERE id = ? AND user_id = ?
 	`, billID, userID).Scan(
-		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Paid, &bill.Overdue, &bill.OverdueDays, &bill.Recurring, &bill.Category, &bill.Icon, &bill.PaymentMethod, &bill.CreatedAt, &bill.UpdatedAt,
+		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate, &bill.Paid, &bill.Overdue, &bill.OverdueDays, &bill.Recurring, &bill.Category, &bill.Icon, &bill.CreatedAt, &bill.UpdatedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -1288,8 +1270,8 @@ func fetchBillByID(billID int, userID string) (*Bill, error) {
 func addBill(bill Bill) (int, error) {
 	res, err := db.Exec(`
 		INSERT INTO bills (
-			user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, payment_method
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		bill.UserID,
 		bill.Name,
@@ -1301,7 +1283,6 @@ func addBill(bill Bill) (int, error) {
 		bill.Recurring,
 		bill.Category,
 		bill.Icon,
-		bill.PaymentMethod,
 	)
 	if err != nil {
 		return 0, err
@@ -1328,7 +1309,6 @@ func updateBill(bill Bill) error {
 			recurring = ?,
 			category = ?,
 			icon = ?,
-			payment_method = ?,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = ? AND user_id = ?
 	`,
@@ -1341,7 +1321,6 @@ func updateBill(bill Bill) error {
 		bill.Recurring,
 		bill.Category,
 		bill.Icon,
-		bill.PaymentMethod,
 		bill.ID,
 		bill.UserID,
 	)

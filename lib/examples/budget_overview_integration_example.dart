@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/budget_overview_with_period.dart';
+import '../widgets/budget_overview_monthly.dart';
 import '../utils/app_localizations.dart';
 
-/// Example screen showing how to use the integrated BudgetOverviewWithPeriod widget
-/// This demonstrates the complete integration between the period selector and budget overview
+/// Example screen showing how to use the integrated BudgetOverviewMonthly widget
+/// This demonstrates the complete integration between the monthly selector and budget overview
 /// with automatic data fetching from the microservice.
 class BudgetOverviewIntegrationExample extends StatelessWidget {
   const BudgetOverviewIntegrationExample({super.key});
@@ -17,7 +17,7 @@ class BudgetOverviewIntegrationExample extends StatelessWidget {
         title: Text(localizations.translate('money_flow')),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: const BudgetOverviewWithPeriod(),
+      body: const BudgetOverviewMonthly(),
     );
   }
 }
@@ -38,7 +38,7 @@ class DashboardWithBudgetOverview extends StatelessWidget {
             // Other dashboard widgets can go here
 
             // Budget Overview Section
-            const BudgetOverviewWithPeriod(),
+            const BudgetOverviewMonthly(),
 
             // More dashboard widgets can be added below
             const SizedBox(height: 20),
@@ -84,7 +84,7 @@ class _CustomBudgetOverviewExampleState
       body:
           _isCompactView
               ? const CompactBudgetView()
-              : const BudgetOverviewWithPeriod(),
+              : const BudgetOverviewMonthly(),
     );
   }
 }
@@ -97,7 +97,7 @@ class CompactBudgetView extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.all(8.0),
-      child: BudgetOverviewWithPeriod(),
+      child: BudgetOverviewMonthly(),
     );
   }
 }
@@ -142,7 +142,7 @@ class IntegrationInstructions extends StatelessWidget {
             const SizedBox(height: 8),
             const CodeBlock('''
 // Basic usage in any screen:
-const BudgetOverviewWithPeriod()
+const BudgetOverviewMonthly()
 
 // The widget automatically:
 // 1. Initializes with current month

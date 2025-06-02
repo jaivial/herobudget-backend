@@ -640,14 +640,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Text(
-            _getStepTitle(),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.getPrimaryColor(context),
+          // Title with optional icon for specific steps
+          if (_currentStep == 4 || _currentStep == 5 || _currentStep == 6)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    _getStepIcon(),
+                    color: AppTheme.getPrimaryColor(context),
+                    size: 24,
+                  ),
+                ),
+                Text(
+                  _getStepTitle(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.getPrimaryColor(context),
+                  ),
+                ),
+              ],
+            )
+          else
+            Text(
+              _getStepTitle(),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.getPrimaryColor(context),
+              ),
             ),
-          ),
           const SizedBox(height: 4),
           Text(
             _getStepDescription(),
@@ -929,7 +958,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             );
                                             ToastUtil.showErrorToast(
                                               context,
-                                              'Please enter a valid email address',
+                                              context.tr.translate(
+                                                'please_enter_valid_email_address',
+                                              ),
                                             );
                                             return;
                                           }
@@ -972,8 +1003,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             // If email already exists, show error
                                             if (emailExists) {
                                               setState(() {
-                                                _emailError =
-                                                    'This email is already registered';
+                                                _emailError = context.tr
+                                                    .translate(
+                                                      'email_already_in_use',
+                                                    );
                                               });
                                               ToastUtil.showCustomToast(
                                                 context,
@@ -1227,7 +1260,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                         if (_givenNameController.text.isEmpty) {
                                           ToastUtil.showErrorToast(
                                             context,
-                                            'First name is required',
+                                            context.tr.translate(
+                                              'please_enter_first_name',
+                                            ),
                                           );
                                           return;
                                         }
@@ -1236,7 +1271,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                             .isEmpty) {
                                           ToastUtil.showErrorToast(
                                             context,
-                                            'Last name is required',
+                                            context.tr.translate(
+                                              'please_enter_last_name',
+                                            ),
                                           );
                                           return;
                                         }
@@ -1473,7 +1510,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                             const SizedBox(height: 24),
                             Text(
-                              'Creating your account...',
+                              context.tr.translate('creating_your_account'),
                               style: TextStyle(
                                 color: AppTheme.getPrimaryColor(context),
                                 fontSize: 17,
@@ -1482,8 +1519,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Please wait a moment',
+                            Text(
+                              context.tr.translate('please_wait_moment'),
                               style: TextStyle(
                                 color: Colors.grey,
                                 fontSize: 14,
@@ -1582,6 +1619,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  IconData _getStepIcon() {
+    switch (_currentStep) {
+      case 4:
+        return Icons.lock_rounded;
+      case 5:
+        return Icons.person_rounded;
+      case 6:
+        return Icons.camera_alt_rounded;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
   String _getStepDescription() {
     if (!_isSignupFlow && _currentStep == 2) {
       return context.tr.translate('enter_credentials');
@@ -1636,7 +1686,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             !_emailController.text.contains('@')) {
           ToastUtil.showErrorToast(
             context,
-            'Please enter a valid email address',
+            context.tr.translate('please_enter_valid_email_address'),
           );
           return false;
         }
@@ -1653,7 +1703,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         setState(() {
           _isLoading = false;
           if (emailExists) {
-            _emailError = 'This email is already registered';
+            _emailError = context.tr.translate('email_already_in_use');
             ToastUtil.showCustomToast(
               context,
               'Account with this email already exists. Try signing in instead.',
@@ -1675,20 +1725,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case 4:
         // Password step
         if (_passwordController.text.isEmpty) {
-          ToastUtil.showErrorToast(context, 'Please enter a password');
+          ToastUtil.showErrorToast(
+            context,
+            context.tr.translate('please_enter_password'),
+          );
           return false;
         }
 
         if (_passwordController.text.length < 6) {
           ToastUtil.showErrorToast(
             context,
-            'Password must be at least 6 characters',
+            context.tr.translate('password_min_6_chars'),
           );
           return false;
         }
 
         if (_confirmPasswordController.text != _passwordController.text) {
-          ToastUtil.showErrorToast(context, 'Passwords do not match');
+          ToastUtil.showErrorToast(
+            context,
+            context.tr.translate('passwords_do_not_match'),
+          );
           return false;
         }
 
@@ -1697,12 +1753,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case 5:
         // Personal info step
         if (_givenNameController.text.isEmpty) {
-          ToastUtil.showErrorToast(context, 'First name is required');
+          ToastUtil.showErrorToast(
+            context,
+            context.tr.translate('please_enter_first_name'),
+          );
           return false;
         }
 
         if (_familyNameController.text.isEmpty) {
-          ToastUtil.showErrorToast(context, 'Last name is required');
+          ToastUtil.showErrorToast(
+            context,
+            context.tr.translate('please_enter_last_name'),
+          );
           return false;
         }
 
@@ -1713,7 +1775,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (_profileImageFile == null) {
           ToastUtil.showWarningToast(
             context,
-            'No profile image selected. You can add one later.',
+            context.tr.translate('no_profile_image_selected'),
           );
         }
         return true;
@@ -1736,14 +1798,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_signinEmailController.text.isEmpty ||
         !_signinEmailController.text.contains('@')) {
       setState(() {
-        _signinEmailError = 'Please enter a valid email address';
+        _signinEmailError = context.tr.translate(
+          'please_enter_valid_email_address',
+        );
       });
       return;
     }
 
     if (_signinPasswordController.text.isEmpty) {
       setState(() {
-        _signinPasswordError = 'Please enter your password';
+        _signinPasswordError = context.tr.translate(
+          'please_enter_your_password',
+        );
       });
       return;
     }
@@ -1784,18 +1850,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // Set specific field errors if applicable
         if (result['error_type'] == 'email_not_found') {
           setState(() {
-            _signinEmailError = 'Invalid email address';
+            _signinEmailError = context.tr.translate('email_not_found');
           });
         }
         if (result['error_type'] == 'invalid_credentials') {
           setState(() {
-            _signinPasswordError = 'Invalid password';
+            _signinPasswordError = context.tr.translate('invalid_password');
           });
         }
       }
     } catch (e) {
       if (mounted) {
-        ToastUtil.showErrorToast(context, 'An error occurred: $e');
+        ToastUtil.showErrorToast(
+          context,
+          context.tr.translate('an_error_occurred_try_again'),
+        );
       }
     } finally {
       if (mounted) {

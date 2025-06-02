@@ -198,74 +198,87 @@ Contiene las pantallas principales de la aplicación, organizadas por funcionali
 Contiene los servicios que implementan la lógica de negocio y la comunicación con el backend.
 
 - `auth_service.dart`: Gestiona la autenticación de usuarios.
-- `category_service.dart`: Gestiona las operaciones CRUD de categorías.
-- `expense_service.dart`: Gestiona las operaciones CRUD de gastos.
-- `income_service.dart`: Gestiona las operaciones CRUD de ingresos.
-- `profile_service.dart`: Gestiona las operaciones del perfil de usuario.
-- `dashboard_service.dart`: **Actualizado** - Ahora incluye integración con el endpoint `/budget-overview` del backend para obtener datos financieros en tiempo real según el período seleccionado.
-- `language_service.dart`: Gestiona la configuración de idioma.
-- `savings_service.dart`: Gestiona las operaciones de ahorros.
-- `bills_service.dart`: Gestiona las operaciones de facturas recurrentes.
-- `api_helper.dart`: Utilidad para comunicación con la API.
+- `language_service.dart`: Gestiona las preferencias de idioma y localización.
+- `language_update_service.dart`: Actualiza el idioma del usuario en la base de datos.
+- `dashboard_service.dart`: Obtiene datos del dashboard financiero.
+- `category_service.dart`: Gestiona las categorías de ingresos y gastos.
+- `expense_service.dart`: Gestiona los gastos del usuario.
+- `income_service.dart`: Gestiona los ingresos del usuario.
+- `bills_service.dart`: Gestiona las facturas recurrentes.
+- `savings_service.dart`: Gestiona las metas de ahorro.
 
-**Nuevas funcionalidades en `dashboard_service.dart`:**
-- `fetchBudgetOverview()`: Método que se conecta con el endpoint `/budget-overview` del microservicio `budget_overview_fetch`
-- `createFinanceMetricsFromBudgetOverview()`: Convierte los datos del backend al modelo `FinanceMetrics` del frontend
-- `_formatDateForPeriod()`: Formatea fechas según el tipo de período (diario, semanal, mensual, etc.)
-- Soporte para todos los períodos: daily, weekly, monthly, quarterly, semiannual, annual
+#### 4. Utils (`lib/utils/`)
+Contiene utilidades y extensiones para facilitar el desarrollo.
 
-#### 4. Theme (`lib/theme/`)
-Define la apariencia visual de la aplicación.
+- `app_localizations.dart`: Sistema principal de localización y traducciones.
+- `extensions.dart`: Extensiones útiles para BuildContext y otros tipos.
+- `currency_utils.dart`: Utilidades para formateo de monedas.
 
-- `app_theme.dart`: Definición de temas (claro/oscuro), colores y estilos.
+#### 5. Assets (`assets/`)
+Contiene recursos estáticos de la aplicación.
 
-#### 5. Widgets (`lib/widgets/`)
-Contiene widgets reutilizables organizados por funcionalidad.
+- `l10n/`: Archivos de traducción en formato JSON para 14 idiomas soportados.
+  - `en.json`: Inglés (idioma base)
+  - `es.json`: Español
+  - `fr.json`: Francés
+  - `it.json`: Italiano
+  - `de.json`: Alemán
+  - `gsw.json`: Alemán suizo
+  - `el.json`: Griego
+  - `nl.json`: Holandés
+  - `da.json`: Danés
+  - `ru.json`: Ruso
+  - `pt.json`: Portugués
+  - `zh.json`: Chino
+  - `ja.json`: Japonés
+  - `hi.json`: Hindi
+- `images/`: Imágenes y recursos gráficos.
+- `avatars/`: Avatares predeterminados para usuarios.
 
-- `finance_metrics.dart`: **Actualizado** - Ahora incluye dos widgets:
-  - `FinanceMetricsWidget`: Widget original que muestra la distribución financiera estática
-  - `FinanceMetricsWithPeriod`: **Nuevo** - Widget dinámico que incluye selector de período y obtiene datos del backend automáticamente
+## Sistema de Localización
 
-**Características del nuevo widget `FinanceMetricsWithPeriod`:**
-- **Selector de período integrado**: Permite cambiar entre diferentes períodos de tiempo
-- **Fetching automático**: Obtiene datos del backend cuando cambia el período o fecha
-- **Estados de carga**: Muestra indicadores de carga, errores y datos vacíos
-- **Sincronización con dashboard**: Notifica cambios de período al componente padre
-- **Manejo de errores**: Incluye botón de reintento en caso de errores de conexión
+### Arquitectura de Traducciones
 
-**Flujo de datos del widget:**
-1. Usuario selecciona un período (daily, weekly, monthly, etc.)
-2. Widget llama a `DashboardService.fetchBudgetOverview()` con los parámetros seleccionados
-3. Servicio hace petición HTTP POST a `http://localhost:8097/budget-overview`
-4. Backend devuelve datos agregados del período solicitado
-5. Servicio convierte los datos a modelo `FinanceMetrics`
-6. Widget actualiza la visualización con los nuevos datos
-7. Se muestra la distribución porcentual de ingresos, gastos y facturas
+La aplicación implementa un sistema completo de localización que soporta 14 idiomas diferentes:
 
-**Integración en el Dashboard:**
-El dashboard principal (`dashboard_screen.dart`) ahora utiliza `FinanceMetricsWithPeriod` en lugar del widget estático, proporcionando:
-- Datos en tiempo real desde la base de datos
-- Sincronización automática entre componentes
-- Experiencia de usuario mejorada con datos actualizados
+#### Componentes Principales:
 
-#### 6. Utils (`lib/utils/`)
-Contiene utilidades y funciones helper.
+1. **AppLocalizations** (`lib/utils/app_localizations.dart`):
+   - Clase principal que maneja la carga y acceso a las traducciones
+   - Implementa fallback automático a inglés para claves faltantes
+   - Soporte para pluralización y parámetros dinámicos
+   - Formateo de fechas y monedas según el idioma
 
-### Backend (Go)
+2. **LanguageService** (`lib/services/language_service.dart`):
+   - Gestiona las preferencias de idioma del usuario
+   - Detecta automáticamente el idioma del dispositivo
+   - Sincroniza preferencias con el servidor cuando está disponible
+   - Almacena preferencias localmente en SharedPreferences
 
-La estructura del backend está organizada por dominios funcionales:
+3. **Extensiones de Contexto** (`lib/utils/extensions.dart`):
+   - Proporciona acceso fácil a traducciones mediante `context.tr.translate()`
+   - Simplifica el uso del sistema de localización en widgets
 
-- `money_flow_sync/`: Sincronización de flujos monetarios.
-- `categories_management/`: Gestión de categorías.
-- `expense_management/`: Gestión de gastos.
-- `income_management/`: Gestión de ingresos.
-- `profile_management/`: Gestión de perfiles de usuario.
-- `bills_management/`: Gestión de facturas.
-- `savings_management/`: Gestión de ahorros.
-- `budget_management/`: Gestión de presupuestos.
-- `dashboard_data/`: Generación de datos para dashboard.
-- `signin/`, `signup/`: Autenticación de usuarios.
-- `reset_password/`: Restablecimiento de contraseña.
+#### Flujo de Detección de Idioma:
+
+1. **Inicio de la aplicación**: Se verifica si existe una preferencia guardada
+2. **Sin preferencia guardada**: Se detecta el idioma del dispositivo
+3. **Idioma soportado**: Se usa el idioma detectado
+4. **Idioma no soportado**: Se usa inglés como fallback
+5. **Usuario autenticado**: Se sincroniza con la preferencia del servidor
+
+#### Resolución de Problemas Comunes:
+
+- **Pantallas en inglés únicamente**: Verificar que todas las claves de traducción existan en todos los archivos de idioma
+- **Configuración incorrecta**: Asegurar que `MaterialApp.locale` esté correctamente configurado
+- **Claves faltantes**: El sistema automáticamente usa inglés como fallback
+
+#### Mantenimiento de Traducciones:
+
+- Todas las claves deben existir en el archivo base `en.json`
+- Los archivos de idioma deben mantenerse sincronizados
+- Las nuevas funcionalidades requieren traducciones en todos los idiomas soportados
+- Se recomienda usar herramientas de validación para verificar completitud
 
 ## Flujo de Datos y Relaciones
 

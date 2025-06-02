@@ -85,9 +85,9 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
                         // Validate password step
                         if (widget.passwordController.text.length < 6) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text(
-                                'Password must be at least 6 characters',
+                                context.tr.translate('password_min_6_chars'),
                               ),
                               backgroundColor: Colors.red,
                             ),
@@ -98,8 +98,10 @@ class _PasswordStepWrapperState extends State<PasswordStepWrapper> {
                         if (widget.confirmPasswordController.text !=
                             widget.passwordController.text) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Passwords do not match'),
+                            SnackBar(
+                              content: Text(
+                                context.tr.translate('passwords_do_not_match'),
+                              ),
                               backgroundColor: Colors.red,
                             ),
                           );

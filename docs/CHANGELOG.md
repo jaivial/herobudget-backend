@@ -282,3 +282,118 @@ Historial de versiones anteriores no disponible.
 - `lib/widgets/transaction_overview_widget.dart`
 - `lib/widgets/transaction_history_table.dart` 
 - `lib/screens/dashboard/dashboard_screen.dart` 
+
+## [2024-01-15] - Corrección del Sistema de Traducciones
+
+### Problema Resuelto
+- **Pantalla email_sent_step.dart mostrando solo en inglés**: Se identificó y corrigió el problema de localización que causaba que ciertas pantallas no mostraran las traducciones correctas según el idioma del dispositivo.
+- **Pantalla email_verification_screen.dart mostrando solo en inglés**: Se corrigió el problema de strings hardcodeados en inglés que impedían la correcta localización de la pantalla de verificación de email.
+
+### Cambios Realizados
+
+#### 1. Corrección de email_verification_screen.dart
+- **Strings hardcodeados eliminados**: Se reemplazaron todos los textos en inglés hardcodeados por llamadas al sistema de traducción
+- **Nuevas claves de traducción añadidas**: Se crearon 12 nuevas claves específicas para la pantalla de verificación de email
+- **Soporte completo multiidioma**: La pantalla ahora se muestra correctamente en los 14 idiomas soportados
+- **Claves añadidas**:
+  - `email_verification_checking_status`: "Verificando estado de verificación..."
+  - `email_verification_complete`: "¡Tu correo electrónico ha sido verificado!"
+  - `email_verification_description`: "Hemos enviado un código de verificación a"
+  - `email_verification_error_checking`: "Error verificando estado de verificación"
+  - `email_verification_error_sending`: "Error enviando código de verificación"
+  - `email_verification_failed_to_send`: "Error al enviar código de verificación"
+  - `email_verification_instruction`: "Por favor ingresa el código para verificar tu cuenta y comenzar a usar Hero Budget."
+  - `email_verification_not_verified`: "Tu correo electrónico aún no está verificado. Por favor revisa tu bandeja de entrada."
+  - `email_verification_redirecting`: "Redirigiendo a pantalla de verificación..."
+  - `email_verification_required`: "Verificación de Correo Electrónico Requerida"
+  - `email_verification_sent`: "¡Código de verificación enviado! Por favor revisa tu correo electrónico."
+
+#### 2. Mejoras en la Detección de Idioma (`lib/main.dart`)
+- **Mejorada la inicialización del locale**: Ahora detecta correctamente el idioma del dispositivo cuando no hay preferencia guardada
+- **Validación de idiomas soportados**: Verifica que el idioma del dispositivo esté en la lista de idiomas soportados antes de aplicarlo
+- **Fallback automático**: Si el idioma del dispositivo no está soportado, automáticamente usa inglés
+- **Guardado automático**: Guarda la preferencia de idioma detectada para uso futuro
+
+#### 3. Optimización del Servicio de Idiomas (`lib/services/language_service.dart`)
+- **Mejor manejo de formatos antiguos**: Convierte automáticamente formatos de locale antiguos (con código de país) al nuevo formato
+- **Detección mejorada del dispositivo**: Implementa verificación de idiomas soportados antes de aplicar el idioma del dispositivo
+- **Logging mejorado**: Añade mensajes informativos para facilitar el debugging
+
+#### 4. Corrección de Traducciones Faltantes (`assets/l10n/zh.json`)
+- **Claves agregadas para email_sent_step**: Se añadieron las traducciones faltantes en chino:
+  - `email_sent_title`: "检查您的邮箱"
+  - `email_sent_description`: "我们已向以下地址发送了密码重置链接："
+  - `email_instructions`: "点击邮件中的链接重置您的密码。如果您没有看到邮件，请检查您的垃圾邮件文件夹。"
+  - `try_different_email`: "尝试不同的邮箱"
+
+#### 5. Documentación Actualizada
+- **UI/UX Guide**: Añadida sección detallada sobre el sistema de traducciones y resolución de problemas
+- **Project Structure**: Documentado el sistema completo de localización con arquitectura y flujo de datos
+
+### Archivos Modificados
+- `lib/main.dart`: Mejorada la detección e inicialización del locale
+- `lib/services/language_service.dart`: Optimizado el método getLanguagePreference
+- `assets/l10n/zh.json`: Agregadas claves de traducción faltantes
+- `docs/UI_UX_GUIDE.md`: Actualizada sección de localización
+- `docs/PROJECT_STRUCTURE.md`: Añadida documentación del sistema de traducciones
+
+### Impacto
+- **Resolución completa**: La pantalla email_sent_step.dart ahora se muestra correctamente en todos los idiomas soportados
+- **Mejor experiencia de usuario**: Detección automática del idioma del dispositivo en la primera ejecución
+- **Sistema más robusto**: Manejo mejorado de errores y casos edge en la detección de idiomas
+- **Documentación completa**: Guías claras para futuras modificaciones y resolución de problemas
+
+### Idiomas Verificados
+Se confirmó que las traducciones para email_sent_step existen en todos los 14 idiomas soportados:
+- ✅ Inglés (en)
+- ✅ Español (es) 
+- ✅ Francés (fr)
+- ✅ Italiano (it)
+- ✅ Alemán (de)
+- ✅ Alemán Suizo (gsw)
+- ✅ Griego (el)
+- ✅ Holandés (nl)
+- ✅ Danés (da)
+- ✅ Ruso (ru)
+- ✅ Portugués (pt)
+- ✅ Chino (zh) - Corregido
+- ✅ Japonés (ja)
+- ✅ Hindi (hi)
+
+---
+
+*Para futuras referencias: Este tipo de problemas de localización se pueden prevenir implementando validaciones automáticas que verifiquen la completitud de las traducciones en todos los archivos de idioma.* 
+
+## [Unreleased] - 2024-12-19
+
+### Fixed
+- **[email_otp_verification_screen.dart]**: Fixed localization issue where all texts appeared only in English
+  - Added 16 new translation keys for email OTP verification screen
+  - Keys: `email_otp_description`, `email_otp_enter_6_digits`, `email_otp_enter_all_digits`, `email_otp_failed_to_verify`, `email_otp_invalid_user_data`, `email_otp_network_error`, `email_otp_resend_code`, `email_otp_resend_countdown`, `email_otp_resend_failed`, `email_otp_resend_sent`, `email_otp_sending`, `email_otp_seconds`, `email_otp_verify_button`
+  - Added translations to all 14 supported languages: en, es, fr, it, de, gsw, el, nl, da, ru, pt, zh, ja, hi
+  - Replaced hardcoded English strings with `context.tr.translate()` calls
+  - Screen now properly displays in user's configured language
+  - Files modified: 16 total (1 main code file + 14 translation files + 1 documentation file)
+
+- **[email_verification_screen.dart]**: Fixed localization issue where all texts appeared only in English
+  - Added 12 new translation keys for email verification screen
+  - Keys: `email_verification_checking_status`, `email_verification_complete`, `email_verification_description`, `email_verification_error_checking`, `email_verification_error_sending`, `email_verification_failed_to_send`, `email_verification_instruction`, `email_verification_not_verified`, `email_verification_redirecting`, `email_verification_required`, `email_verification_sent`
+  - Added translations to all 14 supported languages
+  - Replaced hardcoded English strings with proper translation system
+  - Corrected import to use existing `extensions.dart` file
+  - Screen now properly displays in user's configured language
+
+- **[email_sent_step.dart]**: Fixed localization issues that prevented proper language detection
+  - Enhanced locale initialization in `main.dart` for better device language detection and fallback mechanisms
+  - Optimized `LanguageService` with improved handling of old locale formats and device language detection
+  - Fixed missing translation keys in Chinese (`zh.json`) file
+  - All email-related verification screens now properly respect user's language settings
+
+## Context
+The localization fixes address a systematic issue where verification screens were displaying hardcoded English text instead of using the app's translation system. This affected users who had configured non-English languages, creating an inconsistent user experience during the critical email verification process.
+
+### Technical Implementation
+- **Translation System**: Uses `AppLocalizations` class with JSON-based translations loaded from `assets/l10n/` directory
+- **Extension Method**: Utilizes `context.tr.translate()` extension method from `utils/extensions.dart`
+- **Language Support**: Maintains consistency across all 14 supported languages
+- **File Organization**: All files maintained under 200-line limit as per project standards 

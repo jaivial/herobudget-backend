@@ -39,10 +39,10 @@ type BudgetData struct {
 }
 
 type Bill struct {
-	Amount     float64 `json:"amount"`
-	DueDate    string  `json:"due_date"`
-	Paid       bool    `json:"paid"`
-	Recurring  bool    `json:"recurring"`
+	Amount    float64 `json:"amount"`
+	DueDate   string  `json:"due_date"`
+	Paid      bool    `json:"paid"`
+	Recurring bool    `json:"recurring"`
 }
 
 var (
@@ -80,7 +80,7 @@ func main() {
 	// Set up CORS middleware and routes
 	http.HandleFunc("/money-flow/sync", corsMiddleware(handleSyncMoneyFlow))
 
-	port := 8096 // Nuevo puerto para el servicio de sincronización de money flow
+	port := 8097 // Puerto para el servicio de sincronización de money flow
 	log.Printf("Money Flow Sync service started on :%d", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }
@@ -261,9 +261,9 @@ func getPreviousPeriodData(userID, currentPeriod string) (string, float64) {
 	// Define the previous period based on the current period
 	var previousPeriod string
 	var queryDateCondition string
-	
+
 	now := time.Now()
-	
+
 	switch currentPeriod {
 	case "daily":
 		// Previous day
@@ -321,24 +321,24 @@ func getPreviousPeriodData(userID, currentPeriod string) (string, float64) {
 		// If the period is not recognized, don't try to get previous data
 		return "", 0
 	}
-	
+
 	// Query to get the most recent budget entry for the previous period
 	query := fmt.Sprintf(`
 		SELECT remaining_amount FROM budget 
 		WHERE user_id = ? AND period = ? %s
 		LIMIT 1
 	`, queryDateCondition)
-	
+
 	var remainingAmount float64
 	err := db.QueryRow(query, userID, previousPeriod).Scan(&remainingAmount)
-	
+
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("Error getting previous period data: %v", err)
 		}
 		return "", 0
 	}
-	
+
 	return previousPeriod, remainingAmount
 }
 

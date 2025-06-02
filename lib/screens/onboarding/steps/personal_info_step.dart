@@ -23,42 +23,6 @@ class PersonalInfoStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Personal info section header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.person_rounded,
-                  color: AppTheme.getPrimaryColor(context),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                context.tr.translate('personal_information'),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getPrimaryColor(context),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(left: 46),
-            child: Text(
-              context.tr.translate('tell_us_about_yourself'),
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-          ),
-          const SizedBox(height: 24),
-
           // First name field
           TextFormField(
             controller: givenNameController,

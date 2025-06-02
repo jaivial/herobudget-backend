@@ -110,6 +110,27 @@ Hero Budget utiliza la tipografía predeterminada de Material Design.
 - Soporte completo para múltiples idiomas
 - Adaptación del diseño para diferentes longitudes de texto
 
+### Sistema de Traducciones
+- **Arquitectura**: Sistema basado en JSON con archivos en `assets/l10n/`
+- **Idiomas Soportados**: 14 idiomas (en, es, fr, it, de, gsw, el, nl, da, ru, pt, zh, ja, hi)
+- **Implementación**: 
+  - `AppLocalizations` clase para manejo de traducciones
+  - Extensión `context.tr.translate()` para acceso fácil
+  - Fallback automático a inglés para claves faltantes
+- **Detección de Idioma**: 
+  - Detección automática del idioma del dispositivo
+  - Almacenamiento de preferencia en SharedPreferences
+  - Sincronización con el servidor (cuando está disponible)
+
+### Resolución de Problemas de Localización
+- **Problema común**: Pantallas mostrando solo en inglés
+- **Causa principal**: Configuración incorrecta de locale o claves de traducción faltantes
+- **Solución**: 
+  1. Verificar que todas las claves existan en todos los archivos de idioma
+  2. Comprobar la configuración de `MaterialApp.locale`
+  3. Asegurar que `AppLocalizations.delegate` esté correctamente configurado
+- **Fallback**: Sistema automático de fallback a inglés para claves no encontradas
+
 ## Elementos de UI específicos
 
 ### Widget de Flujo de Dinero

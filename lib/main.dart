@@ -59,8 +59,10 @@ class LanguageChangeNotifier {
 final languageChangeNotifier = LanguageChangeNotifier();
 
 void main() async {
-  // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // FORCE PRODUCTION APIs - Use remote VPS endpoints
+  // ApiConfig.useProduction();
 
   // ==========================================
   // 🔧 CONFIGURACIÓN DE AMBIENTE
@@ -71,9 +73,6 @@ void main() async {
 
   // Para usar servicios locales (localhost) - requiere start_services.sh
   ApiConfig.useLocalhost();
-
-  // Para usar servicios de producción
-  // ApiConfig.useProduction();
 
   // OPCIÓN 2: Configuración automática (recomendada)
   // Usar la configuración por defecto basada en el modo de compilación:
@@ -321,13 +320,37 @@ class _MyAppState extends State<MyApp> {
       // Get saved locale from local storage
       final savedLocale = await LanguageService.getLanguagePreference();
 
-      // Convert the string locale to Locale object
-      Locale appLocale = Locale(savedLocale ?? 'en');
+      // Convert the string locale to Locale object, with better device locale detection
+      Locale appLocale;
+      if (savedLocale != null && savedLocale.isNotEmpty) {
+        appLocale = Locale(savedLocale);
+      } else {
+        // If no saved locale, detect device locale and ensure it's supported
+        final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+        final supportedLanguageCodes =
+            AppLocalizations.supportedLocales
+                .map((locale) => locale.languageCode)
+                .toList();
+
+        if (supportedLanguageCodes.contains(deviceLocale.languageCode)) {
+          appLocale = Locale(deviceLocale.languageCode);
+          // Save the detected locale for future use
+          await LanguageService.saveLanguagePreference(
+            deviceLocale.languageCode,
+          );
+        } else {
+          // Fallback to English if device locale is not supported
+          appLocale = const Locale('en');
+          await LanguageService.saveLanguagePreference('en');
+        }
+      }
 
       setState(() {
         _appLocale = appLocale;
         _isLocaleSupported = true;
       });
+
+      print('App locale set to: ${appLocale.languageCode}');
 
       // Check if user is already signed in
       final bool isSignedIn = await SignInService.isSignedIn();

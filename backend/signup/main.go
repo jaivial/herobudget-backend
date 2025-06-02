@@ -19,6 +19,8 @@ import (
 	"strings"
 	"time"
 
+	"text/template"
+
 	"github.com/chai2010/webp"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nfnt/resize"
@@ -35,7 +37,32 @@ var (
 	fromEmail    string
 	appBaseURL   string
 	verifyPage   string
+
+	// Email templates for different languages
+	verificationEmailTemplates VerificationEmailTemplates
 )
+
+// Email template structure for verification
+type VerificationEmailTemplate struct {
+	Subject      string `json:"subject"`
+	Greeting     string `json:"greeting"`
+	Message      string `json:"message"`
+	CodeLabel    string `json:"code_label"`
+	ExpiryNotice string `json:"expiry_notice"`
+	Footer       string `json:"footer"`
+}
+
+// Email templates collection for verification
+type VerificationEmailTemplates struct {
+	Templates map[string]VerificationEmailTemplate `json:"templates"`
+}
+
+// Template data for verification email generation
+type VerificationEmailTemplateData struct {
+	UserName         string
+	VerificationCode string
+	Template         VerificationEmailTemplate
+}
 
 // Configuration structure
 type Config struct {
@@ -150,9 +177,67 @@ func loadConfig() {
 	log.Println("Configuration loaded successfully")
 }
 
+func loadVerificationEmailTemplates() {
+	// Get the current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get current directory: %v", err)
+	}
+
+	// Construct path to the verification email templates file
+	templatesPath := filepath.Join(cwd, "verification_email_templates.json")
+
+	// Check if templates file exists
+	if _, err := os.Stat(templatesPath); os.IsNotExist(err) {
+		log.Fatalf("Verification email templates file not found at: %s", templatesPath)
+	}
+
+	// Read and parse the templates file
+	templatesFile, err := os.ReadFile(templatesPath)
+	if err != nil {
+		log.Fatalf("Error reading verification email templates file: %v", err)
+	}
+
+	if err := json.Unmarshal(templatesFile, &verificationEmailTemplates); err != nil {
+		log.Fatalf("Error parsing verification email templates file: %v", err)
+	}
+
+	log.Printf("Verification email templates loaded for %d languages", len(verificationEmailTemplates.Templates))
+}
+
+// Get verification email template for language, fallback to English if not found
+func getVerificationEmailTemplate(language string) VerificationEmailTemplate {
+	// Normalize language code (e.g., "en-US" -> "en")
+	lang := strings.Split(language, "-")[0]
+
+	if template, exists := verificationEmailTemplates.Templates[lang]; exists {
+		return template
+	}
+
+	// Fallback to English
+	if template, exists := verificationEmailTemplates.Templates["en"]; exists {
+		log.Printf("Language '%s' not found, using English fallback", language)
+		return template
+	}
+
+	// If even English is not found, use hardcoded fallback
+	log.Printf("No verification templates found, using hardcoded English fallback")
+	return VerificationEmailTemplate{
+		Subject:      "Hero Budget - Verify Your Email",
+		Greeting:     "Hello {{.UserName}},",
+		Message:      "Thank you for signing up with Hero Budget. To complete your registration, please enter the verification code below in the app:",
+		CodeLabel:    "Your verification code:",
+		ExpiryNotice: "This code will expire in 24 hours.",
+		Footer:       "If you did not create an account with Hero Budget, please ignore this email.",
+	}
+}
+
 func init() {
 	// Load configuration
 	loadConfig()
+
+	// Load email templates
+	loadVerificationEmailTemplates()
 
 	var err error
 
@@ -425,8 +510,8 @@ func processImage(base64Image string) (string, error) {
 	return base64.StdEncoding.EncodeToString(webpBuf.Bytes()), nil
 }
 
-// Send verification email
-func sendVerificationEmail(toEmail, verificationCode, userName string) error {
+// Send verification email with language support
+func sendVerificationEmail(toEmail, verificationCode, userName, language string) error {
 	// Validate email before attempting to send
 	if toEmail == "" {
 		return fmt.Errorf("cannot send verification email: email address is empty")
@@ -437,8 +522,16 @@ func sendVerificationEmail(toEmail, verificationCode, userName string) error {
 		userName = "there" // Default fallback if name is empty
 	}
 
+	// Default to English if no language specified
+	if language == "" {
+		language = "en"
+	}
+
+	// Get the email template for the specified language
+	emailTemplate := getVerificationEmailTemplate(language)
+
 	// Log the values for debugging
-	log.Printf("Sending verification email with OTP - Email: %s, Code: %s, Name: %s", toEmail, verificationCode, userName)
+	log.Printf("Sending verification email with OTP - Email: %s, Code: %s, Name: %s, Language: %s", toEmail, verificationCode, userName, language)
 
 	// Read the herobudgeticon.png image for embedding
 	imgPath := filepath.Join("..", "..", "assets", "images", "herobudgeticon.png")
@@ -452,7 +545,7 @@ func sendVerificationEmail(toEmail, verificationCode, userName string) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", fromEmail)
 	m.SetHeader("To", toEmail)
-	m.SetHeader("Subject", "Hero Budget - Verify Your Email")
+	m.SetHeader("Subject", emailTemplate.Subject)
 
 	// Create HTML with or without image
 	var imageTag string
@@ -465,36 +558,66 @@ func sendVerificationEmail(toEmail, verificationCode, userName string) error {
 		imageTag = ""
 	}
 
-	// Build the email HTML body with OTP code instead of verification link
-	emailBody := `
+	// Parse and execute the email template
+	templateData := VerificationEmailTemplateData{
+		UserName:         userName,
+		VerificationCode: verificationCode,
+		Template:         emailTemplate,
+	}
+
+	// Parse the greeting template
+	greetingTmpl, err := template.New("greeting").Parse(emailTemplate.Greeting)
+	if err != nil {
+		log.Printf("Error parsing greeting template: %v", err)
+		return fmt.Errorf("failed to parse greeting template: %v", err)
+	}
+
+	var greetingBuf bytes.Buffer
+	if err := greetingTmpl.Execute(&greetingBuf, templateData); err != nil {
+		log.Printf("Error executing greeting template: %v", err)
+		return fmt.Errorf("failed to execute greeting template: %v", err)
+	}
+
+	// Build the email HTML body with the template data
+	emailBody := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
+    <title>%s</title>
 </head>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333333;">
-    <div style="background-color: #F8E7FA; background: linear-gradient(135deg, #F8E7FA 0%, #E6D0F0 100%); border-radius: 12px; padding: 35px; text-align: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-        ` + (func() string {
-		if imageTag != "" {
-			return `<div style="filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));">` + imageTag + `</div>`
-		}
-		return ""
-	})() + `
-        <p style="margin-bottom: 20px; font-size: 18px; color: #4A154B; font-weight: 500;">Hello ` + userName + `,</p>
-        <p style="margin-bottom: 30px; color: #4A154B;">Thank you for signing up with Hero Budget. To complete your registration, please enter the verification code below in the app:</p>
+    <div style="background-color: #F8E7FA; background: linear-gradient(135deg, #F8E7FA 0%%, #E6D0F0 100%%); border-radius: 12px; padding: 35px; text-align: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+        %s
+        <p style="margin-bottom: 20px; font-size: 18px; color: #4A154B; font-weight: 500;">%s</p>
+        <p style="margin-bottom: 30px; color: #4A154B;">%s</p>
+        <p style="color: #4A154B; font-size: 16px; margin-bottom: 10px;">%s</p>
         <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; font-size: 32px; letter-spacing: 5px; font-weight: bold; color: #6A1B9A; margin: 30px auto; max-width: 250px; box-shadow: 0 3px 5px rgba(106, 27, 154, 0.2);">
-            ` + verificationCode + `
+            %s
         </div>
-        <p style="color: #4A154B; font-size: 14px;">This code will expire in 24 hours.</p>
+        <p style="color: #4A154B; font-size: 14px;">%s</p>
     </div>
     <p style="color: #777777; font-size: 12px; text-align: center; margin-top: 20px;">
-        If you did not create an account with Hero Budget, please ignore this email.
+        %s
     </p>
 </body>
 </html>
-`
+`,
+		emailTemplate.Subject,
+		func() string {
+			if imageTag != "" {
+				return `<div style="filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));">` + imageTag + `</div>`
+			}
+			return ""
+		}(),
+		greetingBuf.String(),
+		emailTemplate.Message,
+		emailTemplate.CodeLabel,
+		verificationCode,
+		emailTemplate.ExpiryNotice,
+		emailTemplate.Footer,
+	)
 
 	// Set the email body
 	m.SetBody("text/html", emailBody)
@@ -507,7 +630,7 @@ func sendVerificationEmail(toEmail, verificationCode, userName string) error {
 		return fmt.Errorf("failed to send verification email: %v", err)
 	}
 
-	log.Printf("Verification email with OTP sent successfully to %s", toEmail)
+	log.Printf("Verification email with OTP sent successfully to %s in language: %s", toEmail, language)
 	return nil
 }
 
@@ -656,7 +779,7 @@ func handleSignup(w http.ResponseWriter, r *http.Request) {
 			userNameForEmail = "there" // Default fallback
 		}
 
-		err = sendVerificationEmail(req.Email, verificationCode, userNameForEmail)
+		err = sendVerificationEmail(req.Email, verificationCode, userNameForEmail, req.Locale)
 		if err != nil {
 			log.Printf("Warning: Failed to send verification email: %v", err)
 			// Continue even if email sending fails
@@ -864,6 +987,7 @@ func handleResendVerification(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		UserID string `json:"user_id"`
 		Email  string `json:"email"`
+		Locale string `json:"locale"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -885,20 +1009,21 @@ func handleResendVerification(w http.ResponseWriter, r *http.Request) {
 	var email string
 	var name string
 	var verificationCode string
+	var userLocale string
 	var query string
 	var queryParams []interface{}
 
 	if req.UserID != "" {
 		// If we have a user ID, use that for lookup
-		query = "SELECT id, email, name, verification_code FROM users WHERE id = ?"
+		query = "SELECT id, email, name, verification_code, locale FROM users WHERE id = ?"
 		queryParams = []interface{}{req.UserID}
 	} else {
 		// Otherwise use email
-		query = "SELECT id, email, name, verification_code FROM users WHERE email = ?"
+		query = "SELECT id, email, name, verification_code, locale FROM users WHERE email = ?"
 		queryParams = []interface{}{req.Email}
 	}
 
-	err := db.QueryRow(query, queryParams...).Scan(&userID, &email, &name, &verificationCode)
+	err := db.QueryRow(query, queryParams...).Scan(&userID, &email, &name, &verificationCode, &userLocale)
 
 	if err == sql.ErrNoRows {
 		log.Printf("User not found for resend verification")
@@ -908,6 +1033,15 @@ func handleResendVerification(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Database error: %v", err)
 		http.Error(w, "Database error", http.StatusInternalServerError)
 		return
+	}
+
+	// Use the locale from the request if provided, otherwise use the user's stored locale
+	language := req.Locale
+	if language == "" {
+		language = userLocale
+	}
+	if language == "" {
+		language = "en" // Default to English
 	}
 
 	// Check if verification_code is empty - user might already be verified
@@ -930,7 +1064,7 @@ func handleResendVerification(w http.ResponseWriter, r *http.Request) {
 
 	// Send the verification email
 	if smtpHost != "smtp.example.com" { // Only send if SMTP is configured
-		err = sendVerificationEmail(email, verificationCode, name)
+		err = sendVerificationEmail(email, verificationCode, name, language)
 		if err != nil {
 			log.Printf("Failed to send verification email: %v", err)
 			http.Error(w, "Failed to send verification email", http.StatusInternalServerError)

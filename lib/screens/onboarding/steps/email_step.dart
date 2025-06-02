@@ -160,7 +160,7 @@ class EmailStep extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Why sign up?',
+                            context.tr.translate('why_sign_up'),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: isDesktop ? 18 : 16,
@@ -169,7 +169,7 @@ class EmailStep extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Creating an account allows you to sync your budget data across devices and backup your information securely.',
+                            context.tr.translate('why_sign_up_description'),
                             style: TextStyle(
                               color: Colors.grey.shade700,
                               fontSize: isDesktop ? 16 : 14,

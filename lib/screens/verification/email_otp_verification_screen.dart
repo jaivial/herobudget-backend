@@ -7,6 +7,7 @@ import 'dart:async';
 import '../../theme/app_theme.dart';
 import '../../services/verification_service.dart';
 import '../../utils/toast_util.dart';
+import '../../utils/extensions.dart';
 import '../dashboard/dashboard_screen.dart';
 import 'email_verification_success_screen.dart';
 
@@ -80,7 +81,7 @@ class _EmailOTPVerificationScreenState
     // Validate OTP
     if (otp.length != 6) {
       setState(() {
-        _errorMessage = 'Please enter all 6 digits of the verification code';
+        _errorMessage = context.tr.translate('email_otp_enter_all_digits');
       });
       return;
     }
@@ -101,7 +102,7 @@ class _EmailOTPVerificationScreenState
         if (userData == null) {
           setState(() {
             _isVerifying = false;
-            _errorMessage = 'Invalid user data received from server';
+            _errorMessage = context.tr.translate('email_otp_invalid_user_data');
           });
           return;
         }
@@ -132,13 +133,15 @@ class _EmailOTPVerificationScreenState
         // Show error message
         setState(() {
           _isVerifying = false;
-          _errorMessage = result['error'] ?? 'Failed to verify email';
+          _errorMessage =
+              result['error'] ??
+              context.tr.translate('email_otp_failed_to_verify');
         });
       }
     } catch (e) {
       setState(() {
         _isVerifying = false;
-        _errorMessage = 'Network or server error. Please try again later.';
+        _errorMessage = context.tr.translate('email_otp_network_error');
       });
     }
   }
@@ -161,7 +164,7 @@ class _EmailOTPVerificationScreenState
       if (result['success']) {
         ToastUtil.showSuccessToast(
           context,
-          'Verification code sent to your email',
+          context.tr.translate('email_otp_resend_sent'),
         );
 
         // Start countdown for resend button
@@ -173,12 +176,13 @@ class _EmailOTPVerificationScreenState
       } else {
         setState(() {
           _errorMessage =
-              result['error'] ?? 'Failed to resend verification code';
+              result['error'] ??
+              context.tr.translate('email_otp_resend_failed');
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Network or server error. Please try again later.';
+        _errorMessage = context.tr.translate('email_otp_network_error');
       });
     } finally {
       setState(() {
@@ -206,7 +210,7 @@ class _EmailOTPVerificationScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Verify Your Email',
+          context.tr.translate('verify_your_email'),
           style: TextStyle(
             color: AppTheme.getPrimaryColor(context),
             fontWeight: FontWeight.bold,
@@ -242,7 +246,7 @@ class _EmailOTPVerificationScreenState
 
                 // Title
                 Text(
-                  'Email Verification',
+                  context.tr.translate('email_verification'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -254,15 +258,15 @@ class _EmailOTPVerificationScreenState
 
                 // Description
                 Text(
-                  'We\'ve sent a verification code to ${widget.userInfo['email']}',
+                  '${context.tr.translate('email_otp_description')} ${widget.userInfo['email']}',
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
 
-                const Text(
-                  'Enter the 6-digit code below to verify your account',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                Text(
+                  context.tr.translate('email_otp_enter_6_digits'),
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 40),
@@ -366,9 +370,9 @@ class _EmailOTPVerificationScreenState
                                 strokeWidth: 2,
                               ),
                             )
-                            : const Text(
-                              'VERIFY',
-                              style: TextStyle(
+                            : Text(
+                              context.tr.translate('email_otp_verify_button'),
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -385,10 +389,10 @@ class _EmailOTPVerificationScreenState
                           : _resendVerificationCode,
                   child: Text(
                     _resendCountdown > 0
-                        ? 'Resend code in $_resendCountdown seconds'
+                        ? '${context.tr.translate('email_otp_resend_countdown')} $_resendCountdown ${context.tr.translate('email_otp_seconds')}'
                         : _isResending
-                        ? 'Sending...'
-                        : 'Resend verification code',
+                        ? context.tr.translate('email_otp_sending')
+                        : context.tr.translate('email_otp_resend_code'),
                     style: TextStyle(
                       color:
                           (_resendCountdown > 0 || _isResending)

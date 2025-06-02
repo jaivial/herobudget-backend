@@ -33,7 +33,7 @@ import '../category/add_category_screen.dart';
 import 'package:intl/intl.dart';
 import '../invoice/add_invoice_screen.dart';
 import '../invoice/pay_bill_screen.dart';
-import '../../widgets/budget_overview_with_period.dart';
+import '../../widgets/budget_overview_monthly.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String userId;
@@ -385,10 +385,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       // Refresh budget overview
       final budgetOverviewState = _budgetOverviewKey.currentState;
       if (budgetOverviewState != null) {
-        print('🔄 Refreshing BudgetOverviewWithPeriod...');
+        print('🔄 Refreshing BudgetOverviewMonthly...');
         final dynamic state = budgetOverviewState;
         if (state.mounted) {
-          await state.fetchData();
+          await state.refreshBudgetData();
         }
       }
 
@@ -409,10 +409,18 @@ class _DashboardScreenState extends State<DashboardScreen>
         }
       }
 
+      // Increment refresh counter to force FinanceMetricsWithPeriod rebuild
+      setState(() {
+        _refreshCounter++;
+      });
+      print(
+        '🔄 Dashboard: FinanceMetricsWithPeriod refresh counter incremented to $_refreshCounter',
+      );
+
       print('🔄 Refreshing all dashboard widgets...');
 
       // Small delay to allow all widgets to process
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 200));
 
       if (mounted) {
         setState(() {
@@ -837,7 +845,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Budget overview integrado con period selector y fetch automático
-            BudgetOverviewWithPeriod(
+            BudgetOverviewMonthly(
               key: _budgetOverviewKey,
               onPeriodChanged: (period, date) {
                 setState(() {

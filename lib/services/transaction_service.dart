@@ -7,9 +7,13 @@ import '../models/dashboard_model.dart';
 
 class TransactionService {
   static String get baseUrl {
+    return ApiConfig.baseApiUrl;
+  }
+
+  static String get deleteServiceUrl {
     return ApiConfig.isProduction
         ? ApiConfig.baseApiUrl
-        : '${ApiConfig.baseApiUrl}:${ApiConfig.budgetOverviewFetchServicePort}';
+        : '${ApiConfig.baseApiUrl}:${ApiConfig.transactionDeleteServicePort}';
   }
 
   static String get billsBaseUrl => ApiConfig.billsManagementUrl;
@@ -549,6 +553,63 @@ class TransactionService {
         // Default to monthly
         final nextMonth = DateTime(periodStart.year, periodStart.month + 1, 1);
         return nextMonth.subtract(const Duration(seconds: 1));
+    }
+  }
+
+  /// Delete a transaction
+  Future<bool> deleteTransaction({
+    required int transactionId,
+    required String transactionType,
+  }) async {
+    try {
+      // Get user ID from SharedPreferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      // Prepare request body
+      final requestBody = <String, dynamic>{
+        'user_id': userId,
+        'transaction_id': transactionId,
+        'transaction_type': transactionType,
+      };
+
+      print(
+        '🗑️ TransactionService: Deleting transaction $transactionId of type $transactionType',
+      );
+      print('📋 Request body: ${json.encode(requestBody)}');
+
+      // Make HTTP request to delete endpoint
+      final response = await http.post(
+        Uri.parse('$deleteServiceUrl/transactions/delete'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(requestBody),
+      );
+
+      print('📡 Delete response status: ${response.statusCode}');
+      print('📦 Delete response body: ${response.body}');
+
+      // Check if response is successful
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        if (responseData['success'] == true) {
+          print('✅ Transaction deleted successfully');
+          return true;
+        } else {
+          throw Exception(
+            responseData['message'] ?? 'Failed to delete transaction',
+          );
+        }
+      } else {
+        throw Exception('Error deleting transaction: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error in deleteTransaction: $e');
+      throw Exception('Error deleting transaction: $e');
     }
   }
 

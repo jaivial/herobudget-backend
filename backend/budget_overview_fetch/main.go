@@ -27,6 +27,7 @@ type BudgetOverview struct {
 	TotalIncome          float64              `json:"total_income"`
 	DailyRate            float64              `json:"daily_rate"`
 	HighSpending         bool                 `json:"high_spending"`
+	IsNegativeBalance    bool                 `json:"is_negative_balance"`
 	MoneyFlow            MoneyFlow            `json:"money_flow"`
 	CashBankDistribution CashBankDistribution `json:"cash_bank_distribution"`
 	SavingsData          SavingsData          `json:"savings_data"`
@@ -179,8 +180,8 @@ func main() {
 	http.HandleFunc("/transactions/upcoming-bills", corsMiddleware(handleUpcomingBills))
 	http.HandleFunc("/health", corsMiddleware(handleHealth))
 
-	// Start server on port 8097
-	port := "8097"
+	// Start server on port 8098
+	port := "8098"
 	log.Printf("Budget Overview Fetch service starting on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
@@ -211,7 +212,7 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	sendSuccessResponse(w, "Service is healthy", map[string]string{
 		"service": "budget_overview_fetch",
 		"status":  "active",
-		"port":    "8097",
+		"port":    "8098",
 	})
 }
 
@@ -263,6 +264,7 @@ func fetchBudgetOverview(request BudgetOverviewRequest) (*BudgetOverview, error)
 	// Fetch balance data from the appropriate table
 	balanceData, err := fetchBalanceData(tableName, request.UserID, dateCondition)
 	if err != nil {
+		log.Printf("Error fetching balance data: %v", err)
 		return nil, fmt.Errorf("failed to fetch balance data: %v", err)
 	}
 
@@ -278,14 +280,7 @@ func getTableAndCondition(period, date string) (string, string) {
 	case "daily":
 		return "daily_cash_bank_balance", fmt.Sprintf("date = '%s'", date)
 	case "weekly":
-		// Handle both formats: "2025-W22" and "2025-22"
-		// The database stores the format without 'W' (e.g., "2025-22")
-		weekDate := date
-		if strings.Contains(date, "-W") {
-			// Remove the 'W' to match database format
-			weekDate = strings.Replace(date, "-W", "-", 1)
-		}
-		return "weekly_cash_bank_balance", fmt.Sprintf("year_week = '%s'", weekDate)
+		return "weekly_cash_bank_balance", fmt.Sprintf("year_week = '%s'", date)
 	case "monthly":
 		return "monthly_cash_bank_balance", fmt.Sprintf("year_month = '%s'", date)
 	case "quarterly":
@@ -350,6 +345,10 @@ func fetchBalanceData(tableName, userID, condition string) (*BalanceData, error)
 		}
 		return nil, err
 	}
+
+	log.Printf("📊 Balance data found: IncomeBank=%.2f, IncomeCash=%.2f, ExpenseBank=%.2f, ExpenseCash=%.2f, BillBank=%.2f, BillCash=%.2f, TotalBalance=%.2f",
+		data.IncomeBankAmount, data.IncomeCashAmount, data.ExpenseBankAmount, data.ExpenseCashAmount,
+		data.BillBankAmount, data.BillCashAmount, data.TotalBalance)
 
 	return &data, nil
 }
@@ -431,6 +430,9 @@ func calculateBudgetOverview(data *BalanceData, period, userID string) *BudgetOv
 	// Determine high spending (if expense percent > 80%)
 	highSpending := expensePercent > 80
 
+	// Detect negative balance (if remaining amount is negative)
+	isNegativeBalance := remainingAmount < 0
+
 	// Money flow from previous period
 	moneyFlow := MoneyFlow{
 		FromPrevious: data.TotalPreviousBalance,
@@ -458,6 +460,9 @@ func calculateBudgetOverview(data *BalanceData, period, userID string) *BudgetOv
 	// First, try to get savings data from the database
 	savingsData := getSavingsDataFromDB(userID, remainingAmount, period)
 
+	log.Printf("💰 Budget Overview calculated: Remaining=%.2f, TotalIncome=%.2f, SpentAmount=%.2f, UpcomingAmount=%.2f, IsNegative=%v",
+		remainingAmount, totalIncome, spentAmount, upcomingAmount, isNegativeBalance)
+
 	return &BudgetOverview{
 		RemainingAmount:      remainingAmount,
 		ExpensePercent:       expensePercent,
@@ -469,6 +474,7 @@ func calculateBudgetOverview(data *BalanceData, period, userID string) *BudgetOv
 		TotalIncome:          totalIncome,
 		DailyRate:            dailyRate,
 		HighSpending:         highSpending,
+		IsNegativeBalance:    isNegativeBalance,
 		MoneyFlow:            moneyFlow,
 		CashBankDistribution: cashBankDistribution,
 		SavingsData:          savingsData,
@@ -1065,13 +1071,11 @@ func fetchTransactionHistory(request TransactionRequest) (*TransactionHistoryRes
 	// Bills query (only paid bills for history)
 	if includeBills {
 		billWhere := strings.Join(whereConditions, " AND ") + " AND paid = 1"
-		if paymentMethodFilter != "" {
-			billWhere += " AND " + paymentMethodFilter
-		}
+		// Note: bills table doesn't have payment_method column, so we use 'cash' as default
 
 		billQuery := fmt.Sprintf(`
 			SELECT 
-				id, 'bill' as type, amount, due_date as date, category, payment_method, NULL as description,
+				id, 'bill' as type, amount, due_date as date, category, 'cash' as payment_method, NULL as description,
 				name, paid, overdue, overdue_days, recurring, icon
 			FROM bills 
 			WHERE %s`, billWhere)
@@ -1195,20 +1199,10 @@ func fetchUpcomingBills(request TransactionRequest) (*UpcomingBillsResponse, err
 		args = append(args, request.EndDate)
 	}
 
-	// Build payment method filter
-	if len(request.PaymentMethods) > 0 {
-		placeholders := make([]string, len(request.PaymentMethods))
-		for i, method := range request.PaymentMethods {
-			placeholders[i] = "?"
-			args = append(args, method)
-		}
-		whereConditions = append(whereConditions, fmt.Sprintf("payment_method IN (%s)", strings.Join(placeholders, ",")))
-	}
-
 	// Build the query
 	query := fmt.Sprintf(`
 		SELECT 
-			id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, payment_method
+			id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon
 		FROM bills 
 		WHERE %s 
 		ORDER BY due_date ASC`, strings.Join(whereConditions, " AND "))
@@ -1232,7 +1226,7 @@ func fetchUpcomingBills(request TransactionRequest) (*UpcomingBillsResponse, err
 
 		err := rows.Scan(
 			&t.ID, &t.Name, &t.Amount, &t.Date, &paid, &overdueFlag, &overdueDays,
-			&recurring, &t.Category, &t.Icon, &t.PaymentMethod,
+			&recurring, &t.Category, &t.Icon,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan bill: %v", err)
@@ -1240,6 +1234,7 @@ func fetchUpcomingBills(request TransactionRequest) (*UpcomingBillsResponse, err
 
 		// Set transaction type and bill-specific fields
 		t.Type = "bill"
+		t.PaymentMethod = "cash" // Default value since bills table doesn't have payment_method
 		t.Paid = &paid
 		t.Overdue = &overdueFlag
 		t.Recurring = &recurring

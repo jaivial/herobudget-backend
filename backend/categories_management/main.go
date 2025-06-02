@@ -139,7 +139,7 @@ func main() {
 	http.HandleFunc("/categories/delete", corsMiddleware(handleDeleteCategory))
 	http.HandleFunc("/categories/fix-emojis", corsMiddleware(handleFixEmojis))
 
-	port := 8095 // Puerto para el servicio de categorías
+	port := 8096 // Puerto para el servicio de categorías
 	log.Printf("Categories Management service started on :%d", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 }

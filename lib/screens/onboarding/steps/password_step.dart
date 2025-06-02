@@ -129,42 +129,6 @@ class _PasswordStepState extends State<PasswordStep>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Password section header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.lock_rounded,
-                  color: AppTheme.getPrimaryColor(context),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                context.tr.translate('create_password'),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getPrimaryColor(context),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: EdgeInsets.only(left: 46),
-            child: Text(
-              context.tr.translate('create_password_desc'),
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-          ),
-          const SizedBox(height: 24),
-
           // Password field
           TextFormField(
             controller: widget.passwordController,
@@ -185,10 +149,10 @@ class _PasswordStepState extends State<PasswordStep>
             textInputAction: TextInputAction.next,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter a password';
+                return context.tr.translate('please_enter_password');
               }
               if (value.length < 6) {
-                return 'Password must be at least 6 characters';
+                return context.tr.translate('password_min_6_chars');
               }
               return null;
             },
@@ -203,11 +167,11 @@ class _PasswordStepState extends State<PasswordStep>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Password Strength:',
+                    context.tr.translate('password_strength'),
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                   ),
                   Text(
-                    _getPasswordStrengthText(),
+                    _getPasswordStrengthText(context),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -250,10 +214,10 @@ class _PasswordStepState extends State<PasswordStep>
             obscureText: widget.obscureConfirmPassword,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please confirm your password';
+                return context.tr.translate('please_confirm_password');
               }
               if (value != widget.passwordController.text) {
-                return 'Passwords do not match';
+                return context.tr.translate('passwords_do_not_match');
               }
               return null;
             },
@@ -272,7 +236,7 @@ class _PasswordStepState extends State<PasswordStep>
               ),
               Expanded(
                 child: Text(
-                  'I agree to verify my email after registration',
+                  context.tr.translate('verify_email_agreement'),
                   style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
                 ),
               ),
@@ -291,8 +255,8 @@ class _PasswordStepState extends State<PasswordStep>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Password Guidelines',
+                Text(
+                  context.tr.translate('password_guidelines'),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -302,26 +266,26 @@ class _PasswordStepState extends State<PasswordStep>
                 const SizedBox(height: 12),
                 _buildAnimatedPasswordGuidelineRow(
                   context,
-                  'At least 6 characters long',
+                  context.tr.translate('at_least_6_chars'),
                   _hasMinLength,
                 ),
                 const SizedBox(height: 8),
                 _buildAnimatedPasswordGuidelineRow(
                   context,
-                  'Passwords match',
+                  context.tr.translate('passwords_match'),
                   _passwordsMatch,
                 ),
                 const SizedBox(height: 8),
                 _buildAnimatedPasswordGuidelineRow(
                   context,
-                  'Contains letters and numbers (recommended)',
+                  context.tr.translate('contains_letters_numbers'),
                   _hasLettersAndNumbers,
                   isRequired: false,
                 ),
                 const SizedBox(height: 8),
                 _buildAnimatedPasswordGuidelineRow(
                   context,
-                  'Contains special characters (recommended)',
+                  context.tr.translate('contains_special_chars'),
                   _hasSpecialChars,
                   isRequired: false,
                 ),
@@ -340,11 +304,11 @@ class _PasswordStepState extends State<PasswordStep>
     return Colors.green;
   }
 
-  String _getPasswordStrengthText() {
-    if (_passwordStrength < 0.3) return 'Weak';
-    if (_passwordStrength < 0.6) return 'Fair';
-    if (_passwordStrength < 0.8) return 'Good';
-    return 'Strong';
+  String _getPasswordStrengthText(BuildContext context) {
+    if (_passwordStrength < 0.3) return context.tr.translate('password_weak');
+    if (_passwordStrength < 0.6) return context.tr.translate('password_fair');
+    if (_passwordStrength < 0.8) return context.tr.translate('password_good');
+    return context.tr.translate('password_strong');
   }
 
   Widget _buildAnimatedPasswordGuidelineRow(

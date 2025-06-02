@@ -101,10 +101,18 @@ class PeriodSavingsData {
   });
 }
 
-class BudgetOverviewWidget extends StatelessWidget {
+class BudgetOverviewWidget extends StatefulWidget {
   final BudgetOverview budgetOverview;
 
   const BudgetOverviewWidget({super.key, required this.budgetOverview});
+
+  @override
+  State<BudgetOverviewWidget> createState() => _BudgetOverviewWidgetState();
+}
+
+class _BudgetOverviewWidgetState extends State<BudgetOverviewWidget> {
+  // Variable para controlar la visibilidad de la advertencia
+  bool _isWarningVisible = true;
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +179,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${budgetOverview.expensePercent.toStringAsFixed(0)}%',
+                  '${widget.budgetOverview.expensePercent.toStringAsFixed(0)}%',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -200,14 +208,14 @@ class BudgetOverviewWidget extends StatelessWidget {
                 Text(
                   _formatCurrencyEuroStyle(
                     localizations.formatCurrency(
-                      budgetOverview.remainingAmount,
+                      widget.budgetOverview.remainingAmount,
                     ),
                   ),
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color:
-                        budgetOverview.remainingAmount >= 0
+                        widget.budgetOverview.remainingAmount >= 0
                             ? Colors.green
                             : Colors.red,
                   ),
@@ -231,7 +239,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                 const Icon(Icons.history, color: Colors.deepPurple, size: 16),
                 const SizedBox(width: 6),
                 Text(
-                  '${localizations.translate('previous')}: ${_formatCurrencyEuroStyle(localizations.formatCurrency(budgetOverview.moneyFlow.fromPrevious))}',
+                  '${localizations.translate('previous')}: ${_formatCurrencyEuroStyle(localizations.formatCurrency(widget.budgetOverview.moneyFlow.fromPrevious))}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -252,7 +260,8 @@ class BudgetOverviewWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color:
-                    budgetOverview.combinedExpense > budgetOverview.totalAmount
+                    widget.budgetOverview.combinedExpense >
+                            widget.budgetOverview.totalAmount
                         ? Colors.red.withOpacity(0.3)
                         : Colors.transparent,
               ),
@@ -277,21 +286,31 @@ class BudgetOverviewWidget extends StatelessWidget {
                     // Barra de gastos realizados
                     FractionallySizedBox(
                       widthFactor:
-                          // Si remainingAmount <= 0, mostrar al 100% rojo
-                          budgetOverview.remainingAmount <= 0
+                          // Si remainingAmount < 0 (sobregasto), mostrar al 100% rojo
+                          // Si remainingAmount == 0, mostrar vacía (0)
+                          // Si remainingAmount > 0, mostrar progreso normal
+                          widget.budgetOverview.remainingAmount < 0
                               ? 1.0
-                              : budgetOverview.totalAmount > 0
-                              ? (budgetOverview.spentAmount /
-                                      budgetOverview.totalAmount)
+                              : widget.budgetOverview.remainingAmount == 0
+                              ? 0.0
+                              : widget.budgetOverview.totalAmount > 0
+                              ? (widget.budgetOverview.spentAmount /
+                                      widget.budgetOverview.totalAmount)
                                   .clamp(0.0, 1.0)
                               : 0,
                       child: Container(
                         height: 15,
                         decoration: BoxDecoration(
                           color:
-                              // Si remainingAmount <= 0 o expense >= 100%, usar rojo
-                              (budgetOverview.remainingAmount <= 0 ||
-                                      budgetOverview.expensePercent >= 100)
+                              // Solo usar rojo si remainingAmount < 0 (sobregasto)
+                              // o si expense >= 100% pero remainingAmount != 0
+                              (widget.budgetOverview.remainingAmount < 0 ||
+                                      (widget.budgetOverview.expensePercent >=
+                                              100 &&
+                                          widget
+                                                  .budgetOverview
+                                                  .remainingAmount !=
+                                              0))
                                   ? Colors.red
                                   : Colors.deepPurple,
                           borderRadius: BorderRadius.circular(7.5),
@@ -299,16 +318,18 @@ class BudgetOverviewWidget extends StatelessWidget {
                       ),
                     ),
                     // Barra de facturas pendientes (solo si remainingAmount > 0)
-                    if (budgetOverview.remainingAmount > 0)
+                    if (widget.budgetOverview.remainingAmount > 0)
                       FractionallySizedBox(
                         widthFactor:
-                            budgetOverview.totalAmount > 0
-                                ? ((budgetOverview.spentAmount +
-                                                budgetOverview.upcomingAmount) /
-                                            budgetOverview.totalAmount)
+                            widget.budgetOverview.totalAmount > 0
+                                ? ((widget.budgetOverview.spentAmount +
+                                                widget
+                                                    .budgetOverview
+                                                    .upcomingAmount) /
+                                            widget.budgetOverview.totalAmount)
                                         .clamp(0.0, 1.0) -
-                                    (budgetOverview.spentAmount /
-                                            budgetOverview.totalAmount)
+                                    (widget.budgetOverview.spentAmount /
+                                            widget.budgetOverview.totalAmount)
                                         .clamp(0.0, 1.0)
                                 : 0,
                         alignment: Alignment.centerRight,
@@ -320,10 +341,10 @@ class BudgetOverviewWidget extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Indicador de 100% - mostrar cuando gastos excedan el presupuesto O cuando remainingAmount <= 0
-                    if (budgetOverview.combinedExpense >
-                            budgetOverview.totalAmount ||
-                        budgetOverview.remainingAmount <= 0)
+                    // Indicador de 100% - mostrar cuando gastos excedan el presupuesto O cuando remainingAmount < 0
+                    if (widget.budgetOverview.combinedExpense >
+                            widget.budgetOverview.totalAmount ||
+                        widget.budgetOverview.remainingAmount < 0)
                       Positioned(
                         right: 0,
                         child: Container(
@@ -363,9 +384,9 @@ class BudgetOverviewWidget extends StatelessWidget {
                                 height: 12,
                                 decoration: BoxDecoration(
                                   color: _getSpentColor(
-                                    budgetOverview.expensePercent,
+                                    widget.budgetOverview.expensePercent,
                                     remainingAmount:
-                                        budgetOverview.remainingAmount,
+                                        widget.budgetOverview.remainingAmount,
                                   ),
                                   shape: BoxShape.circle,
                                 ),
@@ -388,7 +409,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${_formatCurrencyEuroStyle(localizations.formatCurrency(budgetOverview.spentAmount))} (${_getPercentage(budgetOverview.spentAmount, budgetOverview.totalAmount)}%)',
+                          '${_formatCurrencyEuroStyle(localizations.formatCurrency(widget.budgetOverview.spentAmount))} (${_getPercentage(widget.budgetOverview.spentAmount, widget.budgetOverview.totalAmount)}%)',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -396,9 +417,9 @@ class BudgetOverviewWidget extends StatelessWidget {
                                 isDarkMode
                                     ? Colors.white
                                     : _getSpentColor(
-                                      budgetOverview.expensePercent,
+                                      widget.budgetOverview.expensePercent,
                                       remainingAmount:
-                                          budgetOverview.remainingAmount,
+                                          widget.budgetOverview.remainingAmount,
                                     ),
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -438,7 +459,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${_formatCurrencyEuroStyle(localizations.formatCurrency(budgetOverview.upcomingAmount))} (${_getPercentage(budgetOverview.upcomingAmount, budgetOverview.totalAmount)}%)',
+                          '${_formatCurrencyEuroStyle(localizations.formatCurrency(widget.budgetOverview.upcomingAmount))} (${_getPercentage(widget.budgetOverview.upcomingAmount, widget.budgetOverview.totalAmount)}%)',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -499,7 +520,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                         Text(
                           _formatCurrencyEuroStyle(
                             localizations.formatCurrency(
-                              budgetOverview.totalIncome,
+                              widget.budgetOverview.totalIncome,
                             ),
                           ),
                           style: const TextStyle(
@@ -524,7 +545,7 @@ class BudgetOverviewWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color:
-                    budgetOverview.expensePercent > 100
+                    widget.budgetOverview.expensePercent > 100
                         ? Colors.red.withOpacity(0.3)
                         : Colors.transparent,
               ),
@@ -567,7 +588,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                             Text(
                               _formatCurrencyEuroStyle(
                                 localizations.formatCurrency(
-                                  budgetOverview.combinedExpense,
+                                  widget.budgetOverview.combinedExpense,
                                 ),
                               ),
                               style: const TextStyle(
@@ -590,7 +611,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '${budgetOverview.expensePercent.toStringAsFixed(1)}%',
+                        '${widget.budgetOverview.expensePercent.toStringAsFixed(1)}%',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -639,7 +660,7 @@ class BudgetOverviewWidget extends StatelessWidget {
                       Text(
                         _formatCurrencyEuroStyle(
                               localizations.formatCurrency(
-                                budgetOverview.dailyRate,
+                                widget.budgetOverview.dailyRate,
                               ),
                             ) +
                             '/día',
@@ -656,8 +677,8 @@ class BudgetOverviewWidget extends StatelessWidget {
             ),
           ),
 
-          // Advertencia de gasto elevado (solo si es necesario)
-          if (budgetOverview.highSpending)
+          // Advertencia de gasto elevado (solo si es necesario y está visible)
+          if (widget.budgetOverview.highSpending && _isWarningVisible)
             Container(
               margin: const EdgeInsets.only(top: 16),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -679,7 +700,10 @@ class BudgetOverviewWidget extends StatelessWidget {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      // Aquí se manejaría la acción de "Dismiss"
+                      // Ocultar la advertencia cuando el usuario haga click en "Descartar"
+                      setState(() {
+                        _isWarningVisible = false;
+                      });
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red.shade800,
@@ -732,12 +756,13 @@ class BudgetOverviewWidget extends StatelessWidget {
   }
 
   Color _getSpentColor(double percentage, {double? remainingAmount}) {
-    // Si remainingAmount es proporcionado y es <= 0, usar rojo
-    if (remainingAmount != null && remainingAmount <= 0) {
+    // Si remainingAmount es proporcionado y es < 0 (sobregasto), usar rojo
+    if (remainingAmount != null && remainingAmount < 0) {
       return Colors.red;
     }
-    // Si el porcentaje es >= 100, usar rojo
-    if (percentage >= 100) {
+    // Si el porcentaje es >= 100 pero remainingAmount no es 0, usar rojo
+    if (percentage >= 100 &&
+        (remainingAmount == null || remainingAmount != 0)) {
       return Colors.red;
     } else {
       return Colors.deepPurple;

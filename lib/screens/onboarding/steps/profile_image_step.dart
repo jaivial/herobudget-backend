@@ -49,42 +49,6 @@ class ProfileImageStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Profile image section header
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.getPrimaryColor(context).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.camera_alt_rounded,
-                  color: AppTheme.getPrimaryColor(context),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                context.tr.translate('profile_picture'),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.getPrimaryColor(context),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(left: 46),
-            child: Text(
-              context.tr.translate('add_photo_to_personalize'),
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-          ),
-          const SizedBox(height: 32),
-
           // Profile image selection
           Center(
             child: Column(
@@ -256,7 +220,7 @@ class ProfileImageStep extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'You\'re almost there! After completing this step, you will be able to access your budget dashboard.',
+                    context.tr.translate('youre_almost_there'),
                     style: TextStyle(
                       color: AppTheme.getPrimaryColor(context).withOpacity(0.8),
                       fontSize: 14,
@@ -286,9 +250,12 @@ class ProfileImageStep extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Select Image Source',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                Text(
+                  context.tr.translate('select_image_source'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ListTile(
@@ -303,8 +270,10 @@ class ProfileImageStep extends StatelessWidget {
                       color: AppTheme.getPrimaryColor(context),
                     ),
                   ),
-                  title: const Text('Photo Library'),
-                  subtitle: const Text('Choose from your gallery'),
+                  title: Text(context.tr.translate('gallery')),
+                  subtitle: Text(
+                    context.tr.translate('choose_from_your_gallery'),
+                  ),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.gallery, context);
@@ -323,8 +292,8 @@ class ProfileImageStep extends StatelessWidget {
                       color: AppTheme.getPrimaryColor(context),
                     ),
                   ),
-                  title: const Text('Camera'),
-                  subtitle: const Text('Take a new photo'),
+                  title: Text(context.tr.translate('camera')),
+                  subtitle: Text(context.tr.translate('take_a_new_photo')),
                   onTap: () {
                     Navigator.pop(context);
                     _pickImage(ImageSource.camera, context);

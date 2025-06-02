@@ -7,6 +7,7 @@ import '../../services/auth_service.dart';
 import '../../services/verification_service.dart';
 import '../../utils/toast_util.dart';
 import '../../utils/deep_link_handler.dart';
+import '../../utils/extensions.dart';
 import 'email_otp_verification_screen.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
@@ -43,8 +44,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
       // Show a loading indicator
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Checking verification status...'),
+          SnackBar(
+            content: Text(
+              context.tr.translate('email_verification_checking_status'),
+            ),
             duration: Duration(seconds: 2),
           ),
         );
@@ -58,7 +61,10 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
       if (mounted) {
         if (result == true) {
           // Email has been verified, proceed to dashboard
-          ToastUtil.showSuccessToast(context, 'Your email has been verified!');
+          ToastUtil.showSuccessToast(
+            context,
+            context.tr.translate('email_verification_complete'),
+          );
 
           // Navigate to dashboard
           Navigator.of(context).pushAndRemoveUntil(
@@ -75,7 +81,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
           // Email not verified yet
           ToastUtil.showInfoToast(
             context,
-            'Your email is not verified yet. Please check your inbox.',
+            context.tr.translate('email_verification_not_verified'),
           );
         }
       }
@@ -83,7 +89,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
       if (mounted) {
         ToastUtil.showErrorToast(
           context,
-          'Error checking verification status: $e',
+          '${context.tr.translate('email_verification_error_checking')}: $e',
         );
       }
     }
@@ -141,7 +147,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         if (result['success'] == true) {
           ToastUtil.showSuccessToast(
             context,
-            'Verification code sent! Please check your email.',
+            context.tr.translate('email_verification_sent'),
           );
 
           // Navigate to OTP verification screen
@@ -157,7 +163,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         } else {
           ToastUtil.showErrorToast(
             context,
-            result['error'] ?? 'Failed to send verification code',
+            result['error'] ??
+                context.tr.translate('email_verification_failed_to_send'),
           );
         }
       }
@@ -165,7 +172,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
       if (mounted) {
         ToastUtil.showErrorToast(
           context,
-          'Error sending verification code: $e',
+          '${context.tr.translate('email_verification_error_sending')}: $e',
         );
       }
     } finally {
@@ -206,7 +213,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
           title: Text(
-            'Email Verification Required',
+            context.tr.translate('email_verification_required'),
             style: TextStyle(
               color: AppTheme.getPrimaryColor(context),
               fontWeight: FontWeight.bold,
@@ -241,7 +248,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
 
                   // Title
                   Text(
-                    'Verify Your Email',
+                    context.tr.translate('verify_your_email'),
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -253,15 +260,15 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
 
                   // Description
                   Text(
-                    'We\'ve sent a verification code to ${widget.userInfo['email']}.',
+                    '${context.tr.translate('email_verification_description')} ${widget.userInfo['email']}.',
                     style: const TextStyle(fontSize: 16, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
 
-                  const Text(
-                    'Please enter the code to verify your account and start using Hero Budget.',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  Text(
+                    context.tr.translate('email_verification_instruction'),
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
@@ -272,9 +279,9 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
                   ),
                   const SizedBox(height: 40),
 
-                  const Text(
-                    'Redirecting to verification screen...',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  Text(
+                    context.tr.translate('email_verification_redirecting'),
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                 ],

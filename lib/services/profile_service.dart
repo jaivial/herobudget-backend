@@ -26,7 +26,7 @@ class ProfileService {
   }) async {
     try {
       // Preparar la URL del endpoint
-      final Uri uri = Uri.parse('$_baseUrl/profile/update');
+      final Uri uri = Uri.parse('$_baseUrl/update');
 
       // Registro inicial para depuración
       if (kDebugMode) {
@@ -145,7 +145,7 @@ class ProfileService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/profile/update-password'),
+        Uri.parse('$_baseUrl/update-password'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': userId,
