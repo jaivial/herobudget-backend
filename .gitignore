@@ -1,0 +1,43 @@
+# Ejecutables
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Archivos de prueba
+test-*
+*.test
+
+# Base de datos local
+*.db
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Archivos de configuración sensibles
+.env
+config/production.json
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# IDE específicos
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencias (si usas Go modules)
+vendor/
+
+# Archivos de backup
+*.bak
+*.backup
