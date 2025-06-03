@@ -11,7 +11,7 @@ class ResetPasswordService {
   static Future<Map<String, dynamic>> checkEmail(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/check-email'),
+        Uri.parse(ApiConfig.resetPasswordCheckEmailEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );
@@ -47,7 +47,7 @@ class ResetPasswordService {
           await LanguageService.getLanguagePreference() ?? 'en';
 
       final response = await http.post(
-        Uri.parse('$baseUrl/request'),
+        Uri.parse(ApiConfig.resetPasswordRequestEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -86,7 +86,7 @@ class ResetPasswordService {
   static Future<Map<String, dynamic>> validateToken(String token) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/validate-token'),
+        Uri.parse(ApiConfig.resetPasswordValidateTokenEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'token': token}),
       );
@@ -128,7 +128,7 @@ class ResetPasswordService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/update'),
+        Uri.parse(ApiConfig.resetPasswordUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'token': token,

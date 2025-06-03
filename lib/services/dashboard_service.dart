@@ -30,7 +30,7 @@ class DashboardService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/user/info?id=$userId'),
+        Uri.parse(ApiConfig.dashboardUserInfoEndpoint + '?id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -125,7 +125,7 @@ class DashboardService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/user/update'),
+        Uri.parse(ApiConfig.dashboardUserUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'id': userId, ...updateData}),
       );
@@ -192,7 +192,7 @@ class DashboardService {
 
       // Make HTTP request using dashboard data service URL with additional date parameter
       final apiUrl =
-          '${dashboardDataUrl}/dashboard/data?user_id=$userId&period=$period&date=$dateString';
+          '${ApiConfig.dashboardDataEndpoint}?user_id=$userId&period=$period&date=$dateString';
       print('📊 Requesting dashboard data from: $apiUrl');
 
       final response = await http.get(
@@ -216,7 +216,7 @@ class DashboardService {
 
           // Log para debug de money flow request
           final moneyFlowUrl =
-              '${moneyFlowCalculationUrl}/money-flow/data?user_id=$userId&period=$period&date=$dateString';
+              '${ApiConfig.moneyFlowDataEndpoint}?user_id=$userId&period=$period&date=$dateString';
           print('💰 Requesting money flow data from: $moneyFlowUrl');
 
           while (currentRetry < maxRetries && !success) {
@@ -348,7 +348,7 @@ class DashboardService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/savings/update'),
+        Uri.parse(ApiConfig.dashboardSavingsUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': userId, 'goal': goal}),
       );
@@ -382,7 +382,7 @@ class DashboardService {
       }
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.incomeManagementServiceUrl}/add'),
+        Uri.parse(ApiConfig.incomeAddEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': userId,
@@ -423,7 +423,7 @@ class DashboardService {
       }
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.expenseManagementServiceUrl}/add'),
+        Uri.parse(ApiConfig.expenseAddEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': userId,
@@ -467,7 +467,7 @@ class DashboardService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/add'),
+        Uri.parse(ApiConfig.dashboardBillsAddEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,
@@ -508,7 +508,7 @@ class DashboardService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/pay'),
+        Uri.parse(ApiConfig.dashboardBillsPayEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': userId, 'bill_id': billId}),
       );

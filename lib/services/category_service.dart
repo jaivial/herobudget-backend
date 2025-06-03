@@ -99,7 +99,7 @@ class CategoryService {
       };
 
       // URL for add endpoint
-      final String url = '$_baseUrl/add';
+      final String url = ApiConfig.categoriesAddEndpoint;
       print('DEBUG - Add category URL: $url');
       print('DEBUG - Request body: $requestBody');
 
@@ -172,7 +172,7 @@ class CategoryService {
       print('DEBUG - requestBody completo: $requestBody');
 
       // URL for update endpoint
-      final String url = '$_baseUrl/update';
+      final String url = ApiConfig.categoriesUpdateEndpoint;
       print('DEBUG - Update category URL: $url');
 
       // Usar ApiHelper para la solicitud HTTP con manejo UTF-8 correcto
@@ -228,7 +228,7 @@ class CategoryService {
       final requestBody = {'user_id': userId, 'category_id': categoryId};
 
       // URL for delete endpoint
-      final String url = '$_baseUrl/delete';
+      final String url = ApiConfig.categoriesDeleteEndpoint;
       print('DEBUG - Delete category URL: $url');
 
       // Usar ApiHelper para la solicitud HTTP con manejo UTF-8 correcto

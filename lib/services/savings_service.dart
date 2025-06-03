@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
+import '../config/environment.dart';
 import '../models/dashboard_model.dart';
 
 class SavingsService {
@@ -13,26 +14,63 @@ class SavingsService {
   /// Fetch current savings data for a user
   Future<SavingsData> getSavingsData(String userId) async {
     try {
+      // 🚨 DEBUG: Logging detallado para diagnóstico
+      final fullUrl = '$baseUrl?user_id=$userId';
+      print('\n🚨 === SAVINGS SERVICE DEBUG ===');
+      print('📍 Method: getSavingsData');
+      print('👤 User ID: $userId');
+      print('🏠 Base URL: $baseUrl');
+      print('🔗 Full URL: $fullUrl');
+      print('🌍 Environment: ${EnvironmentConfig.currentEnvironment}');
+      print('🏭 Is Production: ${EnvironmentConfig.isProduction}');
+      print('🔧 API Config baseUrl: ${ApiConfig.baseApiUrl}');
+      print('================================');
+
       final response = await http.get(
-        Uri.parse('$baseUrl/fetch?user_id=$userId'),
+        Uri.parse(fullUrl),
         headers: {'Content-Type': 'application/json'},
       );
+
+      print('📊 Response received:');
+      print('  • Status Code: ${response.statusCode}');
+      print('  • Response Body: ${response.body}');
+      print('  • Headers: ${response.headers}');
 
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         if (responseData['success'] == true) {
           final data = responseData['data'];
+          print('✅ Savings data fetched successfully');
           return SavingsData.fromJson(data);
         } else {
-          throw Exception(
-            responseData['message'] ?? 'Failed to fetch savings data',
-          );
+          final errorMsg =
+              responseData['message'] ?? 'Failed to fetch savings data';
+          print('❌ Server returned success=false: $errorMsg');
+          throw Exception(errorMsg);
         }
       } else {
-        throw Exception('Error fetching savings data: ${response.statusCode}');
+        final errorMsg = 'Error fetching savings data: ${response.statusCode}';
+        print('❌ HTTP Error: $errorMsg');
+        print('📄 Response body: ${response.body}');
+
+        // Información adicional para debugging 404
+        if (response.statusCode == 404) {
+          print('🔍 404 DEBUG INFO:');
+          print('  • This means the URL path was not found on the server');
+          print('  • Check if the backend service is running on port 8089');
+          print('  • Verify the route /fetch is correctly implemented');
+          print('  • Current full URL: $fullUrl');
+        }
+
+        throw Exception(errorMsg);
       }
     } catch (e) {
-      print('❌ Error in getSavingsData: $e');
+      print('❌ Exception in getSavingsData: $e');
+      print('🔧 Debug info:');
+      print('  • User ID: $userId');
+      print('  • Base URL: $baseUrl');
+      print('  • Environment: ${EnvironmentConfig.currentEnvironment}');
+      print('  • Full URL would be: $baseUrl?user_id=$userId');
       throw Exception('Error fetching savings data: $e');
     }
   }
@@ -45,7 +83,7 @@ class SavingsService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/update'),
+        Uri.parse(ApiConfig.savingsUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId, 'goal': goal, 'period': period}),
       );
@@ -87,7 +125,7 @@ class SavingsService {
       final requestBody = {'user_id': userId, 'available': available};
 
       final response = await http.post(
-        Uri.parse('$baseUrl/update'),
+        Uri.parse(ApiConfig.savingsUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );
@@ -117,7 +155,7 @@ class SavingsService {
   Future<bool> deleteSavingsGoal(String userId) async {
     try {
       final response = await http.delete(
-        Uri.parse('$baseUrl/delete'),
+        Uri.parse(ApiConfig.savingsDeleteEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId}),
       );
@@ -159,7 +197,7 @@ class SavingsService {
   Future<bool> checkHealth() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/health'),
+        Uri.parse(ApiConfig.savingsHealthEndpoint),
         headers: {'Content-Type': 'application/json'},
       );
 

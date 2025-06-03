@@ -105,7 +105,7 @@ func createTablesIfNotExist() {
 	err = db.QueryRow(`
 		SELECT COUNT(*) FROM pragma_table_info('budget') WHERE name='total_income'
 	`).Scan(&exists)
-	
+
 	if err != nil {
 		log.Printf("Error checking for total_income column: %v", err)
 	} else if exists == 0 {
@@ -204,7 +204,7 @@ func handleUpdateBudget(w http.ResponseWriter, r *http.Request) {
 
 	// Calculate the remaining amount (include income in the calculation)
 	remainingAmount := updateRequest.FromPrevious + updateRequest.TotalIncome - updateRequest.SpentAmount - updateRequest.UpcomingAmount
-	
+
 	// Calculate the percent (what percentage of the budget is used/upcoming)
 	var percent float64
 	totalAvailable := updateRequest.FromPrevious + updateRequest.TotalIncome
@@ -273,19 +273,19 @@ func fetchBudgetData(userID, period string) (BudgetData, error) {
 		budget.FromPrevious = 0
 		budget.Percent = 0
 		budget.TotalIncome = 0
-		
+
 		// Check if there's a previous period to inherit from
 		previousPeriod, previousAmount := getPreviousPeriodData(userID, period)
 		if previousAmount > 0 {
 			budget.FromPrevious = previousAmount
 			budget.TotalAmount = previousAmount
 			budget.RemainingAmount = previousAmount
-			
+
 			// Log the inheritance
-			log.Printf("Inheriting %f from previous period %s for user %s in period %s", 
+			log.Printf("Inheriting %f from previous period %s for user %s in period %s",
 				previousAmount, previousPeriod, userID, period)
 		}
-		
+
 		return budget, nil
 	} else if err != nil {
 		return budget, err
@@ -299,9 +299,9 @@ func getPreviousPeriodData(userID, currentPeriod string) (string, float64) {
 	// Define the previous period based on the current period
 	var previousPeriod string
 	var queryDateCondition string
-	
+
 	now := time.Now()
-	
+
 	switch currentPeriod {
 	case "daily":
 		// Previous day
@@ -359,24 +359,24 @@ func getPreviousPeriodData(userID, currentPeriod string) (string, float64) {
 		// If the period is not recognized, don't try to get previous data
 		return "", 0
 	}
-	
+
 	// Query to get the most recent budget entry for the previous period
 	query := fmt.Sprintf(`
 		SELECT remaining_amount FROM budget 
 		WHERE user_id = ? AND period = ? %s
 		LIMIT 1
 	`, queryDateCondition)
-	
+
 	var remainingAmount float64
 	err := db.QueryRow(query, userID, previousPeriod).Scan(&remainingAmount)
-	
+
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("Error getting previous period data: %v", err)
 		}
 		return "", 0
 	}
-	
+
 	return previousPeriod, remainingAmount
 }
 

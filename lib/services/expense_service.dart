@@ -22,7 +22,7 @@ class ExpenseService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/add'),
+        Uri.parse(ApiConfig.expenseAddEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(expense.toJson()),
       );
@@ -53,7 +53,7 @@ class ExpenseService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl?user_id=$userId'),
+        Uri.parse('${ApiConfig.expenseFetchEndpoint}?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -81,7 +81,7 @@ class ExpenseService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/update'),
+        Uri.parse(ApiConfig.expenseUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': expense.userId,
@@ -124,7 +124,7 @@ class ExpenseService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/delete'),
+        Uri.parse(ApiConfig.expenseDeleteEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId, 'expense_id': expenseId}),
       );

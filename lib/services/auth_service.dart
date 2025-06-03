@@ -28,7 +28,7 @@ class AuthService {
     }
 
     try {
-      final url = '${ApiConfig.signupServiceUrl}/check-email';
+      final url = ApiConfig.signupCheckEmailEndpoint;
       print("Checking email at URL: $url");
 
       // First try to ping the service to check if it's reachable
@@ -115,12 +115,12 @@ class AuthService {
     }
 
     print('Prepared signup data with email: $email, name: $fullName');
-    print('Sending to URL: ${ApiConfig.signupServiceUrl}/register');
+    print('Sending to URL: ${ApiConfig.signupRegisterEndpoint}');
 
     try {
       print('Making HTTP POST request to register user...');
       final response = await http.post(
-        Uri.parse('${ApiConfig.signupServiceUrl}/register'),
+        Uri.parse(ApiConfig.signupRegisterEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(signupData),
       );
@@ -199,7 +199,7 @@ class AuthService {
       print('Detected device locale: $normalizedLocale');
 
       final response = await http.post(
-        Uri.parse('${ApiConfig.googleAuthServiceUrl}'),
+        Uri.parse(ApiConfig.googleAuthEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'idToken': googleAuth.idToken,

@@ -1,0 +1,305 @@
+pipeline {
+    agent any
+    
+    environment {
+        // Configuración del proyecto
+        BACKEND_PATH = '/opt/hero_budget/backend'
+        BACKUP_PATH = '/opt/hero_budget/backups'
+        SERVICE_NAME = 'herobudget'
+        REPO_NAME = 'herobudget-backend'
+        
+        // Scripts de automatización
+        WEBHOOK_DEPLOY_SCRIPT = './scripts/webhook_deploy.sh'
+        MANAGE_SERVICES_SCRIPT = './scripts/manage_services.sh'
+        VERIFY_DEPLOYMENT_SCRIPT = './scripts/verify_deployment.sh'
+        
+        // Configuración de notificaciones
+        SLACK_CHANNEL = '#herobudget-deployments'
+        EMAIL_RECIPIENTS = 'admin@herobudget.com'
+        
+        // Variables de estado
+        DEPLOYMENT_STATUS = 'UNKNOWN'
+        BACKUP_FILE = ''
+        BUILD_TIMESTAMP = sh(script: 'date +%Y%m%d_%H%M%S', returnStdout: true).trim()
+    }
+    
+    options {
+        // Configurar timeouts y retenciones
+        timeout(time: 30, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        skipDefaultCheckout(false)
+        
+        // Configurar triggers
+        triggers {
+            githubPush()
+        }
+    }
+    
+    stages {
+        stage('🔍 Pre-Deploy Checks') {
+            steps {
+                script {
+                    echo "🚀 Iniciando pipeline CI/CD Hero Budget Backend"
+                    echo "=================================================="
+                    echo "Build: ${env.BUILD_NUMBER}"
+                    echo "Branch: ${env.GIT_BRANCH}"
+                    echo "Commit: ${env.GIT_COMMIT}"
+                    echo "Timestamp: ${BUILD_TIMESTAMP}"
+                    echo "=================================================="
+                    
+                    // Hacer ejecutables los scripts
+                    sh '''
+                        chmod +x scripts/*.sh 2>/dev/null || true
+                        echo "✅ Scripts marcados como ejecutables"
+                    '''
+                    
+                    // Verificar información del commit
+                    sh '''
+                        echo "📋 Información del commit:"
+                        git log --oneline -1
+                        echo ""
+                        echo "📂 Archivos modificados:"
+                        git diff --name-only HEAD~1 HEAD || echo "Primer commit"
+                    '''
+                }
+            }
+        }
+        
+        stage('🔧 Code Quality & Tests') {
+            parallel {
+                stage('🧪 Run Tests') {
+                    steps {
+                        script {
+                            echo "🧪 Ejecutando tests del proyecto..."
+                            
+                            sh '''
+                                # Verificar si Go está disponible
+                                if command -v go &> /dev/null; then
+                                    echo "✅ Go disponible: $(go version)"
+                                    
+                                    # Ejecutar tests si existen
+                                    if find . -name "*_test.go" | grep -q .; then
+                                        echo "🧪 Ejecutando tests Go..."
+                                        go test ./... -v
+                                    else
+                                        echo "ℹ️ No se encontraron tests Go"
+                                    fi
+                                    
+                                    # Verificar sintaxis
+                                    echo "🔍 Verificando sintaxis Go..."
+                                    go vet ./...
+                                else
+                                    echo "⚠️ Go no disponible en Jenkins"
+                                fi
+                            '''
+                        }
+                    }
+                }
+                
+                stage('🔒 Security Scan') {
+                    steps {
+                        script {
+                            echo "🔒 Ejecutando escaneo de seguridad..."
+                            
+                            sh '''
+                                echo "🔍 Buscando credenciales hardcodeadas..."
+                                if grep -r -i "password\|secret\|key" --include="*.go" . | grep -v "// "; then
+                                    echo "⚠️ Posibles credenciales encontradas (revisar manualmente)"
+                                else
+                                    echo "✅ No se encontraron credenciales obvias"
+                                fi
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('🛑 Stop Services') {
+            steps {
+                script {
+                    echo "🛑 Parando servicios usando manage_services.sh..."
+                    
+                    def stopResult = sh(
+                        script: '''
+                            if [ -f "${MANAGE_SERVICES_SCRIPT}" ]; then
+                                echo "🔄 Ejecutando script de gestión de servicios..."
+                                ${MANAGE_SERVICES_SCRIPT} stop
+                            else
+                                echo "⚠️ Script manage_services.sh no encontrado, usando método manual..."
+                                ssh root@178.16.130.178 "systemctl stop herobudget || true"
+                            fi
+                        ''',
+                        returnStatus: true
+                    )
+                    
+                    if (stopResult == 0) {
+                        echo "✅ Servicios parados correctamente"
+                    } else {
+                        echo "⚠️ Advertencia: Problemas parando servicios, continuando..."
+                    }
+                }
+            }
+        }
+        
+        stage('🚀 Webhook Deploy') {
+            steps {
+                script {
+                    echo "🚀 Ejecutando deployment automático con webhook_deploy.sh..."
+                    
+                    def deployResult = sh(
+                        script: '''
+                            if [ -f "${WEBHOOK_DEPLOY_SCRIPT}" ]; then
+                                echo "📥 Ejecutando script de webhook deployment..."
+                                ${WEBHOOK_DEPLOY_SCRIPT} main --force
+                            else
+                                echo "❌ Script webhook_deploy.sh no encontrado"
+                                exit 1
+                            fi
+                        ''',
+                        returnStatus: true
+                    )
+                    
+                    if (deployResult == 0) {
+                        echo "✅ Deployment automático completado"
+                    } else {
+                        error "❌ Error durante deployment automático"
+                    fi
+                }
+            }
+        }
+        
+        stage('🚀 Start Services') {
+            steps {
+                script {
+                    echo "🚀 Iniciando servicios usando manage_services.sh..."
+                    
+                    def startResult = sh(
+                        script: '''
+                            if [ -f "${MANAGE_SERVICES_SCRIPT}" ]; then
+                                echo "🔄 Ejecutando script de gestión de servicios..."
+                                ${MANAGE_SERVICES_SCRIPT} restart
+                            else
+                                echo "⚠️ Script manage_services.sh no encontrado, usando método manual..."
+                                ssh root@178.16.130.178 "
+                                    systemctl start herobudget
+                                    systemctl reload nginx
+                                "
+                            fi
+                        ''',
+                        returnStatus: true
+                    )
+                    
+                    if (startResult == 0) {
+                        echo "✅ Servicios iniciados correctamente"
+                    } else {
+                        error "❌ Error iniciando servicios"
+                    fi
+                }
+            }
+        }
+        
+        stage('🔍 Post-Deploy Verification') {
+            steps {
+                script {
+                    echo "🔍 Verificando deployment..."
+                    
+                    def verifyResult = sh(
+                        script: '''
+                            if [ -f "${VERIFY_DEPLOYMENT_SCRIPT}" ]; then
+                                echo "✅ Ejecutando verificación automática..."
+                                ${VERIFY_DEPLOYMENT_SCRIPT}
+                            else
+                                echo "⚠️ Script de verificación no encontrado, usando verificación manual..."
+                                ${MANAGE_SERVICES_SCRIPT} health || echo "Health check manual"
+                            fi
+                        ''',
+                        returnStatus: true
+                    )
+                    
+                    if (verifyResult == 0) {
+                        echo "✅ Verificación exitosa"
+                        env.DEPLOYMENT_STATUS = 'SUCCESS'
+                    } else {
+                        echo "❌ Fallo en verificación"
+                        env.DEPLOYMENT_STATUS = 'FAILED'
+                        error "Deployment verification failed"
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            script {
+                echo "🎉 ¡DEPLOYMENT EXITOSO!"
+                echo "=================================================="
+                echo "✅ Build: ${env.BUILD_NUMBER}"
+                echo "✅ Branch: ${env.GIT_BRANCH}"
+                echo "✅ Timestamp: ${BUILD_TIMESTAMP}"
+                echo "✅ Estado: SUCCESS"
+                echo "=================================================="
+                
+                // Log de éxito
+                sh '''
+                    echo "✅ $(date): Deployment exitoso - Build ${BUILD_NUMBER}" >> /opt/hero_budget/logs/jenkins_deployments.log
+                '''
+            }
+        }
+        
+        failure {
+            script {
+                echo "❌ DEPLOYMENT FALLIDO"
+                echo "=================================================="
+                echo "❌ Build: ${env.BUILD_NUMBER}"
+                echo "❌ Branch: ${env.GIT_BRANCH}"
+                echo "❌ Timestamp: ${BUILD_TIMESTAMP}"
+                echo "❌ Estado: FAILED"
+                echo "=================================================="
+                
+                // Intentar rollback automático si hay backup
+                sh '''
+                    echo "🔄 Intentando rollback automático..."
+                    if [ -f "/tmp/last_backup.txt" ]; then
+                        BACKUP_FILE=$(cat /tmp/last_backup.txt)
+                        if [ -f "/opt/hero_budget/backups/$BACKUP_FILE" ]; then
+                            echo "📦 Restaurando backup: $BACKUP_FILE"
+                            ssh root@178.16.130.178 "
+                                cd /opt/hero_budget
+                                systemctl stop herobudget || true
+                                rm -rf backend_failed
+                                mv backend backend_failed || true
+                                tar -xzf backups/$BACKUP_FILE
+                                systemctl start herobudget
+                            "
+                            echo "✅ Rollback completado"
+                        else
+                            echo "❌ Backup no encontrado para rollback"
+                        fi
+                    else
+                        echo "❌ No hay información de backup para rollback"
+                    fi
+                    
+                    echo "❌ $(date): Deployment fallido - Build ${BUILD_NUMBER}" >> /opt/hero_budget/logs/jenkins_deployments.log
+                '''
+            }
+        }
+        
+        always {
+            script {
+                echo "🧹 Limpieza post-deployment..."
+                sh '''
+                    # Limpiar archivos temporales
+                    rm -f /tmp/last_backup.txt /tmp/last_successful_deploy.txt 2>/dev/null || true
+                    
+                    # Mostrar estado final de servicios
+                    if [ -f "${MANAGE_SERVICES_SCRIPT}" ]; then
+                        echo "📊 Estado final de servicios:"
+                        ${MANAGE_SERVICES_SCRIPT} status || true
+                    fi
+                '''
+            }
+        }
+    }
+} 

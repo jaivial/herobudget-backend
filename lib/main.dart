@@ -58,6 +58,77 @@ class LanguageChangeNotifier {
 // Create a single instance to be used throughout the app
 final languageChangeNotifier = LanguageChangeNotifier();
 
+/// Función para diagnosticar problemas comunes en el startup
+Future<void> _performStartupDiagnostics() async {
+  try {
+    print('\n🚨 === STARTUP DIAGNOSTICS ===');
+
+    // 1. Verificar SharedPreferences y user_id
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    final allKeys = prefs.getKeys();
+
+    print('🔍 SharedPreferences Diagnostics:');
+    print('  • User ID: ${userId ?? "NULL"}');
+    print('  • All keys: ${allKeys.toList()}');
+
+    if (userId == null) {
+      print('⚠️  WARNING: No user_id found in SharedPreferences');
+      print('   This will cause 404 errors when fetching user-specific data');
+    } else {
+      print('✅ User ID found: $userId');
+    }
+
+    // 2. Verificar configuración de ambiente
+    print('\n🌍 Environment Configuration:');
+    print('  • Environment: ${EnvironmentConfig.currentEnvironment}');
+    print('  • Is Development: ${EnvironmentConfig.isDevelopment}');
+    print('  • Base URL: ${EnvironmentConfig.baseUrl}');
+
+    // 3. Mostrar URLs que se van a usar
+    print('\n🔗 Key API URLs:');
+    print('  • Savings: ${ApiConfig.savingsManagementUrl}');
+    if (userId != null) {
+      print(
+        '  • Savings Full URL: ${ApiConfig.savingsManagementUrl}/fetch?user_id=$userId',
+      );
+    }
+
+    // 4. Test rápido de conectividad (solo en desarrollo)
+    if (EnvironmentConfig.isDevelopment) {
+      print('\n🧪 Quick Connectivity Test:');
+      await _quickConnectivityTest();
+    }
+
+    print('=== END DIAGNOSTICS ===\n');
+  } catch (e) {
+    print('❌ Error in startup diagnostics: $e');
+  }
+}
+
+/// Test rápido de conectividad para servicios locales
+Future<void> _quickConnectivityTest() async {
+  final servicesToTest = [
+    {'port': 8089, 'name': 'Savings'},
+    {'port': 8081, 'name': 'Google Auth'},
+    {'port': 8088, 'name': 'Budget'},
+  ];
+
+  for (final service in servicesToTest) {
+    try {
+      final socket = await Socket.connect(
+        'localhost',
+        service['port'] as int,
+      ).timeout(const Duration(seconds: 1));
+
+      socket.destroy();
+      print('  ✅ ${service['name']} (port ${service['port']}): OK');
+    } catch (e) {
+      print('  ❌ ${service['name']} (port ${service['port']}): NOT AVAILABLE');
+    }
+  }
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -83,6 +154,11 @@ void main() async {
 
   // Initialize API helper with environment configuration
   ApiHelper.initialize();
+
+  // ==========================================
+  // 🚨 DEBUG: Verificar configuración y user_id
+  // ==========================================
+  await _performStartupDiagnostics();
 
   // Print environment and API configuration for debugging
   if (EnvironmentConfig.enableLogging) {

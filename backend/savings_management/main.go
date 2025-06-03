@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -107,6 +108,7 @@ func main() {
 	http.HandleFunc("/savings/fetch", corsMiddleware(handleFetchSavings))
 	http.HandleFunc("/savings/update", corsMiddleware(handleUpdateSavings))
 	http.HandleFunc("/savings/delete", corsMiddleware(handleDeleteSavings))
+	http.HandleFunc("/health", corsMiddleware(handleHealth))
 
 	port := 8089
 	log.Printf("Savings Management service started on :%d", port)
@@ -365,6 +367,27 @@ func deleteSavingsData(userID string) error {
 	}
 
 	return nil
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Test database connection
+	if err := db.Ping(); err != nil {
+		log.Printf("Health check failed - database connection error: %v", err)
+		sendErrorResponse(w, "Database connection failed", http.StatusInternalServerError)
+		return
+	}
+
+	// Return success response
+	sendSuccessResponse(w, "Savings Management service is healthy", map[string]string{
+		"status":    "healthy",
+		"service":   "savings_management",
+		"timestamp": fmt.Sprintf("%d", time.Now().Unix()),
+	})
 }
 
 func sendSuccessResponse(w http.ResponseWriter, message string, data interface{}) {

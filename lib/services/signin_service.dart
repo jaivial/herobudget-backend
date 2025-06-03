@@ -15,7 +15,7 @@ class SignInService {
   ) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/signin'),
+        Uri.parse(ApiConfig.signinEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
@@ -94,7 +94,7 @@ class SignInService {
   static Future<bool> checkEmailExists(String email) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/signin/check-email'),
+        Uri.parse(ApiConfig.signinCheckEmailEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email}),
       );

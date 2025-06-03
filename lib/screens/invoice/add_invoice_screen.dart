@@ -27,7 +27,11 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
 
   // Fechas
   DateTime _startDate = DateTime.now();
-  DateTime _paymentDate = DateTime.now();
+  int _paymentDay =
+      DateTime.now().day; // Cambio: día del mes en lugar de fecha completa
+
+  // Duración de la factura
+  int _durationMonths = 1; // Nuevo: duración en meses
 
   // Categoría y método de pago
   String _selectedCategory = '';
@@ -101,14 +105,14 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
   Future<void> _selectPaymentDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _paymentDate,
+      initialDate: _startDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
 
-    if (picked != null && picked != _paymentDate) {
+    if (picked != null && picked != _startDate) {
       setState(() {
-        _paymentDate = picked;
+        _startDate = picked;
       });
     }
   }
@@ -128,7 +132,6 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
 
         // Formatear las fechas
         final startDateFormatted = DateFormat('yyyy-MM-dd').format(_startDate);
-        final paymentDueDate = DateFormat('yyyy-MM-dd').format(_paymentDate);
 
         // Verificar que los campos obligatorios no estén vacíos
         if (_selectedCategory.isEmpty) {
@@ -143,7 +146,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
         final success = await _invoiceService.addInvoice(
           name: _selectedCategory.isNotEmpty ? _selectedCategory : 'Invoice',
           amount: amount,
-          dueDate: paymentDueDate,
+          startDate: startDateFormatted,
+          paymentDay: _paymentDay,
+          durationMonths: _durationMonths,
           category: _selectedCategory,
           paymentMethod: _selectedPaymentMethod,
           recurring:
@@ -153,7 +158,6 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               _descriptionController.text.isNotEmpty
                   ? _descriptionController.text
                   : null,
-          startDate: startDateFormatted,
           regularity: _selectedRegularity,
         );
 
@@ -392,53 +396,183 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Día de pago
-                        InkWell(
-                          onTap: () => _selectPaymentDate(context),
-                          child: InputDecorator(
+                        // Día de pago del mes
+                        Text(
+                          context.tr.translate('payment_day') != ''
+                              ? context.tr.translate('payment_day')
+                              : 'Día de pago del mes',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Theme.of(
+                                        context,
+                                      ).colorScheme.outline.withOpacity(0.3)
+                                      : Colors.grey.shade300,
+                            ),
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .surfaceVariant
+                                        .withOpacity(0.5)
+                                    : Theme.of(context).cardColor,
+                          ),
+                          child: DropdownButtonFormField<int>(
+                            value: _paymentDay,
+                            isExpanded: true,
                             decoration: InputDecoration(
-                              labelText:
-                                  context.tr.translate('payment_day') != ''
-                                      ? context.tr.translate('payment_day')
-                                      : 'Día de pago',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
                               ),
                               prefixIcon: Icon(
                                 Icons.event,
                                 color: Theme.of(context).colorScheme.primary,
                               ),
-                              labelStyle: TextStyle(
-                                color:
-                                    Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white.withOpacity(0.9)
-                                        : null,
+                            ),
+                            items: List.generate(31, (index) {
+                              final day = index + 1;
+                              return DropdownMenuItem(
+                                value: day,
+                                child: Text('Día $day'),
+                              );
+                            }),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _paymentDay = value;
+                                });
+                              }
+                            },
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                            dropdownColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Theme.of(context).colorScheme.surface
+                                    : Theme.of(context).cardColor,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Duración de la factura
+                        Text(
+                          context.tr.translate('duration_months') != ''
+                              ? context.tr.translate('duration_months')
+                              : 'Duración (meses)',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Theme.of(
+                                        context,
+                                      ).colorScheme.outline.withOpacity(0.3)
+                                      : Colors.grey.shade300,
+                            ),
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .surfaceVariant
+                                        .withOpacity(0.5)
+                                    : Theme.of(context).cardColor,
+                          ),
+                          child: DropdownButtonFormField<int>(
+                            value: _durationMonths > 12 ? 0 : _durationMonths,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.schedule,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  DateFormat('yyyy-MM-dd').format(_paymentDate),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color:
-                                        Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Colors.white
-                                            : Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
+                            items: [
+                              ...List.generate(12, (index) {
+                                final months = index + 1;
+                                return DropdownMenuItem(
+                                  value: months,
+                                  child: Text(
+                                    '$months ${months == 1 ? 'mes' : 'meses'}',
                                   ),
+                                );
+                              }),
+                              DropdownMenuItem(
+                                value: 0, // Valor especial para personalizado
+                                child: Text(
+                                  _durationMonths > 12
+                                      ? '$_durationMonths meses (Personalizado)'
+                                      : 'Personalizado',
                                 ),
-                                Icon(
-                                  Icons.arrow_drop_down,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.5),
-                                ),
-                              ],
+                              ),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                if (value == 0) {
+                                  // Mostrar diálogo para entrada personalizada
+                                  _showCustomDurationDialog();
+                                } else {
+                                  setState(() {
+                                    _durationMonths = value;
+                                  });
+                                }
+                              }
+                            },
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                            dropdownColor:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? Theme.of(context).colorScheme.surface
+                                    : Theme.of(context).cardColor,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -1063,6 +1197,85 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showCustomDurationDialog() {
+    final TextEditingController controller = TextEditingController(
+      text: _durationMonths > 12 ? _durationMonths.toString() : '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            context.tr.translate('custom_duration') != ''
+                ? context.tr.translate('custom_duration')
+                : 'Duración personalizada',
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText:
+                      context.tr.translate('duration_months') != ''
+                          ? context.tr.translate('duration_months')
+                          : 'Duración en meses',
+                  hintText: 'Ej: 24',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text(
+                context.tr.translate('cancel') != ''
+                    ? context.tr.translate('cancel')
+                    : 'Cancelar',
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                final value = controller.text.trim();
+                if (value.isNotEmpty) {
+                  final parsedValue = int.tryParse(value);
+                  if (parsedValue != null && parsedValue > 0) {
+                    setState(() {
+                      _durationMonths = parsedValue;
+                    });
+                    Navigator.pop(context);
+                  } else {
+                    // Mostrar error si el valor no es válido
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Por favor ingresa un número válido mayor a 0',
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              child: Text(
+                context.tr.translate('save') != ''
+                    ? context.tr.translate('save')
+                    : 'Guardar',
+              ),
+            ),
+          ],
         );
       },
     );

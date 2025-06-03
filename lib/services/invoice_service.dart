@@ -23,7 +23,7 @@ class InvoiceService {
         throw Exception('User not authenticated');
       }
 
-      final fullUrl = '$baseUrl?user_id=$userId';
+      final fullUrl = ApiConfig.billsFetchEndpoint + '?user_id=$userId';
 
       // Realizar la petición HTTP
       final response = await http.get(
@@ -69,12 +69,14 @@ class InvoiceService {
   Future<bool> addInvoice({
     required String name,
     required double amount,
-    required String dueDate,
+    String? dueDate,
+    required String startDate,
+    required int paymentDay,
+    required int durationMonths,
     required String category,
     required String paymentMethod,
     required bool recurring,
     String? description,
-    String? startDate,
     String? regularity,
   }) async {
     try {
@@ -94,7 +96,10 @@ class InvoiceService {
         'user_id': userId,
         'name': name,
         'amount': amount,
-        'due_date': dueDate,
+        'start_date': startDate,
+        'payment_day': paymentDay,
+        'duration_months': durationMonths,
+        'regularity': regularity ?? 'monthly',
         'category': category,
         'icon': icon,
         'recurring': recurring,
@@ -104,18 +109,20 @@ class InvoiceService {
         'payment_method': paymentMethod,
       };
 
+      // Mantener dueDate para compatibilidad si se proporciona
+      if (dueDate != null && dueDate.isNotEmpty) {
+        invoiceData['due_date'] = dueDate;
+      } else {
+        // Si no se proporciona dueDate, usar startDate como fallback
+        invoiceData['due_date'] = startDate;
+      }
+
       // Añadir campos opcionales si no son nulos
       if (description != null && description.isNotEmpty) {
         invoiceData['description'] = description;
       }
-      if (startDate != null && startDate.isNotEmpty) {
-        invoiceData['start_date'] = startDate;
-      }
-      if (regularity != null && regularity.isNotEmpty) {
-        invoiceData['regularity'] = regularity;
-      }
 
-      final fullUrl = '$baseUrl/add';
+      final fullUrl = ApiConfig.billsAddEndpoint;
 
       // Realizar la petición HTTP
       final response = await http.post(
@@ -138,7 +145,12 @@ class InvoiceService {
   }
 
   /// Marca una factura como pagada
-  Future<bool> payInvoice(int invoiceId, String paymentMethod) async {
+  Future<bool> payInvoice(
+    int invoiceId,
+    String paymentMethod, {
+    String? yearMonth, // Nuevo: mes específico a pagar (YYYY-MM)
+    String? description, // Nuevo: descripción adicional
+  }) async {
     try {
       // Obtener el ID de usuario desde SharedPreferences
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -148,15 +160,28 @@ class InvoiceService {
         throw Exception('User not authenticated');
       }
 
+      // Crear el cuerpo de la solicitud
+      final Map<String, dynamic> requestBody = {
+        'user_id': userId,
+        'bill_id': invoiceId,
+        'payment_method': paymentMethod, // 'cash' o 'bank'
+      };
+
+      // Añadir yearMonth si se proporciona (nuevo sistema)
+      if (yearMonth != null && yearMonth.isNotEmpty) {
+        requestBody['year_month'] = yearMonth;
+      }
+
+      // Añadir descripción si se proporciona
+      if (description != null && description.isNotEmpty) {
+        requestBody['description'] = description;
+      }
+
       // Realizar la petición HTTP
       final response = await http.post(
-        Uri.parse('$baseUrl/pay'),
+        Uri.parse(ApiConfig.billsPayEndpoint),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'user_id': userId,
-          'bill_id': invoiceId,
-          'payment_method': paymentMethod, // 'cash' o 'bank'
-        }),
+        body: json.encode(requestBody),
       );
 
       // Verificar si la respuesta es exitosa
@@ -222,7 +247,7 @@ class InvoiceService {
 
       // Realizar la petición HTTP
       final response = await http.post(
-        Uri.parse('$baseUrl/update'),
+        Uri.parse(ApiConfig.billsUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(invoiceData),
       );
@@ -253,7 +278,7 @@ class InvoiceService {
 
       // Realizar la petición HTTP
       final response = await http.post(
-        Uri.parse('$baseUrl/delete'),
+        Uri.parse(ApiConfig.billsDeleteEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': userId, 'bill_id': invoiceId}),
       );
@@ -284,7 +309,7 @@ class InvoiceService {
 
       // Realizar la petición HTTP
       final response = await http.get(
-        Uri.parse('$baseUrl/upcoming?user_id=$userId'),
+        Uri.parse(ApiConfig.billsUpcomingEndpoint + '?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 

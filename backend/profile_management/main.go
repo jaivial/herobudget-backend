@@ -51,6 +51,11 @@ type PasswordUpdateRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
+type LocaleUpdateRequest struct {
+	UserID string `json:"user_id"`
+	Locale string `json:"locale"`
+}
+
 type ApiResponse struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message,omitempty"`
@@ -94,6 +99,7 @@ func main() {
 	http.HandleFunc("/profile/update-password", corsMiddleware(handlePasswordUpdate))
 	http.HandleFunc("/profile/ping", corsMiddleware(handlePing))
 	http.HandleFunc("/profile/test-image-update", corsMiddleware(handleTestImageUpdate))
+	http.HandleFunc("/update/locale", corsMiddleware(handleLocaleUpdate))
 
 	port := 8092 // Asignamos el puerto 8092 para el servicio de profile_management
 	log.Printf("Profile Management service started on :%d", port)
@@ -483,6 +489,58 @@ func handlePing(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"status":  "ok",
 		"message": "Profile Management service is running",
+	})
+}
+
+func handleLocaleUpdate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req LocaleUpdateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("Invalid request body: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.UserID == "" || req.Locale == "" {
+		http.Error(w, "All fields are required", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Updating locale for user ID: %s", req.UserID)
+
+	// Verify user exists
+	var count int
+	err := db.QueryRow("SELECT COUNT(*) FROM users WHERE id = ?", req.UserID).Scan(&count)
+	if err != nil {
+		log.Printf("Database error: %v", err)
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	if count == 0 {
+		log.Printf("User not found: %s", req.UserID)
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Update locale
+	_, err = db.Exec("UPDATE users SET locale = ? WHERE id = ?", req.Locale, req.UserID)
+	if err != nil {
+		log.Printf("Failed to update locale: %v", err)
+		http.Error(w, "Failed to update locale", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Locale updated successfully for user ID: %s", req.UserID)
+
+	// Return success
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ApiResponse{
+		Success: true,
+		Message: "Locale updated successfully",
 	})
 }
 

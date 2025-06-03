@@ -13,10 +13,10 @@ class ProfileService {
   // URL base del servicio de gestión de perfiles
   static String get _baseUrl => ApiConfig.profileManagementUrl;
 
-  /// Actualiza el perfil del usuario con nueva información
+  /// Actualiza el perfil del usuario con la información proporcionada
   ///
-  /// Recibe el ID del usuario, nombre, nombre propio, apellido y una imagen opcional en base64
-  /// Devuelve un [UserModel] actualizado si la operación es exitosa o lanza una excepción
+  /// Cada parámetro es opcional excepto el userId. Solo se actualizan
+  /// los campos que se pasan como argumentos.
   static Future<UserModel> updateProfile({
     required int userId,
     String? name,
@@ -26,7 +26,7 @@ class ProfileService {
   }) async {
     try {
       // Preparar la URL del endpoint
-      final Uri uri = Uri.parse('$_baseUrl/update');
+      final Uri uri = Uri.parse(ApiConfig.profileUpdateEndpoint);
 
       // Registro inicial para depuración
       if (kDebugMode) {
@@ -145,7 +145,7 @@ class ProfileService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl/update-password'),
+        Uri.parse(ApiConfig.profileUpdatePasswordEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': userId,
@@ -223,7 +223,7 @@ class ProfileService {
   static Future<bool> isServiceAvailable() async {
     try {
       final response = await http
-          .get(Uri.parse('$_baseUrl/profile/ping'))
+          .get(Uri.parse(ApiConfig.profilePingEndpoint))
           .timeout(const Duration(seconds: 5));
       return response.statusCode == 200;
     } catch (e) {
@@ -241,7 +241,7 @@ class ProfileService {
   }) async {
     try {
       // Usar el nuevo endpoint específico para pruebas
-      final Uri uri = Uri.parse('$_baseUrl/profile/test-image-update');
+      final Uri uri = Uri.parse(ApiConfig.profileTestImageUpdateEndpoint);
 
       if (kDebugMode) {
         print(

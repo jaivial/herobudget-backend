@@ -95,26 +95,28 @@ class ApiConfig {
     }
   }
 
-  // URLs base para servicios (sin endpoints específicos)
+  // URLs base para servicios - CORREGIDAS PARA USAR RUTAS ESPECÍFICAS QUE FUNCIONAN
   static String get signupBaseUrl =>
-      _buildServiceUrl('/signup', signupServicePort);
+      _buildServiceUrl('/signup/register', signupServicePort);
   static String get languageServiceUrl =>
-      _buildServiceUrl('/language', languageServicePort);
+      _buildServiceUrl('/language/get', languageServicePort);
   static String get signinServiceUrl => _buildServiceUrl('', signinServicePort);
   static String get googleAuthBaseUrl =>
       _buildServiceUrl('/auth/google', googleAuthServicePort);
   static String get fetchDashboardServiceUrl =>
       _buildServiceUrl('', fetchDashboardServicePort);
   static String get resetPasswordServiceUrl =>
-      _buildServiceUrl('/reset-password', resetPasswordServicePort);
+      _buildServiceUrl('/reset-password/request', resetPasswordServicePort);
   static String get dashboardDataServiceUrl =>
-      _buildServiceUrl('/dashboard-data', dashboardDataServicePort);
+      _buildServiceUrl('/dashboard/data', dashboardDataServicePort);
   static String get budgetManagementUrl =>
-      _buildServiceUrl('/budget', budgetManagementServicePort);
+      _buildServiceUrl('/budget/fetch', budgetManagementServicePort);
   static String get savingsManagementUrl =>
-      _buildServiceUrl('/savings', savingsManagementServicePort);
-  static String get cashBankManagementUrl =>
-      _buildServiceUrl('/cash-bank', cashBankManagementServicePort);
+      _buildServiceUrl('/savings/fetch', savingsManagementServicePort);
+  static String get cashBankManagementUrl => _buildServiceUrl(
+    '/cash-bank/distribution',
+    cashBankManagementServicePort,
+  );
   static String get billsManagementUrl =>
       _buildServiceUrl('/bills', billsManagementServicePort);
   static String get incomeManagementServiceUrl =>
@@ -124,15 +126,15 @@ class ApiConfig {
   static String get categoriesEndpoint =>
       _buildServiceUrl('/categories', categoriesManagementServicePort);
   static String get profileManagementUrl =>
-      _buildServiceUrl('/profile', profileManagementServicePort);
+      _buildServiceUrl('/profile/update', profileManagementServicePort);
 
   // URLs específicas manteniendo compatibilidad
   static String get signupServiceUrl => signupBaseUrl;
   static String get googleAuthServiceUrl => googleAuthBaseUrl;
 
-  // Money Flow Sync Service
+  // Money Flow Sync Service - REVERTIDA A URL ORIGINAL
   static String get moneyFlowSyncServiceUrl =>
-      _buildServiceUrl('/money-flow-sync', moneyFlowSyncServicePort);
+      _buildServiceUrl('/money-flow/sync', moneyFlowSyncServicePort);
 
   // Budget Overview Fetch Service - FIXED: Uses /budget-overview endpoint
   static String get budgetOverviewFetchServiceUrl =>
@@ -141,6 +143,144 @@ class ApiConfig {
   // Transaction History Service - Uses same service as budget overview (port 8098)
   static String get transactionHistoryServiceUrl =>
       _buildServiceUrl('', budgetOverviewFetchServicePort);
+
+  // ===== ENDPOINTS ESPECÍFICOS CENTRALIZADOS =====
+
+  // 🔐 Authentication Endpoints
+  static String get signinEndpoint =>
+      _buildServiceUrl('/signin', signinServicePort);
+  static String get signinCheckEmailEndpoint =>
+      _buildServiceUrl('/signin/check-email', signinServicePort);
+  static String get signupRegisterEndpoint => signupServiceUrl;
+  static String get signupCheckEmailEndpoint =>
+      _buildServiceUrl('/signup/check-email', signupServicePort);
+  static String get signupCheckVerificationEndpoint =>
+      _buildServiceUrl('/signup/check-verification', signupServicePort);
+  static String get signupResendVerificationEndpoint =>
+      _buildServiceUrl('/signup/resend-verification', signupServicePort);
+  static String get signupVerifyEmailEndpoint =>
+      _buildServiceUrl('/signup/verify-email', signupServicePort);
+  static String get googleAuthEndpoint => googleAuthServiceUrl;
+
+  // 🔑 Reset Password Endpoints
+  static String get resetPasswordCheckEmailEndpoint =>
+      _buildServiceUrl('/reset-password/check-email', resetPasswordServicePort);
+  static String get resetPasswordRequestEndpoint => resetPasswordServiceUrl;
+  static String get resetPasswordValidateTokenEndpoint => _buildServiceUrl(
+    '/reset-password/validate-token',
+    resetPasswordServicePort,
+  );
+  static String get resetPasswordUpdateEndpoint =>
+      _buildServiceUrl('/reset-password/update', resetPasswordServicePort);
+
+  // 💰 Savings Management Endpoints
+  static String get savingsFetchEndpoint => savingsManagementUrl;
+  static String get savingsUpdateEndpoint =>
+      _buildServiceUrl('/savings/update', savingsManagementServicePort);
+  static String get savingsDeleteEndpoint =>
+      _buildServiceUrl('/savings/delete', savingsManagementServicePort);
+  static String get savingsHealthEndpoint =>
+      _buildServiceUrl('/savings/health', savingsManagementServicePort);
+
+  // 📊 Income Management Endpoints
+  static String get incomeAddEndpoint =>
+      _buildServiceUrl('/incomes/add', incomeManagementServicePort);
+  static String get incomeFetchEndpoint => incomeManagementServiceUrl;
+  static String get incomeUpdateEndpoint =>
+      _buildServiceUrl('/incomes/update', incomeManagementServicePort);
+  static String get incomeDeleteEndpoint =>
+      _buildServiceUrl('/incomes/delete', incomeManagementServicePort);
+
+  // 📉 Expense Management Endpoints
+  static String get expenseAddEndpoint =>
+      _buildServiceUrl('/expenses/add', expenseManagementServicePort);
+  static String get expenseFetchEndpoint => expenseManagementServiceUrl;
+  static String get expenseUpdateEndpoint =>
+      _buildServiceUrl('/expenses/update', expenseManagementServicePort);
+  static String get expenseDeleteEndpoint =>
+      _buildServiceUrl('/expenses/delete', expenseManagementServicePort);
+
+  // 🏦 Cash Bank Management Endpoints
+  static String get cashBankDistributionEndpoint => cashBankManagementUrl;
+  static String get cashUpdateEndpoint =>
+      _buildServiceUrl('/cash-bank/cash/update', cashBankManagementServicePort);
+  static String get bankUpdateEndpoint =>
+      _buildServiceUrl('/cash-bank/bank/update', cashBankManagementServicePort);
+  static String get transferCashToBankEndpoint =>
+      isProduction
+          ? '$baseApiUrl/transfer/cash-to-bank'
+          : '$baseApiUrl:$cashBankManagementServicePort/transfer/cash-to-bank';
+  static String get transferBankToCashEndpoint =>
+      isProduction
+          ? '$baseApiUrl/transfer/bank-to-cash'
+          : '$baseApiUrl:$cashBankManagementServicePort/transfer/bank-to-cash';
+
+  // 🧾 Bills Management Endpoints
+  static String get billsFetchEndpoint => billsManagementUrl;
+  static String get billsAddEndpoint =>
+      _buildServiceUrl('/bills/add', billsManagementServicePort);
+  static String get billsPayEndpoint =>
+      _buildServiceUrl('/bills/pay', billsManagementServicePort);
+  static String get billsUpdateEndpoint =>
+      _buildServiceUrl('/bills/update', billsManagementServicePort);
+  static String get billsDeleteEndpoint =>
+      _buildServiceUrl('/bills/delete', billsManagementServicePort);
+  static String get billsUpcomingEndpoint =>
+      _buildServiceUrl('/bills/upcoming', billsManagementServicePort);
+
+  // 🗂️ Categories Management Endpoints
+  static String get categoriesFetchEndpoint => categoriesEndpoint;
+  static String get categoriesAddEndpoint =>
+      _buildServiceUrl('/categories/add', categoriesManagementServicePort);
+  static String get categoriesUpdateEndpoint =>
+      _buildServiceUrl('/categories/update', categoriesManagementServicePort);
+  static String get categoriesDeleteEndpoint =>
+      _buildServiceUrl('/categories/delete', categoriesManagementServicePort);
+
+  // 👤 Profile Management Endpoints
+  static String get profileUpdateEndpoint => profileManagementUrl;
+  static String get profileUpdatePasswordEndpoint => _buildServiceUrl(
+    '/profile/update-password',
+    profileManagementServicePort,
+  );
+  static String get profilePingEndpoint =>
+      _buildServiceUrl('/profile/ping', profileManagementServicePort);
+  static String get profileTestImageUpdateEndpoint => _buildServiceUrl(
+    '/profile/test-image-update',
+    profileManagementServicePort,
+  );
+  static String get profileUpdateLocaleEndpoint =>
+      _buildServiceUrl('/update/locale', profileManagementServicePort);
+
+  // 📈 Transaction & Dashboard Endpoints
+  static String get transactionHistoryEndpoint =>
+      _buildServiceUrl('/transactions/history', budgetOverviewFetchServicePort);
+  static String get transactionDeleteEndpoint =>
+      _buildServiceUrl('/transactions/delete', transactionDeleteServicePort);
+  static String get budgetOverviewEndpoint => budgetOverviewFetchServiceUrl;
+  static String get budgetOverviewHealthEndpoint =>
+      _buildServiceUrl('/health', budgetOverviewFetchServicePort);
+  static String get dashboardUserInfoEndpoint =>
+      _buildServiceUrl('/user/info', fetchDashboardServicePort);
+  static String get dashboardUserUpdateEndpoint =>
+      _buildServiceUrl('/user/update', fetchDashboardServicePort);
+  static String get dashboardHealthEndpoint =>
+      _buildServiceUrl('/health', fetchDashboardServicePort);
+  static String get dashboardDataEndpoint =>
+      _buildServiceUrl('/dashboard/data', dashboardDataServicePort);
+  static String get dashboardSavingsUpdateEndpoint =>
+      _buildServiceUrl('/savings/update', fetchDashboardServicePort);
+  static String get dashboardBillsAddEndpoint =>
+      _buildServiceUrl('/bills/add', fetchDashboardServicePort);
+  static String get dashboardBillsPayEndpoint =>
+      _buildServiceUrl('/bills/pay', fetchDashboardServicePort);
+  static String get moneyFlowDataEndpoint =>
+      _buildServiceUrl('/money-flow/data', moneyFlowSyncServicePort);
+
+  // 🌐 Language Management Endpoints
+  static String get languageGetEndpoint => languageServiceUrl;
+  static String get languageSetEndpoint =>
+      _buildServiceUrl('/language/set', languageServicePort);
 
   // ===== MÉTODOS DE DEBUG Y UTILIDAD =====
 
@@ -214,6 +354,86 @@ class ApiConfig {
     'budgetOverview': budgetOverviewFetchServiceUrl,
     'transactionHistory': transactionHistoryServiceUrl,
     'profile': profileManagementUrl,
+
+    // 🔐 Authentication Endpoints
+    'signinEndpoint': signinEndpoint,
+    'signinCheckEmail': signinCheckEmailEndpoint,
+    'signupRegister': signupRegisterEndpoint,
+    'signupCheckEmail': signupCheckEmailEndpoint,
+    'signupCheckVerification': signupCheckVerificationEndpoint,
+    'signupResendVerification': signupResendVerificationEndpoint,
+    'signupVerifyEmail': signupVerifyEmailEndpoint,
+    'googleAuthEndpoint': googleAuthEndpoint,
+
+    // 🔑 Reset Password Endpoints
+    'resetPasswordCheckEmail': resetPasswordCheckEmailEndpoint,
+    'resetPasswordRequest': resetPasswordRequestEndpoint,
+    'resetPasswordValidateToken': resetPasswordValidateTokenEndpoint,
+    'resetPasswordUpdate': resetPasswordUpdateEndpoint,
+
+    // 💰 Savings Management Endpoints
+    'savingsFetch': savingsFetchEndpoint,
+    'savingsUpdate': savingsUpdateEndpoint,
+    'savingsDelete': savingsDeleteEndpoint,
+    'savingsHealth': savingsHealthEndpoint,
+
+    // 📊 Income Management Endpoints
+    'incomeAdd': incomeAddEndpoint,
+    'incomeFetch': incomeFetchEndpoint,
+    'incomeUpdate': incomeUpdateEndpoint,
+    'incomeDelete': incomeDeleteEndpoint,
+
+    // 📉 Expense Management Endpoints
+    'expenseAdd': expenseAddEndpoint,
+    'expenseFetch': expenseFetchEndpoint,
+    'expenseUpdate': expenseUpdateEndpoint,
+    'expenseDelete': expenseDeleteEndpoint,
+
+    // 🏦 Cash Bank Management Endpoints
+    'cashBankDistribution': cashBankDistributionEndpoint,
+    'cashUpdate': cashUpdateEndpoint,
+    'bankUpdate': bankUpdateEndpoint,
+    'transferCashToBank': transferCashToBankEndpoint,
+    'transferBankToCash': transferBankToCashEndpoint,
+
+    // 🧾 Bills Management Endpoints
+    'billsFetch': billsFetchEndpoint,
+    'billsAdd': billsAddEndpoint,
+    'billsPay': billsPayEndpoint,
+    'billsUpdate': billsUpdateEndpoint,
+    'billsDelete': billsDeleteEndpoint,
+    'billsUpcoming': billsUpcomingEndpoint,
+
+    // 🗂️ Categories Management Endpoints
+    'categoriesFetch': categoriesFetchEndpoint,
+    'categoriesAdd': categoriesAddEndpoint,
+    'categoriesUpdate': categoriesUpdateEndpoint,
+    'categoriesDelete': categoriesDeleteEndpoint,
+
+    // 👤 Profile Management Endpoints
+    'profileUpdate': profileUpdateEndpoint,
+    'profileUpdatePassword': profileUpdatePasswordEndpoint,
+    'profilePing': profilePingEndpoint,
+    'profileTestImageUpdate': profileTestImageUpdateEndpoint,
+    'profileUpdateLocale': profileUpdateLocaleEndpoint,
+
+    // 📈 Transaction & Dashboard Endpoints
+    'transactionHistoryEndpoint': transactionHistoryEndpoint,
+    'transactionDelete': transactionDeleteEndpoint,
+    'budgetOverviewEndpoint': budgetOverviewEndpoint,
+    'budgetOverviewHealth': budgetOverviewHealthEndpoint,
+    'dashboardUserInfo': dashboardUserInfoEndpoint,
+    'dashboardUserUpdate': dashboardUserUpdateEndpoint,
+    'dashboardHealth': dashboardHealthEndpoint,
+    'dashboardData': dashboardDataEndpoint,
+    'dashboardSavingsUpdate': dashboardSavingsUpdateEndpoint,
+    'dashboardBillsAdd': dashboardBillsAddEndpoint,
+    'dashboardBillsPay': dashboardBillsPayEndpoint,
+    'moneyFlowData': moneyFlowDataEndpoint,
+
+    // 🌐 Language Management Endpoints
+    'languageGet': languageGetEndpoint,
+    'languageSet': languageSetEndpoint,
   };
 
   /// Valida que todos los servicios locales estén disponibles
@@ -249,6 +469,39 @@ class ApiConfig {
     print('\n💡 If services are not available, run: ./start_services.sh');
   }
 
+  /// Mostrar URLs específicas corregidas para servicios con rutas específicas
+  static void printCorrectedUrls() {
+    print('\n🔧 URLS CORREGIDAS CON RUTAS ESPECÍFICAS:');
+    print('Environment: ${EnvironmentConfig.currentEnvironment}');
+
+    print('\n🔐 Authentication (corregidas):');
+    print('  Signup Register: $signupServiceUrl');
+    print('  Reset Password Request: $resetPasswordServiceUrl');
+    print('  Google Auth: $googleAuthServiceUrl');
+    print('  Signin: $signinServiceUrl');
+
+    print('\n📊 Management (corregidas):');
+    print('  Dashboard Data: $dashboardDataServiceUrl');
+    print('  Profile Update: $profileManagementUrl');
+    print('  Language Get: $languageServiceUrl');
+
+    print('\n💰 Financial (corregidas):');
+    print('  Budget Fetch: $budgetManagementUrl');
+    print('  Savings Fetch: $savingsManagementUrl');
+    print('  Cash-Bank Distribution: $cashBankManagementUrl');
+    print('  Categories: $categoriesEndpoint');
+
+    print('\n🚀 Specialized (corregidas):');
+    print('  Money Flow Sync: $moneyFlowSyncServiceUrl');
+
+    print('\n🧪 Test Commands (rutas específicas):');
+    print('  curl -X POST "$signupServiceUrl"');
+    print('  curl -X GET "$languageServiceUrl"');
+    print('  curl -X GET "$budgetManagementUrl"');
+    print('  curl -X GET "$cashBankManagementUrl"');
+    print('========================\n');
+  }
+
   /// Mostrar URLs específicas de Income, Expense y Cash/Bank para debugging
   static void printFinancialUrls() {
     print('\n💰 FINANCIAL OPERATIONS URLs:');
@@ -270,7 +523,7 @@ class ApiConfig {
 
     print('\n🏦 Cash/Bank Management:');
     print('  Base: $cashBankManagementUrl');
-    print('  Distribution: $cashBankManagementUrl/distribution?user_id=X');
+    print('  Distribution: $cashBankManagementUrl?user_id=X');
     print('  Cash Update: $cashBankManagementUrl/cash/update');
     print('  Bank Update: $cashBankManagementUrl/bank/update');
 

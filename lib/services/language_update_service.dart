@@ -19,15 +19,6 @@ class LanguageUpdateService {
         return false;
       }
 
-      // Construir la URL para la API de actualización de idioma
-      final url =
-          ApiConfig.isProduction
-              ? '${ApiConfig.baseApiUrl}/update/locale'
-              : '${ApiConfig.baseApiUrl}:${ApiConfig.profileManagementServicePort}/update/locale';
-
-      print('Actualizando idioma en la base de datos - URL: $url');
-      print('Datos: user_id=${currentUser.id}, locale=$locale');
-
       // Convertir el ID a entero para asegurar que sea compatible con la API
       int userId;
       try {
@@ -40,7 +31,7 @@ class LanguageUpdateService {
 
       // Enviar la solicitud para actualizar el idioma
       final response = await http.post(
-        Uri.parse(url),
+        Uri.parse(ApiConfig.profileUpdateLocaleEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': userId, // Usar el ID convertido a entero

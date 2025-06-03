@@ -20,7 +20,7 @@ class CashBankService {
 
       // Make HTTP request
       final response = await http.get(
-        Uri.parse('$baseUrl/distribution?user_id=$userId'),
+        Uri.parse(ApiConfig.cashBankDistributionEndpoint + '?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -53,7 +53,7 @@ class CashBankService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/cash/update'),
+        Uri.parse(ApiConfig.cashUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,
@@ -87,7 +87,7 @@ class CashBankService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/bank/update'),
+        Uri.parse(ApiConfig.bankUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,
@@ -128,14 +128,9 @@ class CashBankService {
         '🔄 Transferring \$${amount.toStringAsFixed(2)} from cash to bank for user: $userId',
       );
 
-      // Make HTTP request - Use ApiConfig directly for transfer endpoints
-      final transferUrl =
-          ApiConfig.isProduction
-              ? '${ApiConfig.baseApiUrl}/transfer/cash-to-bank'
-              : '${ApiConfig.baseApiUrl}:${ApiConfig.cashBankManagementServicePort}/transfer/cash-to-bank';
-
+      // Make HTTP request - Use ApiConfig transfer endpoint
       final response = await http.post(
-        Uri.parse(transferUrl),
+        Uri.parse(ApiConfig.transferCashToBankEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,
@@ -193,14 +188,9 @@ class CashBankService {
         '🔄 Transferring \$${amount.toStringAsFixed(2)} from bank to cash for user: $userId',
       );
 
-      // Make HTTP request - Use ApiConfig directly for transfer endpoints
-      final transferUrl =
-          ApiConfig.isProduction
-              ? '${ApiConfig.baseApiUrl}/transfer/bank-to-cash'
-              : '${ApiConfig.baseApiUrl}:${ApiConfig.cashBankManagementServicePort}/transfer/bank-to-cash';
-
+      // Make HTTP request - Use ApiConfig transfer endpoint
       final response = await http.post(
-        Uri.parse(transferUrl),
+        Uri.parse(ApiConfig.transferBankToCashEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,

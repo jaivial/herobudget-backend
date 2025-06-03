@@ -20,7 +20,7 @@ class BillsService {
 
       // Make HTTP request
       final response = await http.get(
-        Uri.parse('$baseUrl/bills?user_id=$userId'),
+        Uri.parse('${ApiConfig.billsFetchEndpoint}?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -58,7 +58,7 @@ class BillsService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/add'),
+        Uri.parse(ApiConfig.billsAddEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,
@@ -99,7 +99,7 @@ class BillsService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/pay'),
+        Uri.parse(ApiConfig.billsPayEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': userId, 'bill_id': billId}),
       );
@@ -137,7 +137,7 @@ class BillsService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/update'),
+        Uri.parse(ApiConfig.billsUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'user_id': userId,
@@ -176,7 +176,7 @@ class BillsService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/bills/delete'),
+        Uri.parse(ApiConfig.billsDeleteEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'user_id': userId, 'bill_id': billId}),
       );

@@ -79,6 +79,7 @@ func init() {
 func main() {
 	// Set up CORS middleware and routes
 	http.HandleFunc("/money-flow/sync", corsMiddleware(handleSyncMoneyFlow))
+	http.HandleFunc("/money-flow/data", corsMiddleware(handleGetMoneyFlowData))
 
 	port := 8097 // Puerto para el servicio de sincronización de money flow
 	log.Printf("Money Flow Sync service started on :%d", port)
@@ -137,6 +138,39 @@ func handleSyncMoneyFlow(w http.ResponseWriter, r *http.Request) {
 
 	// Return success response
 	sendSuccessResponse(w, "Money flow synced successfully", budget)
+}
+
+func handleGetMoneyFlowData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get user ID from query parameter
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Get period from query parameter (default to monthly)
+	period := r.URL.Query().Get("period")
+	if period == "" {
+		period = "monthly"
+	}
+
+	log.Printf("Getting money flow data for user %s with period %s", userID, period)
+
+	// Get money flow data
+	budget, err := syncMoneyFlow(userID, period)
+	if err != nil {
+		log.Printf("Error getting money flow data: %v", err)
+		sendErrorResponse(w, "Error getting money flow data", http.StatusInternalServerError)
+		return
+	}
+
+	// Return success response
+	sendSuccessResponse(w, "Money flow data retrieved successfully", budget)
 }
 
 func syncMoneyFlow(userID, period string) (*BudgetData, error) {

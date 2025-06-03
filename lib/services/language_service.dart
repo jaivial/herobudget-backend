@@ -99,7 +99,7 @@ class LanguageService {
         if (!isLocalDevelopment) {
           final response = await http
               .post(
-                Uri.parse('$baseUrl/language/set'),
+                Uri.parse(ApiConfig.languageSetEndpoint),
                 headers: {'Content-Type': 'application/json'},
                 body: jsonEncode({'locale': languageCode}),
               )

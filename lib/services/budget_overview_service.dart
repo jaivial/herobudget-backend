@@ -202,7 +202,7 @@ class BudgetOverviewService {
   Future<bool> checkHealth() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/health'),
+        Uri.parse(ApiConfig.budgetOverviewHealthEndpoint),
         headers: {'Content-Type': 'application/json'},
       );
 

@@ -33,6 +33,20 @@ type User struct {
 	DisplayImage     string    `json:"display_image"`
 }
 
+type UserUpdateRequest struct {
+	ID         string `json:"id"`
+	Name       string `json:"name,omitempty"`
+	Email      string `json:"email,omitempty"`
+	GivenName  string `json:"given_name,omitempty"`
+	FamilyName string `json:"family_name,omitempty"`
+}
+
+type ApiResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
 func init() {
 	var err error
 
@@ -63,6 +77,8 @@ func init() {
 func main() {
 	// Set up CORS middleware
 	http.HandleFunc("/user/info", corsMiddleware(handleGetUserInfo))
+	http.HandleFunc("/user/update", corsMiddleware(handleUpdateUser))
+	http.HandleFunc("/health", corsMiddleware(handleHealth))
 
 	port := 8085
 	log.Printf("Fetch Dashboard service started on :%d", port)
@@ -156,4 +172,81 @@ func handleGetUserInfo(w http.ResponseWriter, r *http.Request) {
 	// Return user info as JSON
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+func handleUpdateUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the request body
+	var updateRequest UserUpdateRequest
+	err := json.NewDecoder(r.Body).Decode(&updateRequest)
+	if err != nil {
+		log.Printf("Error decoding request body: %v", err)
+		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		return
+	}
+
+	// Log for debugging
+	log.Printf("Updating user info: %+v", updateRequest)
+
+	// Update user info in database
+	result, err := db.Exec(`
+		UPDATE users 
+		SET name = ?, email = ?, given_name = ?, family_name = ? 
+		WHERE id = ?
+	`, updateRequest.Name, updateRequest.Email, updateRequest.GivenName, updateRequest.FamilyName, updateRequest.ID)
+
+	if err != nil {
+		log.Printf("Database error for user ID %s: %v", updateRequest.ID, err)
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected: %v", err)
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+
+	if rowsAffected == 0 {
+		log.Printf("User not found for ID: %s", updateRequest.ID)
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	log.Printf("Successfully updated user %s", updateRequest.ID)
+
+	// Return success response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ApiResponse{Success: true, Message: "User updated successfully"})
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Test database connection
+	if err := db.Ping(); err != nil {
+		log.Printf("Health check failed - database connection error: %v", err)
+		http.Error(w, "Database connection failed", http.StatusInternalServerError)
+		return
+	}
+
+	// Return success response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ApiResponse{
+		Success: true,
+		Message: "Fetch Dashboard service is healthy",
+		Data: map[string]string{
+			"status":    "healthy",
+			"service":   "fetch_dashboard",
+			"timestamp": fmt.Sprintf("%d", time.Now().Unix()),
+		},
+	})
 }

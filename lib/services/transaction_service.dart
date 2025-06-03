@@ -10,12 +10,6 @@ class TransactionService {
     return ApiConfig.transactionHistoryServiceUrl;
   }
 
-  static String get deleteServiceUrl {
-    return ApiConfig.isProduction
-        ? ApiConfig.baseApiUrl
-        : '${ApiConfig.baseApiUrl}:${ApiConfig.transactionDeleteServicePort}';
-  }
-
   static String get billsBaseUrl => ApiConfig.billsManagementUrl;
 
   /// Fetch transaction history with filters and pagination
@@ -69,7 +63,7 @@ class TransactionService {
 
       // Make HTTP request
       final response = await http.post(
-        Uri.parse('$baseUrl/transactions/history'),
+        Uri.parse(ApiConfig.transactionHistoryEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );
@@ -584,7 +578,7 @@ class TransactionService {
 
       // Make HTTP request to delete endpoint
       final response = await http.post(
-        Uri.parse('$deleteServiceUrl/transactions/delete'),
+        Uri.parse(ApiConfig.transactionDeleteEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );
@@ -617,7 +611,7 @@ class TransactionService {
   Future<bool> checkHealth() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/health'),
+        Uri.parse(ApiConfig.budgetOverviewHealthEndpoint),
         headers: {'Content-Type': 'application/json'},
       );
 

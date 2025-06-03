@@ -22,7 +22,7 @@ class IncomeService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/add'),
+        Uri.parse(ApiConfig.incomeAddEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(income.toJson()),
       );
@@ -53,7 +53,7 @@ class IncomeService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl?user_id=$userId'),
+        Uri.parse('${ApiConfig.incomeFetchEndpoint}?user_id=$userId'),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -81,7 +81,7 @@ class IncomeService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/update'),
+        Uri.parse(ApiConfig.incomeUpdateEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'user_id': income.userId,
@@ -122,7 +122,7 @@ class IncomeService {
       }
 
       final response = await http.post(
-        Uri.parse('$baseUrl/delete'),
+        Uri.parse(ApiConfig.incomeDeleteEndpoint),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'user_id': userId, 'income_id': incomeId}),
       );
