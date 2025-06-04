@@ -57,8 +57,10 @@
     "clear_all": "Καθαρισμός Όλων",
     "clear_filters": "Καθαρισμός Φίλτρων",
     "combined_expenses": "Συνδυασμένα Έξοδα",
-    "confirm_delete": "Επιβεβαίωση διαγραφής",
-    "confirm_new_password": "Επιβεβαιώστε τον νέο κωδικό",
+    "confirm": "Επιβεβαίωση",
+    "confirm_delete": "Επιβεβαίωση Διαγραφής",
+    "confirm_logout": "Επιβεβαίωση Αποσύνδεσης",
+    "confirm_new_password": "Επιβεβαίωση Νέου Κωδικού",
     "confirm_password": "Επιβεβαίωση κωδικού",
     "confirm_password_required": "Η επιβεβαίωση κωδικού απαιτείται",
     "confirm_payment": "Επιβεβαίωση πληρωμής",
@@ -145,7 +147,7 @@
     "error_deleting_category": "Σφάλμα κατά τη διαγραφή της κατηγορίας",
     "error_deleting_savings_goal": "Σφάλμα κατά τη διαγραφή του στόχου αποταμίευσης",
     "error_loading_data": "Σφάλμα φόρτωσης δεδομένων",
-    "error_updating_savings_goal": "Σφάλμα ενημέρωσης στόχου αποταμίευσης",
+    "error_updating_savings_goal": "Σφάλμα κατά την ενημέρωση του στόχου αποταμίευσης",
     "expense": "Έξοδο",
     "expense_added_successfully": "Το έξοδο προστέθηκε με επιτυχία",
     "expenses": "Έξοδα",
@@ -189,6 +191,8 @@
     "login": "Σύνδεση",
     "logout": "Αποσύνδεση",
     "logout_confirmation": "Είστε βέβαιοι ότι θέλετε να αποσυνδεθείτε;",
+    "logout_confirmation_message": "Είστε σίγουροι ότι θέλετε να αποσυνδεθείτε; Θα χρειαστεί να συνδεθείτε ξανά.",
+    "logout_error": "Σφάλμα κατά την αποσύνδεση. Παρακαλώ δοκιμάστε ξανά.",
     "money_flow": "Ροή Χρημάτων",
     "monthly": "Μηνιαία",
     "monthly_period": "Μηνιαία",
@@ -430,5 +434,6 @@
     "email_otp_resend_sent": "Κωδικός επαλήθευσης στάλθηκε στο email σας",
     "email_otp_sending": "Αποστολή...",
     "email_otp_seconds": "δευτερόλεπτα",
-    "email_otp_verify_button": "ΕΠΑΛΗΘΕΥΣΗ"
+    "email_otp_verify_button": "ΕΠΑΛΗΘΕΥΣΗ",
+    "return_to_start": "Επιστροφή στην Αρχή"
 }

@@ -240,8 +240,63 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       automaticallyImplyLeading: false,
       toolbarHeight: 60, // Altura mayor para acomodar ambos botones
       leading: Container(
-        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
-        child: const ThemeToggleButton(),
+        margin: const EdgeInsets.only(left: 16.0),
+        child: Center(
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Container(
+              decoration: BoxDecoration(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.1)
+                        : Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary)
+                      .withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    // Lógica para cambiar tema
+                    final currentMode = await AppTheme.getThemeMode();
+                    final newMode =
+                        currentMode == ThemeMode.dark
+                            ? ThemeMode.light
+                            : ThemeMode.dark;
+                    await AppTheme.saveThemeMode(newMode);
+                    themeChangeNotifier.notifyThemeChange(newMode);
+                  },
+                  child: Center(
+                    child: FutureBuilder<ThemeMode>(
+                      future: AppTheme.getThemeMode(),
+                      builder: (context, snapshot) {
+                        final isDarkMode = snapshot.data == ThemeMode.dark;
+                        return Icon(
+                          isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                          size: 20,
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.primary,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       actions: [
         Container(
@@ -867,8 +922,63 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       automaticallyImplyLeading: false,
       toolbarHeight: 60, // Altura mayor para acomodar ambos botones
       leading: Container(
-        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
-        child: const ThemeToggleButton(),
+        margin: const EdgeInsets.only(left: 16.0),
+        child: Center(
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Container(
+              decoration: BoxDecoration(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.1)
+                        : Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary)
+                      .withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    // Lógica para cambiar tema
+                    final currentMode = await AppTheme.getThemeMode();
+                    final newMode =
+                        currentMode == ThemeMode.dark
+                            ? ThemeMode.light
+                            : ThemeMode.dark;
+                    await AppTheme.saveThemeMode(newMode);
+                    themeChangeNotifier.notifyThemeChange(newMode);
+                  },
+                  child: Center(
+                    child: FutureBuilder<ThemeMode>(
+                      future: AppTheme.getThemeMode(),
+                      builder: (context, snapshot) {
+                        final isDarkMode = snapshot.data == ThemeMode.dark;
+                        return Icon(
+                          isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                          size: 20,
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.primary,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       actions: [
         Container(
@@ -1146,8 +1256,63 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       automaticallyImplyLeading: false,
       toolbarHeight: 60, // Altura mayor para acomodar ambos botones
       leading: Container(
-        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
-        child: const ThemeToggleButton(),
+        margin: const EdgeInsets.only(left: 16.0),
+        child: Center(
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Container(
+              decoration: BoxDecoration(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.1)
+                        : Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary)
+                      .withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    // Lógica para cambiar tema
+                    final currentMode = await AppTheme.getThemeMode();
+                    final newMode =
+                        currentMode == ThemeMode.dark
+                            ? ThemeMode.light
+                            : ThemeMode.dark;
+                    await AppTheme.saveThemeMode(newMode);
+                    themeChangeNotifier.notifyThemeChange(newMode);
+                  },
+                  child: Center(
+                    child: FutureBuilder<ThemeMode>(
+                      future: AppTheme.getThemeMode(),
+                      builder: (context, snapshot) {
+                        final isDarkMode = snapshot.data == ThemeMode.dark;
+                        return Icon(
+                          isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                          size: 20,
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.primary,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       actions: [
         Container(
@@ -1186,19 +1351,66 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             automaticallyImplyLeading: false,
             toolbarHeight: 60, // Altura mayor para acomodar ambos botones
             leading: Container(
-              margin: const EdgeInsets.only(left: 16.0, top: 8.0),
-              child: const ThemeToggleButton(),
-            ),
-            actions: [
-              Container(
-                margin: const EdgeInsets.only(top: 8.0, right: 16.0),
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8.0),
+              margin: const EdgeInsets.only(left: 16.0),
+              child: Center(
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color:
+                          Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.1)
+                              : Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: (Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.primary)
+                            .withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () async {
+                          // Lógica para cambiar tema
+                          final currentMode = await AppTheme.getThemeMode();
+                          final newMode =
+                              currentMode == ThemeMode.dark
+                                  ? ThemeMode.light
+                                  : ThemeMode.dark;
+                          await AppTheme.saveThemeMode(newMode);
+                          themeChangeNotifier.notifyThemeChange(newMode);
+                        },
+                        child: Center(
+                          child: FutureBuilder<ThemeMode>(
+                            future: AppTheme.getThemeMode(),
+                            builder: (context, snapshot) {
+                              final isDarkMode =
+                                  snapshot.data == ThemeMode.dark;
+                              return Icon(
+                                isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                                size: 20,
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white
+                                        : Theme.of(context).colorScheme.primary,
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                child: LanguageSelectorButton(),
               ),
-            ],
+            ),
           );
 
           // Navigate to the personal info step
@@ -1347,8 +1559,63 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       automaticallyImplyLeading: false,
       toolbarHeight: 60, // Altura mayor para acomodar ambos botones
       leading: Container(
-        margin: const EdgeInsets.only(left: 16.0, top: 8.0),
-        child: const ThemeToggleButton(),
+        margin: const EdgeInsets.only(left: 16.0),
+        child: Center(
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Container(
+              decoration: BoxDecoration(
+                color:
+                    Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.1)
+                        : Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: (Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary)
+                      .withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    // Lógica para cambiar tema
+                    final currentMode = await AppTheme.getThemeMode();
+                    final newMode =
+                        currentMode == ThemeMode.dark
+                            ? ThemeMode.light
+                            : ThemeMode.dark;
+                    await AppTheme.saveThemeMode(newMode);
+                    themeChangeNotifier.notifyThemeChange(newMode);
+                  },
+                  child: Center(
+                    child: FutureBuilder<ThemeMode>(
+                      future: AppTheme.getThemeMode(),
+                      builder: (context, snapshot) {
+                        final isDarkMode = snapshot.data == ThemeMode.dark;
+                        return Icon(
+                          isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                          size: 20,
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Theme.of(context).colorScheme.primary,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
       actions: [
         Container(

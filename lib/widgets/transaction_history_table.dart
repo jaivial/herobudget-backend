@@ -251,10 +251,8 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
         setState(() {
           _isLoading = false;
         });
-      }
 
-      // Show success message
-      if (mounted) {
+        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -263,12 +261,19 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
             backgroundColor: Colors.green,
           ),
         );
-      }
 
-      // Refresh parent widget if callback provided
-      // This will trigger dashboard refresh to update budget overview and finance metrics
-      if (widget.onRefresh != null) {
-        widget.onRefresh!();
+        // Refresh parent widget (dashboard) to update all widgets
+        // This will trigger complete dashboard refresh like when adding income/expense
+        print(
+          '🔄 TransactionHistoryTable: Transaction deleted successfully, triggering dashboard refresh',
+        );
+
+        // Small delay to ensure local data is fully loaded before triggering dashboard refresh
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (widget.onRefresh != null && mounted) {
+            widget.onRefresh!();
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -284,6 +289,7 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
           ),
         );
       }
+      print('❌ Error deleting transaction: $e');
     }
   }
 

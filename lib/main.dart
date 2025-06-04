@@ -135,7 +135,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // FORCE PRODUCTION APIs - Use remote VPS endpoints
-  // ApiConfig.useProduction();
+  ApiConfig.useProduction();
 
   // ==========================================
   // 🔧 CONFIGURACIÓN DE AMBIENTE
@@ -145,7 +145,7 @@ void main() async {
   // Descomenta la línea que necesites:
 
   // Para usar servicios locales (localhost) - requiere start_services.sh
-  ApiConfig.useLocalhost();
+  // ApiConfig.useLocalhost();
 
   // OPCIÓN 2: Configuración automática (recomendada)
   // Usar la configuración por defecto basada en el modo de compilación:

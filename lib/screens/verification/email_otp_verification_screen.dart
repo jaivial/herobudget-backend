@@ -10,6 +10,7 @@ import '../../utils/toast_util.dart';
 import '../../utils/extensions.dart';
 import '../dashboard/dashboard_screen.dart';
 import 'email_verification_success_screen.dart';
+import '../onboarding/onboarding_screen.dart';
 
 class EmailOTPVerificationScreen extends StatefulWidget {
   final String userId;
@@ -229,6 +230,88 @@ class _EmailOTPVerificationScreenState
     }
   }
 
+  // Logout user and return to onboarding screen
+  Future<void> _logout() async {
+    // Show confirmation dialog
+    final bool? confirmLogout = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            context.tr.translate('confirm_logout'),
+            style: TextStyle(
+              color: AppTheme.getPrimaryColor(context),
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            context.tr.translate('logout_confirmation_message'),
+            style: const TextStyle(fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          actions: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      context.tr.translate('cancel'),
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.getPrimaryColor(context),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(context.tr.translate('logout')),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+
+    // If user confirmed logout
+    if (confirmLogout == true) {
+      try {
+        // Clear all user data from localStorage
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('user_id');
+        await prefs.remove('user_data');
+        await prefs.remove('user_info'); // Also remove old key if it exists
+
+        print('User data cleared from localStorage');
+
+        // Navigate to onboarding screen and clear navigation stack
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+            (route) => false, // Remove all previous routes
+          );
+        }
+      } catch (e) {
+        print('Error during logout: $e');
+        // Show error toast
+        ToastUtil.showErrorToast(context, context.tr.translate('logout_error'));
+      }
+    }
+  }
+
   // Handle paste functionality to distribute code across all fields
   void _handlePaste(String pastedText, int currentIndex) {
     // Remove any non-digit characters
@@ -274,7 +357,14 @@ class _EmailOTPVerificationScreenState
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios,
+            color: AppTheme.getPrimaryColor(context),
+          ),
+          onPressed: _logout,
+          tooltip: context.tr.translate('return_to_start'),
+        ),
       ),
       body: SafeArea(
         child: Center(

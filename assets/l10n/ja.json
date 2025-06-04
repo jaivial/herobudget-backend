@@ -57,8 +57,10 @@
     "clear_all": "すべてクリア",
     "clear_filters": "フィルターをクリア",
     "combined_expenses": "合計支出",
+    "confirm": "確認",
     "confirm_delete": "削除の確認",
-    "confirm_new_password": "新しいパスワードを確認",
+    "confirm_logout": "ログアウトの確認",
+    "confirm_new_password": "新しいパスワードの確認",
     "confirm_password": "パスワードを確認",
     "confirm_password_required": "パスワード確認は必須です",
     "confirm_payment": "支払いを確認",
@@ -189,6 +191,8 @@
     "login": "ログイン",
     "logout": "ログアウト",
     "logout_confirmation": "ログアウトしてもよろしいですか？",
+    "logout_confirmation_message": "本当にログアウトしますか？再度ログインする必要があります。",
+    "logout_error": "ログアウト中にエラーが発生しました。もう一度お試しください。",
     "money_flow": "資金フロー",
     "monthly": "月次",
     "monthly_period": "毎月",
@@ -431,5 +435,6 @@
     "email_otp_sending": "送信中...",
     "email_otp_seconds": "秒",
     "email_otp_verify_button": "確認",
-    "delete_permanently": "完全に削除"
+    "delete_permanently": "完全に削除",
+    "return_to_start": "スタートに戻る"
 }

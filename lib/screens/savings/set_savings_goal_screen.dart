@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/savings_service.dart';
 import '../../utils/extensions.dart';
-import '../../utils/savings_period_calculator.dart';
 import '../../theme/app_theme.dart';
 
 // Custom formatter que maneja decimales de manera más robusta
@@ -87,7 +86,6 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
   bool _isLoadingCurrentData = true;
   SavingsData? _currentSavingsData;
   String? _userId;
-  String _selectedPeriod = 'monthly';
   bool _isEditingExistingGoal = false;
 
   @override
@@ -107,7 +105,6 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
           _currentSavingsData = savingsData;
           if (savingsData.goal > 0) {
             _goalController.text = savingsData.goal.toStringAsFixed(2);
-            _selectedPeriod = savingsData.period;
             _isEditingExistingGoal = true;
           }
           _isLoadingCurrentData = false;
@@ -185,12 +182,8 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
         _isLoading = true;
       });
 
-      // Update savings goal with period
-      await _savingsService.setSavingsGoalWithPeriod(
-        _userId!,
-        goal,
-        _selectedPeriod,
-      );
+      // Update savings goal with fixed monthly period
+      await _savingsService.setSavingsGoalWithPeriod(_userId!, goal, 'monthly');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -325,7 +318,6 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
             dailyTarget: 0,
           );
           _goalController.clear();
-          _selectedPeriod = 'monthly';
           _isEditingExistingGoal = false;
         });
 
@@ -359,103 +351,6 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
         });
       }
     }
-  }
-
-  void _showPeriodSelector() {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder:
-          (context) => Container(
-            decoration: BoxDecoration(
-              color: isDarkMode ? AppTheme.surfaceDark : Colors.white,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color:
-                          isDarkMode
-                              ? Colors.white.withOpacity(0.3)
-                              : Colors.grey.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Title
-                Text(
-                  context.tr.translate('select_savings_period'),
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Period options
-                ...SavingsPeriodCalculator.getAllPeriods().map((period) {
-                  final isSelected = _selectedPeriod == period;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(
-                        context.tr.translate(period),
-                        style: TextStyle(
-                          color: isDarkMode ? Colors.white : Colors.black,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                      ),
-                      trailing:
-                          isSelected
-                              ? Icon(
-                                Icons.check_circle,
-                                color:
-                                    isDarkMode
-                                        ? AppTheme.primaryColorDark
-                                        : Colors.blue.shade600,
-                              )
-                              : null,
-                      onTap: () {
-                        setState(() {
-                          _selectedPeriod = period;
-                        });
-                        Navigator.pop(context);
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      tileColor:
-                          isSelected
-                              ? (isDarkMode
-                                  ? AppTheme.primaryColorDark.withOpacity(0.1)
-                                  : Colors.blue.withOpacity(0.1))
-                              : null,
-                    ),
-                  );
-                }).toList(),
-
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-    );
   }
 
   @override
@@ -787,122 +682,6 @@ class _SetSavingsGoalScreenState extends State<SetSavingsGoalScreen> {
                                   isDarkMode
                                       ? AppTheme.backgroundDark.withOpacity(0.3)
                                       : Colors.grey.withOpacity(0.05),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Period selector section
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: isDarkMode ? AppTheme.surfaceDark : Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            context.tr.translate('savings_period'),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isDarkMode ? Colors.white : Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            context.tr.translate('select_savings_period'),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color:
-                                  isDarkMode
-                                      ? Colors.white.withOpacity(0.7)
-                                      : Colors.grey.shade600,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Period selection selector
-                          Center(
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color:
-                                      isDarkMode
-                                          ? Colors.grey.withOpacity(0.3)
-                                          : Colors.grey.withOpacity(0.3),
-                                ),
-                                borderRadius: BorderRadius.circular(12),
-                                color:
-                                    isDarkMode
-                                        ? AppTheme.backgroundDark.withOpacity(
-                                          0.3,
-                                        )
-                                        : Colors.grey.withOpacity(0.05),
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: _showPeriodSelector,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 16,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.schedule,
-                                          color:
-                                              isDarkMode
-                                                  ? AppTheme.primaryColorDark
-                                                  : Colors.blue.shade600,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            context.tr.translate(
-                                              _selectedPeriod,
-                                            ),
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                              color:
-                                                  isDarkMode
-                                                      ? Colors.white
-                                                      : Colors.black,
-                                            ),
-                                          ),
-                                        ),
-                                        Icon(
-                                          Icons.keyboard_arrow_down,
-                                          color:
-                                              isDarkMode
-                                                  ? Colors.white.withOpacity(
-                                                    0.7,
-                                                  )
-                                                  : Colors.grey.shade600,
-                                          size: 20,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ),
                           ),
                         ],

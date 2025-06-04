@@ -39,6 +39,8 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
   String _currentPeriod = 'monthly';
   String _formattedDate = '';
   bool _isRefreshing = false;
+  DateTime?
+  _lastRefreshTime; // Track refresh timing to avoid rapid consecutive calls
 
   @override
   void initState() {
@@ -61,9 +63,10 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
     if (oldWidget.period != widget.period || oldWidget.date != widget.date) {
       _updatePeriodAndDate();
       // Defer refresh until after the build phase completes
+      // For period changes, only refresh child widgets, don't notify dashboard
       SchedulerBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _handleRefresh();
+          _handlePeriodChange();
         }
       });
     }
@@ -329,72 +332,136 @@ class _TransactionOverviewWidgetState extends State<TransactionOverviewWidget>
     );
   }
 
-  void _handleRefresh() {
-    // Prevent multiple simultaneous refresh calls
-    if (_isRefreshing) {
+  void _handleRefresh({bool force = false}) {
+    // Prevent multiple simultaneous refresh calls unless force is true
+    if (_isRefreshing && !force) {
       print(
         '🔄 TransactionOverviewWidget: Refresh already in progress, skipping...',
       );
       return;
     }
 
+    if (force) {
+      print(
+        '🔄 TransactionOverviewWidget: Force refresh requested, bypassing guards',
+      );
+      _isRefreshing = false; // Reset the flag to allow force refresh
+    }
+
+    // Smart refresh logic - only block if very rapid consecutive calls (< 500ms)
+    final now = DateTime.now();
+    final isRapidRefresh =
+        _lastRefreshTime != null &&
+        now.difference(_lastRefreshTime!).inMilliseconds < 500;
+
+    if (isRapidRefresh && !force) {
+      print(
+        '🔄 TransactionOverviewWidget: Blocking rapid refresh (< 500ms) to prevent spam',
+      );
+      return;
+    }
+
     _isRefreshing = true;
+    _lastRefreshTime = now;
     print(
       '🔄 TransactionOverviewWidget: Refreshing with period=$_currentPeriod, date=$_formattedDate',
     );
 
     try {
-      // Refresh upcoming bills widget
-      final upcomingBillsState = _upcomingBillsKey.currentState;
-      if (upcomingBillsState != null) {
-        final dynamic state = upcomingBillsState;
-        if (state.mounted) {
-          try {
-            state.refreshData();
-            print(
-              '🔄 TransactionOverviewWidget: UpcomingBillsWidget refreshed',
-            );
-          } catch (e) {
-            print('Error refreshing upcoming bills: $e');
-          }
-        }
-      }
+      _refreshChildWidgets(force: force);
 
-      // Refresh transaction history widget
-      final transactionHistoryState = _transactionHistoryKey.currentState;
-      if (transactionHistoryState != null) {
-        final dynamic state = transactionHistoryState;
-        if (state.mounted) {
-          try {
-            state.refreshData();
-            print(
-              '🔄 TransactionOverviewWidget: TransactionHistoryTable refreshed',
-            );
-          } catch (e) {
-            print('Error refreshing transaction history: $e');
-          }
-        }
-      }
-
-      // Notify parent widget (Dashboard) to refresh
+      // Always notify parent widget (Dashboard) to refresh when this is a DATA change
+      // NOT for period changes - only for data changes like transaction deletion
       if (widget.onRefresh != null) {
         print(
-          '🔄 TransactionOverviewWidget: Notifying parent widget to refresh',
+          '🔄 TransactionOverviewWidget: Notifying parent widget to refresh dashboard',
         );
         widget.onRefresh!();
       }
     } finally {
       // Reset refresh flag after a delay to prevent rapid successive calls
-      Future.delayed(const Duration(milliseconds: 1000), () {
+      Future.delayed(const Duration(milliseconds: 500), () {
         _isRefreshing = false;
       });
     }
   }
 
+  // New method for period changes that doesn't notify dashboard
+  void _handlePeriodChange() {
+    print(
+      '🔄 TransactionOverviewWidget: Period change detected, refreshing child widgets only',
+    );
+
+    _isRefreshing = true;
+    _lastRefreshTime = DateTime.now();
+
+    try {
+      _refreshChildWidgets(force: false);
+      // Do NOT notify dashboard - this is just a period change
+    } finally {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _isRefreshing = false;
+      });
+    }
+  }
+
+  // Helper method to refresh child widgets
+  void _refreshChildWidgets({bool force = false}) {
+    // Refresh upcoming bills widget
+    final upcomingBillsState = _upcomingBillsKey.currentState;
+    if (upcomingBillsState != null) {
+      final dynamic state = upcomingBillsState;
+      if (state.mounted) {
+        try {
+          if (force && state.refreshData != null) {
+            // Try calling refreshData with force parameter if available
+            try {
+              state.refreshData(force: force);
+            } catch (e) {
+              // Fallback to regular refreshData if force parameter not available
+              state.refreshData();
+            }
+          } else {
+            state.refreshData();
+          }
+          print('🔄 TransactionOverviewWidget: UpcomingBillsWidget refreshed');
+        } catch (e) {
+          print('Error refreshing upcoming bills: $e');
+        }
+      }
+    }
+
+    // Refresh transaction history widget
+    final transactionHistoryState = _transactionHistoryKey.currentState;
+    if (transactionHistoryState != null) {
+      final dynamic state = transactionHistoryState;
+      if (state.mounted) {
+        try {
+          if (force && state.refreshData != null) {
+            // Try calling refreshData with force parameter if available
+            try {
+              state.refreshData(force: force);
+            } catch (e) {
+              // Fallback to regular refreshData if force parameter not available
+              state.refreshData();
+            }
+          } else {
+            state.refreshData();
+          }
+          print(
+            '🔄 TransactionOverviewWidget: TransactionHistoryTable refreshed',
+          );
+        } catch (e) {
+          print('Error refreshing transaction history: $e');
+        }
+      }
+    }
+  }
+
   // Método público para ser llamado desde el dashboard
-  void refreshData() {
+  void refreshData({bool force = false}) {
     print('🔄 TransactionOverviewWidget: External refresh requested');
-    _handleRefresh();
+    _handleRefresh(force: force);
   }
 }
 

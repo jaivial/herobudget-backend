@@ -88,6 +88,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   // Counter para forzar rebuild de widgets
   int _refreshCounter = 0;
 
+  // Control de refresh de cambios de datos para evitar bucles
+  String? _lastDataChangeId;
+  DateTime? _lastDataChangeTime;
+
   @override
   void initState() {
     super.initState();
@@ -372,35 +376,76 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  Future<void> _refreshDashboard() async {
+  Future<void> _refreshDashboard({
+    bool force = false,
+    bool fromDataChange = false,
+    String? dataChangeId,
+  }) async {
+    // If this is a data change refresh, check if we've already processed this operation
+    if (fromDataChange && dataChangeId != null) {
+      if (_lastDataChangeId == dataChangeId) {
+        print(
+          '🚫 Dashboard: Skipping duplicate data change refresh: $dataChangeId',
+        );
+        return;
+      }
+
+      // Check if we've had a data change refresh very recently (within 2 seconds)
+      if (_lastDataChangeTime != null) {
+        final timeSinceLastChange = DateTime.now().difference(
+          _lastDataChangeTime!,
+        );
+        if (timeSinceLastChange.inSeconds < 2) {
+          print(
+            '🚫 Dashboard: Skipping rapid data change refresh (${timeSinceLastChange.inMilliseconds}ms since last)',
+          );
+          return;
+        }
+      }
+
+      // Record this data change operation
+      _lastDataChangeId = dataChangeId;
+      _lastDataChangeTime = DateTime.now();
+
+      print('🔄 Dashboard: Processing data change refresh: $dataChangeId');
+    }
+
+    // When refresh comes from data changes, force the budget overview but not others
+    final shouldForceBudget = force || fromDataChange;
+
     print(
-      '🔄 Refreshing dashboard - Period: $_currentPeriod, Date: $_selectedDate',
+      '🔄 Refreshing dashboard - Period: $_currentPeriod, Date: $_selectedDate, Force: $force, FromDataChange: $fromDataChange, ShouldForceBudget: $shouldForceBudget',
     );
 
-    // Use setState to trigger a rebuild of the dashboard
-    setState(() {
-      _isLoading = true;
-    });
+    // Only show dashboard loading for data changes, not for period changes
+    // Period changes are handled by individual widgets' loading states
+    if (fromDataChange) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
-      // Refresh budget overview
+      // Refresh budget overview with force parameter only for budget
       final budgetOverviewState = _budgetOverviewKey.currentState;
       if (budgetOverviewState != null) {
         print('🔄 Refreshing BudgetOverviewMonthly...');
         final dynamic state = budgetOverviewState;
         if (state.mounted) {
-          await state.refreshBudgetData();
+          await state.refreshBudgetData(force: shouldForceBudget);
         }
       }
 
-      // Refresh transaction overview
+      // Refresh transaction overview but tell it NOT to call back to dashboard
       final transactionOverviewState = _transactionOverviewKey.currentState;
-      if (transactionOverviewState != null) {
+      if (transactionOverviewState != null && !fromDataChange) {
         print('🔄 Refreshing TransactionOverviewWidget...');
         final dynamic state = transactionOverviewState;
         if (state.mounted) {
           try {
-            state.refreshData(); // Usar el método público
+            state.refreshData(
+              force: false,
+            ); // Never force TransactionOverview from dashboard
             print(
               '🔄 Dashboard: TransactionOverviewWidget refreshed successfully',
             );
@@ -413,6 +458,10 @@ class _DashboardScreenState extends State<DashboardScreen>
       // Increment refresh counter to force FinanceMetricsWithPeriod rebuild
       setState(() {
         _refreshCounter++;
+        // Only set loading to false if we had set it to true
+        if (fromDataChange) {
+          _isLoading = false;
+        }
       });
       print(
         '🔄 Dashboard: FinanceMetricsWithPeriod refresh counter incremented to $_refreshCounter',
@@ -423,20 +472,27 @@ class _DashboardScreenState extends State<DashboardScreen>
       // Small delay to allow all widgets to process
       await Future.delayed(const Duration(milliseconds: 200));
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-
       print('✅ All dashboard widgets refreshed');
     } catch (e) {
       print('❌ Error during dashboard refresh: $e');
-      if (mounted) {
+      if (mounted && fromDataChange) {
         setState(() {
           _isLoading = false;
         });
       }
+    }
+
+    // Clean up data change tracking after some time
+    if (fromDataChange && dataChangeId != null) {
+      Future.delayed(const Duration(seconds: 5), () {
+        if (_lastDataChangeId == dataChangeId) {
+          _lastDataChangeId = null;
+          _lastDataChangeTime = null;
+          print(
+            '🧹 Dashboard: Cleaned up data change tracking for $dataChangeId',
+          );
+        }
+      });
     }
 
     print('✅ Dashboard refrescado con datos simulados locales');
@@ -448,13 +504,14 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     setState(() {
       _currentPeriod = period;
+      // No cambiar _isLoading aquí - cada widget maneja su propio loading
     });
 
     // Usar datos de ejemplo locales en lugar de hacer llamadas API
     final mockData = _createMockDashboardData(period);
     setState(() {
       _dashboardModel = mockData;
-      _isDashboardLoading = false;
+      // No cambiar _isDashboardLoading aquí
     });
   }
 
@@ -469,13 +526,14 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     setState(() {
       _selectedDate = date;
+      // No cambiar _isLoading aquí - cada widget maneja su propio loading
     });
 
     // Usar datos de ejemplo locales en lugar de hacer llamadas API
     final mockData = _createMockDashboardData(_currentPeriod);
     setState(() {
       _dashboardModel = mockData;
-      _isDashboardLoading = false;
+      // No cambiar _isDashboardLoading aquí
     });
   }
 
@@ -483,13 +541,14 @@ class _DashboardScreenState extends State<DashboardScreen>
     setState(() {
       _selectedDate = startDate;
       _currentPeriod = 'custom';
+      // No cambiar _isLoading aquí - cada widget maneja su propio loading
     });
 
     // Usar datos de ejemplo locales en lugar de hacer llamadas API
     final mockData = _createMockDashboardData('custom');
     setState(() {
       _dashboardModel = mockData;
-      _isDashboardLoading = false;
+      // No cambiar _isDashboardLoading aquí
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -823,8 +882,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildDashboardMainContent(DashboardModel dashboardData) {
     return RefreshIndicator(
       onRefresh: () async {
-        // Usar el método de refresh mejorado
-        _refreshDashboard();
+        // Usar el método de refresh mejorado solo para refresh manual del usuario
+        // No para cambios de período que ya son manejados por cada widget
+        print('🔄 Dashboard: Manual refresh triggered by pull-to-refresh');
+        _refreshDashboard(force: true);
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -873,7 +934,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                 print(
                   '📋 Dashboard: Received refresh request from TransactionOverviewWidget',
                 );
-                _refreshDashboard();
+                // This refresh comes from data changes (transaction delete/add), so force it
+                // Generate unique ID for this data change operation
+                final dataChangeId =
+                    'transaction_change_${DateTime.now().millisecondsSinceEpoch}';
+                _refreshDashboard(
+                  fromDataChange: true,
+                  dataChangeId: dataChangeId,
+                );
               },
             ),
 
@@ -1102,9 +1170,11 @@ class _DashboardScreenState extends State<DashboardScreen>
       MaterialPageRoute(
         builder:
             (context) => AddIncomeScreen(
-              onSuccess: () {
+              onSuccess: () async {
                 // Refresh dashboard data when a new income is added
-                _refreshDashboard();
+                print('📋 Dashboard: Income added via callback, refreshing...');
+                await _refreshDashboard(force: true);
+                print('📋 Dashboard: Income refresh completed');
               },
             ),
       ),
@@ -1118,9 +1188,13 @@ class _DashboardScreenState extends State<DashboardScreen>
       MaterialPageRoute(
         builder:
             (context) => AddExpenseScreen(
-              onSuccess: () {
+              onSuccess: () async {
                 // Refresh dashboard data when a new expense is added
-                _refreshDashboard();
+                print(
+                  '📋 Dashboard: Expense added via callback, refreshing...',
+                );
+                await _refreshDashboard(force: true);
+                print('📋 Dashboard: Expense refresh completed');
               },
             ),
       ),

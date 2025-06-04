@@ -9,7 +9,7 @@ import '../../utils/currency_utils.dart';
 import '../category/add_category_screen.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  final Function? onSuccess;
+  final Future<void> Function()? onSuccess;
 
   const AddExpenseScreen({super.key, this.onSuccess});
 
@@ -126,12 +126,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             ),
           );
 
-          // Call the success callback if provided
+          // Call the success callback if provided and wait for it to complete
           if (widget.onSuccess != null) {
-            widget.onSuccess!();
+            await widget.onSuccess!();
           }
 
-          // Close the screen
+          // Close the screen after callback completes
           Navigator.of(context).pop();
         }
       } catch (e) {
