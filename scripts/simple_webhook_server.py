@@ -14,6 +14,7 @@ from urllib.parse import urlparse, parse_qs
 import hmac
 import hashlib
 import time
+import urllib.request
 
 # Configuración
 PORT = 9090
@@ -131,6 +132,10 @@ class WebhookHandler(BaseHTTPRequestHandler):
             if result.stderr:
                 logging.warning(f"STDERR: {result.stderr}")
             
+            # Si el deployment fue exitoso, ejecutar health check rápido
+            if result.returncode == 0:
+                self.post_deployment_health_check()
+            
             return result.returncode == 0
             
         except subprocess.TimeoutExpired:
@@ -139,6 +144,54 @@ class WebhookHandler(BaseHTTPRequestHandler):
         except Exception as e:
             logging.error(f"Error ejecutando deployment: {e}")
             return False
+
+    def post_deployment_health_check(self):
+        """Ejecutar health check rápido post-deployment"""
+        try:
+            logging.info("🏥 Ejecutando health check post-deployment...")
+            
+            # URLs a verificar
+            health_urls = [
+                "https://herobudget.jaimedigitalstudio.com/health",
+                "https://herobudget.jaimedigitalstudio.com/signup/check-email"
+            ]
+            
+            successful_checks = 0
+            total_checks = len(health_urls)
+            
+            for url in health_urls:
+                try:
+                    if "check-email" in url:
+                        # POST request para check-email
+                        data = '{"email":"test@example.com"}'.encode('utf-8')
+                        req = urllib.request.Request(url, data=data, 
+                                                   headers={'Content-Type': 'application/json'})
+                    else:
+                        # GET request para health
+                        req = urllib.request.Request(url)
+                    
+                    response = urllib.request.urlopen(req, timeout=10)
+                    if response.status == 200:
+                        logging.info(f"✅ Health check OK: {url}")
+                        successful_checks += 1
+                    else:
+                        logging.warning(f"⚠️ Health check HTTP {response.status}: {url}")
+                        
+                except Exception as e:
+                    logging.warning(f"❌ Health check failed: {url} - {e}")
+            
+            health_percentage = (successful_checks * 100) // total_checks
+            logging.info(f"📊 Post-deployment health: {health_percentage}% ({successful_checks}/{total_checks} OK)")
+            
+            if health_percentage >= 75:
+                logging.info("🎉 Deployment saludable - Sistema operacional")
+            elif health_percentage >= 50:
+                logging.warning("⚠️ Deployment parcial - Algunos servicios necesitan atención")
+            else:
+                logging.error("❌ Deployment problemático - Verificar servicios manualmente")
+                
+        except Exception as e:
+            logging.error(f"Error en health check post-deployment: {e}")
 
     def log_message(self, format, *args):
         """Override para usar nuestro logging"""
