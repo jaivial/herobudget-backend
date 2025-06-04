@@ -92,6 +92,10 @@
     "delete": "Elimina",
     "delete_account": "Elimina Account",
     "delete_account_coming_soon": "Funzione eliminazione account in arrivo",
+    "delete_account_warning": "Avviso di Eliminazione Account",
+    "delete_account_data_list": "Tutti i dati del tuo account verranno eliminati inclusi transazioni, budget, categorie e impostazioni.",
+    "delete_account_irreversible": "Questa azione è irreversibile e non può essere annullata.",
+    "delete_permanently": "Elimina Permanentemente",
     "delete_category_confirmation": "Sei sicuro di voler eliminare questa categoria",
     "delete_savings_goal": "Elimina Obiettivo di Risparmio",
     "delete_savings_goal_confirmation": "Sei sicuro di voler eliminare il tuo obiettivo di risparmio? Questa azione non può essere annullata.",
@@ -447,5 +451,8 @@
     "email_otp_resend_sent": "Codice di verifica inviato alla tua email",
     "email_otp_sending": "Invio in corso...",
     "email_otp_seconds": "secondi",
-    "email_otp_verify_button": "VERIFICA"
+    "email_otp_verify_button": "VERIFICA",
+    "deleting_account": "Eliminazione account...",
+    "account_deleted_successfully": "Account eliminato con successo",
+    "delete_account_error": "Errore durante l'eliminazione dell'account"
 }

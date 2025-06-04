@@ -92,7 +92,10 @@
     "delete": "削除",
     "delete_account": "アカウントを削除",
     "delete_account_coming_soon": "アカウント削除機能は近日公開予定",
-    "delete_category_confirmation": "このカテゴリーを削除してもよろしいですか",
+    "delete_account_warning": "アカウント削除の警告",
+    "delete_account_data_list": "取引、予算、カテゴリ、設定を含むすべてのアカウントデータが削除されます。",
+    "delete_account_irreversible": "この操作は元に戻すことができず、取り消すことができません。",
+    "delete_account_confirmation": "このカテゴリーを削除してもよろしいですか",
     "delete_savings_goal": "貯蓄目標を削除",
     "delete_savings_goal_confirmation": "貯蓄目標を削除してもよろしいですか？この操作は元に戻すことができません。",
     "demo_user": "デモユーザー",
@@ -427,5 +430,6 @@
     "email_otp_resend_sent": "認証コードをメールアドレスに送信しました",
     "email_otp_sending": "送信中...",
     "email_otp_seconds": "秒",
-    "email_otp_verify_button": "確認"
+    "email_otp_verify_button": "確認",
+    "delete_permanently": "完全に削除"
 }

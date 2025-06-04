@@ -92,6 +92,10 @@
     "delete": "Excluir",
     "delete_account": "Excluir Conta",
     "delete_account_coming_soon": "Recurso de excluir conta em breve",
+    "delete_account_warning": "Aviso de Exclusão de Conta",
+    "delete_account_data_list": "Todos os dados da sua conta serão excluídos incluindo transações, orçamentos, categorias e configurações.",
+    "delete_account_irreversible": "Esta ação é irreversível e não pode ser desfeita.",
+    "delete_permanently": "Excluir Permanentemente",
     "delete_category_confirmation": "Tem certeza que deseja excluir esta categoria",
     "delete_savings_goal": "Excluir Meta de Poupança",
     "delete_savings_goal_confirmation": "Tem certeza de que deseja excluir sua meta de poupança? Esta ação não pode ser desfeita.",
@@ -447,5 +451,8 @@
     "email_otp_resend_sent": "Código de verificação enviado para seu email",
     "email_otp_sending": "Enviando...",
     "email_otp_seconds": "segundos",
-    "email_otp_verify_button": "VERIFICAR"
+    "email_otp_verify_button": "VERIFICAR",
+    "deleting_account": "Excluindo conta...",
+    "account_deleted_successfully": "Conta excluída com sucesso",
+    "delete_account_error": "Erro ao excluir conta"
 }

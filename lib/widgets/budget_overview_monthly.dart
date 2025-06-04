@@ -9,6 +9,7 @@ import 'period_selector_monthly.dart';
 import 'savings_overview.dart';
 import 'cash_bank_distribution.dart';
 import 'budget_overview_animations.dart';
+import 'skeleton_loader.dart';
 
 class BudgetOverviewMonthly extends StatefulWidget {
   final Function(String period, String date)? onPeriodChanged;
@@ -221,24 +222,75 @@ class _BudgetOverviewMonthlyState extends State<BudgetOverviewMonthly>
               },
             ),
 
-          // Loading indicator
+          // Skeleton loading for budget data
           if (_isLoading)
             Container(
               width: double.infinity,
-              height: 200,
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(localizations.translate('loading_budget_data')),
-                  ],
-                ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header skeleton
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const SkeletonLoader.circular(size: 32),
+                          const SizedBox(width: 12),
+                          const SkeletonLoader(width: 120, height: 18),
+                        ],
+                      ),
+                      const SkeletonLoader(
+                        width: 60,
+                        height: 24,
+                        borderRadius: 12,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Main amount skeleton
+                  Column(
+                    children: [
+                      const SkeletonLoader(width: 150, height: 16),
+                      const SizedBox(height: 8),
+                      const SkeletonLoader(width: 200, height: 32),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Progress bar skeleton
+                  const SkeletonLoader(
+                    width: double.infinity,
+                    height: 24,
+                    borderRadius: 12,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Additional info skeletons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const SkeletonLoader(width: 100, height: 16),
+                      const SkeletonLoader(width: 80, height: 16),
+                    ],
+                  ),
+                ],
               ),
             ),
 

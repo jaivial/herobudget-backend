@@ -92,6 +92,10 @@
     "delete": "Löschen",
     "delete_account": "Konto löschen",
     "delete_account_coming_soon": "Konto-Löschfunktion kommt bald",
+    "delete_account_warning": "Warnung zur Kontolöschung",
+    "delete_account_data_list": "Alle Ihre Kontodaten werden gelöscht, einschließlich Transaktionen, Budgets, Kategorien und Einstellungen.",
+    "delete_account_irreversible": "Diese Aktion ist irreversibel und kann nicht rückgängig gemacht werden.",
+    "delete_permanently": "Dauerhaft löschen",
     "delete_category_confirmation": "Sind Sie sicher, dass Sie diese Kategorie löschen möchten",
     "delete_savings_goal": "Sparziel Löschen",
     "delete_savings_goal_confirmation": "Bist du sicher, dass du dein Sparziel löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -448,5 +452,8 @@
     "email_otp_resend_sent": "Bestätigungscode an Ihre E-Mail gesendet",
     "email_otp_sending": "Wird gesendet...",
     "email_otp_seconds": "Sekunden",
-    "email_otp_verify_button": "VERIFIZIEREN"
+    "email_otp_verify_button": "VERIFIZIEREN",
+    "deleting_account": "Konto wird gelöscht...",
+    "account_deleted_successfully": "Konto erfolgreich gelöscht",
+    "delete_account_error": "Fehler beim Löschen des Kontos"
 }

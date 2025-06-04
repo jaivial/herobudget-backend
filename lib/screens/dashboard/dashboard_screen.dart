@@ -16,6 +16,7 @@ import '../../widgets/period_selector.dart';
 import '../../widgets/quick_actions.dart';
 import '../../widgets/savings_overview.dart';
 import '../../widgets/transaction_overview_widget.dart';
+import '../../widgets/loading_screen.dart';
 import '../../models/dashboard_model.dart';
 import '../../services/savings_service.dart';
 import '../../services/cash_bank_service.dart';
@@ -719,74 +720,75 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Main content (sin bottomNavigationBar)
-          SafeArea(
-            bottom: false, // No aplicar SafeArea en la parte inferior
-            child: Column(
-              children: [
-                // App header
-                AppHeader(user: _user),
+      body: LoadingScreen(
+        isLoading: _isDashboardLoading,
+        message:
+            context.tr.translate('loading_dashboard') ??
+            'Cargando dashboard...',
+        child: Stack(
+          children: [
+            // Main content (sin bottomNavigationBar)
+            SafeArea(
+              bottom: false, // No aplicar SafeArea en la parte inferior
+              child: Column(
+                children: [
+                  // App header
+                  AppHeader(user: _user),
 
-                // Main content - Con padding inferior para dar espacio a la barra de navegación
-                Expanded(
-                  child:
-                      _isDashboardLoading
-                          ? _buildLoadingIndicator()
-                          : _buildDashboardBody(),
-                ),
-              ],
-            ),
-          ),
-
-          // Overlay oscuro cuando el menú de acciones rápidas está abierto
-          if (_isQuickMenuExpanded)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: _toggleQuickMenu, // Cerrar el menú al tocar fuera
-                child: AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return Container(
-                      color: Colors.black.withOpacity(
-                        0.5 * _animationController.value,
-                      ),
-                    );
-                  },
-                ),
+                  // Main content - Con padding inferior para dar espacio a la barra de navegación
+                  Expanded(child: _buildDashboardBody()),
+                ],
               ),
             ),
 
-          // Acciones rápidas - Aparecer en semicírculo cuando el menú está expandido
-          if (_isQuickMenuExpanded) ..._buildQuickActions(),
+            // Overlay oscuro cuando el menú de acciones rápidas está abierto
+            if (_isQuickMenuExpanded)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: _toggleQuickMenu, // Cerrar el menú al tocar fuera
+                  child: AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      return Container(
+                        color: Colors.black.withOpacity(
+                          0.5 * _animationController.value,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
 
-          // Barra de navegación en la parte inferior
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: AppBottomNavigation(
-              currentIndex: _currentNavigationIndex,
-              onTabChanged: (index) {
-                setState(() {
-                  _currentNavigationIndex = index;
-                });
+            // Acciones rápidas - Aparecer en semicírculo cuando el menú está expandido
+            if (_isQuickMenuExpanded) ..._buildQuickActions(),
 
-                // Navegar a otras pantallas según el índice
-                switch (index) {
-                  case 0:
-                    // Ya estamos en Dashboard/Home
-                    break;
-                  case 1:
-                    // Navegar a Perfil
-                    Navigator.pushNamed(context, '/profile');
-                    break;
-                }
-              },
+            // Barra de navegación en la parte inferior
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: AppBottomNavigation(
+                currentIndex: _currentNavigationIndex,
+                onTabChanged: (index) {
+                  setState(() {
+                    _currentNavigationIndex = index;
+                  });
+
+                  // Navegar a otras pantallas según el índice
+                  switch (index) {
+                    case 0:
+                      // Ya estamos en Dashboard/Home
+                      break;
+                    case 1:
+                      // Navegar a Perfil
+                      Navigator.pushNamed(context, '/profile');
+                      break;
+                  }
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
 
       // Botón flotante de acciones rápidas
@@ -804,20 +806,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  // Widget para mostrar indicador de carga
-  Widget _buildLoadingIndicator() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(context.tr.translate('loading_data')),
-        ],
-      ),
     );
   }
 

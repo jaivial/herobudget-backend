@@ -92,6 +92,10 @@
     "delete": "Supprimer",
     "delete_account": "Supprimer le compte",
     "delete_account_coming_soon": "La fonction de suppression de compte sera bientôt disponible",
+    "delete_account_warning": "Avertissement de Suppression de Compte",
+    "delete_account_data_list": "Toutes vos données de compte seront supprimées, y compris les transactions, budgets, catégories et paramètres.",
+    "delete_account_irreversible": "Cette action est irréversible et ne peut pas être annulée.",
+    "delete_permanently": "Supprimer Définitivement",
     "delete_category_confirmation": "Êtes-vous sûr de vouloir supprimer cette catégorie",
     "delete_savings_goal": "Supprimer l'Objectif d'Épargne",
     "delete_savings_goal_confirmation": "Êtes-vous sûr de vouloir supprimer votre objectif d'épargne ? Cette action ne peut pas être annulée.",
@@ -456,5 +460,8 @@
     "email_otp_resend_sent": "Code de vérification envoyé à votre e-mail",
     "email_otp_sending": "Envoi en cours...",
     "email_otp_seconds": "secondes",
-    "email_otp_verify_button": "VÉRIFIER"
+    "email_otp_verify_button": "VÉRIFIER",
+    "deleting_account": "Suppression du compte...",
+    "account_deleted_successfully": "Compte supprimé avec succès",
+    "delete_account_error": "Erreur lors de la suppression du compte"
 }

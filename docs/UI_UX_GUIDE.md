@@ -205,5 +205,84 @@ Este documento debe actualizarse cuando:
 - **Automatización**: Códigos se envían automáticamente sin intervención del usuario
 - **Feedback**: Mensajes claros sobre el estado de envío y verificación de códigos
 
+## Estados de Carga
+
+### Componentes de Loading
+
+Hero Budget implementa un sistema elegante y consistente de estados de carga que mejora significativamente la experiencia de usuario mediante transiciones suaves y feedback visual claro.
+
+#### 1. LoadingScreen
+- **Ubicación**: `lib/widgets/loading_screen.dart`
+- **Propósito**: Pantalla completa de carga con efectos de fade in/out elegantes
+- **Características**:
+  - Fondo semi-transparente que respeta el tema oscuro/claro
+  - Spinner circular con colores púrpura corporativos (#6A1B9A)
+  - Animaciones suaves con `Curves.easeInOut` y `Curves.easeOutBack`
+  - Mensaje personalizable de estado de carga
+  - Fade out automático al completarse la carga
+
+#### 2. SkeletonLoader
+- **Ubicación**: `lib/widgets/skeleton_loader.dart`  
+- **Propósito**: Placeholders animados para contenido que se está cargando
+- **Características**:
+  - Efecto shimmer sutil con gradiente animado
+  - Formas adaptables: rectangular, circular, cards
+  - Colores que se adaptan automáticamente al tema
+  - Constructores específicos: `.circular()`, `.card()`, `SkeletonText`, `SkeletonList`
+  - Duración de animación configurable (default: 1500ms)
+
+#### 3. LoadingOverlay
+- **Ubicación**: `lib/widgets/loading_overlay.dart`
+- **Propósito**: Wrapper universal para aplicar loading states a cualquier widget
+- **Tipos disponibles**:
+  - `LoadingOverlayType.spinner`: Spinner simple con overlay
+  - `LoadingOverlayType.fullScreen`: Pantalla completa elegante
+  - `LoadingOverlayType.skeleton`: Skeleton loader animado
+- **Extensions**: Métodos de conveniencia `.withLoadingOverlay()`, `.withSkeletonLoading()`, `.withFullScreenLoading()`
+
+### Directrices de Uso
+
+#### Cuándo usar cada tipo:
+- **LoadingScreen**: Carga inicial de pantallas, operaciones críticas
+- **SkeletonLoader**: Listas, cards, contenido específico
+- **LoadingOverlay**: Operaciones sobre contenido existente
+
+#### Principios de Diseño:
+- **Smooth**: Transiciones de 300ms para fade in/out
+- **Sutil**: Efectos shimmer discretos, no intrusivos  
+- **Elegante**: Siguiendo paleta de colores púrpura corporativa
+- **Adaptativo**: Respeto automático de tema oscuro/claro
+- **Consistente**: Misma experiencia en toda la aplicación
+
+#### Implementación:
+```dart
+// Pantalla completa
+LoadingScreen(
+  isLoading: _isLoading,
+  message: "Cargando datos...",
+  child: YourContentWidget(),
+)
+
+// Skeleton para listas
+Column(
+  children: _isLoading 
+    ? [SkeletonList(itemCount: 5)]
+    : _buildRealContent(),
+)
+
+// Extension method
+YourWidget().withFullScreenLoading(
+  isLoading: _isLoading,
+  message: "Procesando...",
+)
+```
+
+### Rendimiento
+
+- **Optimizado**: Uso eficiente de AnimationController
+- **Ligero**: Componentes minimalistas <200 líneas cada uno
+- **Reutilizable**: Sistema modular que evita duplicación de código
+- **Responsive**: Adaptación automática a diferentes tamaños de pantalla
+
 ---
 Última actualización: 2023-10-31 

@@ -3,6 +3,7 @@ import '../../../services/auth_service.dart';
 import '../../../services/profile_service.dart';
 import '../../../services/dashboard_service.dart';
 import '../../../utils/extensions.dart';
+import '../../../components/delete_account_modal.dart';
 import '../../onboarding/onboarding_screen.dart';
 
 class ActionsSection extends StatelessWidget {
@@ -120,78 +121,19 @@ class ActionsSection extends StatelessWidget {
   Future<void> _handleDeleteAccount(BuildContext context) async {
     final bool? confirmDelete = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            context.tr.translate('delete_account'),
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.tr.translate('delete_account_warning') ??
-                    'Esta acción eliminará permanentemente tu cuenta y todos tus datos.',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                context.tr.translate('delete_account_data_list') ??
-                    'Se eliminarán:\n• Todas las transacciones\n• Facturas y gastos\n• Ahorros y metas\n• Configuraciones personales\n• Historial completo',
-              ),
-              const SizedBox(height: 16),
-              Text(
-                context.tr.translate('delete_account_irreversible') ??
-                    'Esta acción no se puede deshacer. ¿Estás completamente seguro?',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(context.tr.translate('cancel')),
-              onPressed: () => Navigator.of(context).pop(false),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-              ),
-              child: Text(
-                context.tr.translate('delete_permanently') ??
-                    'Eliminar permanentemente',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              onPressed: () => Navigator.of(context).pop(true),
-            ),
-          ],
-        );
+        return const DeleteAccountModal();
       },
     );
 
     if (confirmDelete == true && context.mounted) {
-      // Mostrar dialog de progreso
+      // Mostrar el modal de progreso mejorado
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return AlertDialog(
-            content: Row(
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Text(
-                    context.tr.translate('deleting_account') ??
-                        'Eliminando cuenta...',
-                  ),
-                ),
-              ],
-            ),
-          );
+          return const DeletingAccountModal();
         },
       );
 

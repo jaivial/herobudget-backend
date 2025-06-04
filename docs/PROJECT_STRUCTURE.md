@@ -209,33 +209,44 @@ Contiene los servicios que implementan la lógica de negocio y la comunicación 
 - `signin_service.dart`: Manejo de inicio de sesión manual
 - `verification_service.dart`: Manejo de verificación de email y códigos OTP
 
-#### 4. Utils (`lib/utils/`)
-Contiene utilidades y extensiones para facilitar el desarrollo.
+#### 4. Widgets (`lib/widgets/`)
+Contiene widgets reutilizables específicos de la aplicación, organizados por funcionalidad.
 
-- `app_localizations.dart`: Sistema principal de localización y traducciones.
-- `extensions.dart`: Extensiones útiles para BuildContext y otros tipos.
-- `currency_utils.dart`: Utilidades para formateo de monedas.
+**Estados de Carga (Enero 2025):**
+- `loading_screen.dart`: Pantalla completa de carga con efectos de fade in/out elegantes
+- `skeleton_loader.dart`: Placeholders animados con efecto shimmer para contenido en carga
+- `loading_overlay.dart`: Wrapper universal para aplicar loading states a cualquier widget
 
-#### 5. Assets (`assets/`)
-Contiene recursos estáticos de la aplicación.
+**Navegación y Layout:**
+- `app_header.dart`: Cabecera principal de la aplicación
+- `app_bottom_navigation.dart`: Navegación inferior
+- `quick_actions.dart`: Botones de acciones rápidas
 
-- `l10n/`: Archivos de traducción en formato JSON para 14 idiomas soportados.
-  - `en.json`: Inglés (idioma base)
-  - `es.json`: Español
-  - `fr.json`: Francés
-  - `it.json`: Italiano
-  - `de.json`: Alemán
-  - `gsw.json`: Alemán suizo
-  - `el.json`: Griego
-  - `nl.json`: Holandés
-  - `da.json`: Danés
-  - `ru.json`: Ruso
-  - `pt.json`: Portugués
-  - `zh.json`: Chino
-  - `ja.json`: Japonés
-  - `hi.json`: Hindi
-- `images/`: Imágenes y recursos gráficos.
-- `avatars/`: Avatares predeterminados para usuarios.
+**Visualización de Datos:**
+- `budget_overview.dart`: Widget principal del resumen presupuestario
+- `transaction_overview_widget.dart`: Overview de transacciones y facturas
+- `finance_metrics.dart`: Métricas financieras
+- `savings_overview.dart`: Resumen de ahorros
+
+**Componentes de UI Especializados:**
+- `period_selector.dart`: Selector de períodos temporales
+- `transfer_modal.dart`: Modal para transferencias entre efectivo y banco
+- `transaction_history_table.dart`: Tabla de historial de transacciones
+- `upcoming_bills.dart`: Widget de facturas próximas
+
+**Localización y Temas:**
+- `language_selector_widget.dart`: Selector de idioma
+- `theme_toggle_button.dart`: Botón para cambiar tema oscuro/claro
+- `localized_text.dart`: Componentes de texto localizado
+
+#### 5. Utils (`lib/utils/`)
+Contiene utilidades y helpers para funcionalidades comunes.
+
+#### 6. Config (`lib/config/`)
+Configuración de la aplicación, incluyendo APIs y constantes.
+
+#### 7. Theme (`lib/theme/`)
+Configuración de temas, colores y estilos de la aplicación.
 
 ## Sistema de Localización
 

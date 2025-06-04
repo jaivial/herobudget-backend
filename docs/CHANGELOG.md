@@ -478,59 +478,92 @@ local timestamp=$(date +%s)
 - **Experiencia de Usuario**: UI refleja correctamente el estado de las facturas
 - **Trazabilidad**: Logs detallados para debugging y monitoreo
 
-## [Unreleased] - 2024-01-XX
+## [2025-01-08] - Implementación de Estados de Carga Elegantes
 
-### Added
-- **Bottom sheet selectors**: Replaced dropdown selectors with modern bottom sheet interfaces for payment day and duration months in bill creation screen
-- **Localized texts**: Added proper localization for "payment day" and "duration months" labels throughout the application
-- **Translation keys**: Added new translation keys: `select_payment_day`, `select_duration`, `payment_day`, `duration_months`, `bill_payment`
+### ✨ Nuevas Funcionalidades
 
-### Changed
-- **Bills display**: Removed collapsible ExpansionTile for paid bills, now shows expanded list directly for better user experience
-- **Payment frequency**: Removed all payment frequency options, bills are now always set to monthly by default
-- **Payment method automation**: Bills now automatically use the saved payment method during payment without option to change
-- **Euro currency positioning**: Fixed Euro symbol positioning - value now appears immediately to the left of € symbol (value€) in both input fields and display formatting
-- **Payment descriptions**: Added localized "Bill payment:" prefix when processing bill payments
-- **UI improvements**: Enhanced payment day and duration selectors with modern bottom sheet interfaces
+#### Sistema de Loading States
+- **LoadingScreen**: Nuevo widget de pantalla completa con efectos de fade in/out suaves
+  - Fondo semi-transparente adaptativo (tema oscuro/claro)
+  - Spinner circular con colores púrpura corporativos (#6A1B9A)
+  - Animaciones elegantes con `Curves.easeInOut` y `Curves.easeOutBack`
+  - Mensaje personalizable y barra de progreso linear
+  - Fade out automático al completarse la carga
+  - Componente adicional `SimpleLoadingSpinner` para uso rápido
 
-### Fixed
-- **Upcoming bills widget**: Improved paid bills section display by removing unnecessary collapsible behavior
-- **Currency formatting**: Corrected Euro currency format to place value directly before symbol without space (e.g., "25.50€" instead of "25.50 €")
-- **Input field positioning**: Euro symbol now appears as suffix in amount input fields for proper value€ format
+- **SkeletonLoader**: Sistema de placeholders animados con efecto shimmer
+  - Efecto shimmer sutil y elegante con gradiente animado
+  - Formas adaptables: rectangular, circular, cards, texto
+  - Colores que se adaptan automáticamente al tema actual
+  - Constructores especializados:
+    - `.circular()` para avatares e iconos
+    - `.card()` para tarjetas
+    - `SkeletonText` para múltiples líneas de texto
+    - `SkeletonList` para listas completas
+  - Duración configurable (default: 1500ms)
 
-### Technical Changes
-- Modified `lib/widgets/upcoming_bills.dart` to remove ExpansionTile and show paid bills in expanded format
-- Updated `lib/screens/invoice/pay_bill_screen.dart` to auto-select payment method and add localized payment descriptions
-- Modified `lib/screens/invoice/add_invoice_screen.dart` to remove frequency selector and implement bottom sheet selectors
-- Updated `lib/utils/app_localizations.dart` to fix Euro currency formatting logic
-- Enhanced input fields in expense, income, and invoice screens to properly position Euro symbol as suffix
-- Added comprehensive translations for Spanish and English locales
+- **LoadingOverlay**: Wrapper universal para estados de carga
+  - Tres tipos: `spinner`, `fullScreen`, `skeleton`
+  - Extensions de conveniencia en Widget:
+    - `.withLoadingOverlay()`
+    - `.withSkeletonLoading()`
+    - `.withFullScreenLoading()`
+  - `LoadingListTile` para elementos de lista individuales
 
-### Files Modified
-- `lib/widgets/upcoming_bills.dart`: Removed collapsible paid bills section
-- `lib/screens/invoice/pay_bill_screen.dart`: Enhanced payment automation and localization
-- `lib/screens/invoice/add_invoice_screen.dart`: Improved UI with bottom sheets and removed frequency options
-- `lib/screens/expense/add_expense_screen.dart`: Fixed Euro positioning in amount input
-- `lib/screens/income/add_income_screen.dart`: Fixed Euro positioning in amount input
-- `lib/utils/app_localizations.dart`: Corrected Euro formatting logic
-- `assets/l10n/en.json`: Added new translation keys
-- `assets/l10n/es.json`: Added Spanish translations for new features
+### 🎨 Mejoras de UI/UX
 
-## [Unreleased]
+#### Principios de Diseño Implementados
+- **Smooth**: Transiciones de 300ms para experiencia fluida
+- **Sutil**: Efectos discretos que no distraen del contenido
+- **Elegante**: Siguiendo la paleta de colores púrpura establecida
+- **Adaptativo**: Respeto automático del tema oscuro/claro del usuario
+- **Consistente**: Misma experiencia de carga en toda la aplicación
 
-### Added
-- Verificación automática de estado de email al iniciar sesión
-- Redirección automática a pantalla de verificación OTP para cuentas no verificadas
-- Envío automático de código OTP cuando se detecta cuenta no verificada
+#### Arquitectura Modular
+- Cada componente <200 líneas según estándares del proyecto
+- Sistema reutilizable que evita duplicación de código
+- Integración perfecta con la guía UI/UX existente
+- Rendimiento optimizado con uso eficiente de AnimationController
 
-### Changed
-- Modificado flujo de inicio automático de sesión para verificar estado de verificación de email
-- Modificado manejo de errores en pantalla de login para detectar cuentas no verificadas
-- Mejorado servicio de signin para proporcionar información detallada sobre estado de verificación
+### 📁 Archivos Afectados
 
-### Fixed
-- Problema donde usuarios con email no verificado podían acceder a la aplicación
-- Error genérico "credenciales incorrectas" ahora redirige correctamente a verificación OTP
-- Inicio automático de sesión ahora respeta el estado de verificación de email
+#### Nuevos Archivos
+- `lib/widgets/loading_screen.dart` - Pantalla de carga completa (175 líneas)
+- `lib/widgets/skeleton_loader.dart` - Sistema de skeleton loading (195 líneas)
+- `lib/widgets/loading_overlay.dart` - Wrapper universal (145 líneas)
+
+#### Documentación Actualizada
+- `docs/UI_UX_GUIDE.md` - Nueva sección "Estados de Carga"
+- `docs/PROJECT_STRUCTURE.md` - Documentación de nuevos widgets
+- `docs/CHANGELOG.md` - Este registro de cambios
+
+### 🔧 Uso Técnico
+
+#### Implementación Básica
+```dart
+// Pantalla completa
+LoadingScreen(
+  isLoading: _isLoading,
+  message: "Cargando datos...",
+  child: YourContentWidget(),
+)
+
+// Skeleton para contenido
+SkeletonList(itemCount: 5, hasImage: true)
+
+// Extension methods
+widget.withFullScreenLoading(isLoading: true)
+```
+
+#### Casos de Uso Recomendados
+- **LoadingScreen**: Carga inicial de pantallas, operaciones críticas
+- **SkeletonLoader**: Listas, cards, contenido específico mientras se cargan datos
+- **LoadingOverlay**: Operaciones sobre contenido existente, refreshes
+
+### 🎯 Impacto en la Experiencia
+
+Esta implementación mejora significativamente la percepción de velocidad y elegancia de la aplicación, proporcionando feedback visual inmediato y transiciones suaves que mantienen al usuario informado sobre el estado de las operaciones sin ser intrusivas.
+
+**Relacionado con el contexto global del proyecto**: Estos componentes se integran perfectamente con el sistema de gestión financiera existente, mejorando la experiencia durante la carga de datos de transacciones, resúmenes presupuestarios y operaciones de sincronización con el backend.
 
 ## [Previous entries...]

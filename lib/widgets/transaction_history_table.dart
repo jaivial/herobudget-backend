@@ -6,6 +6,7 @@ import '../utils/extensions.dart';
 import '../theme/app_theme.dart';
 import 'transaction_list_item.dart';
 import 'transaction_filters_dialog.dart';
+import 'skeleton_loader.dart';
 
 class TransactionHistoryTable extends StatefulWidget {
   final String? period;
@@ -513,7 +514,76 @@ class _TransactionHistoryTableState extends State<TransactionHistoryTable> {
         Expanded(
           child:
               _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Column(
+                    children: [
+                      // Skeleton para el header de la lista
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            const SkeletonLoader.circular(size: 24),
+                            const SizedBox(width: 12),
+                            const Expanded(child: SkeletonLoader(height: 16)),
+                            const SizedBox(width: 12),
+                            const SkeletonLoader(width: 60, height: 16),
+                          ],
+                        ),
+                      ),
+                      // Lista de skeleton items para transacciones
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: 8, // Mostrar 8 items skeleton
+                          separatorBuilder:
+                              (context, index) => Divider(
+                                height: 1,
+                                color: Colors.grey.withOpacity(0.2),
+                              ),
+                          itemBuilder: (context, index) {
+                            return Container(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  const SkeletonLoader.circular(size: 40),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SkeletonLoader(
+                                          width: 120,
+                                          height: 16,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const SkeletonLoader(
+                                          width: 80,
+                                          height: 14,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      const SkeletonLoader(
+                                        width: 80,
+                                        height: 16,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      const SkeletonLoader(
+                                        width: 60,
+                                        height: 14,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  )
                   : _filteredTransactions.isEmpty
                   ? Center(
                     child: Column(

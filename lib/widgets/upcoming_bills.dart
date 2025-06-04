@@ -8,6 +8,8 @@ import '../utils/emoji_utils.dart';
 import '../theme/app_theme.dart';
 import '../screens/invoice/pay_bill_screen.dart';
 import '../models/invoice_model.dart';
+import 'loading_overlay.dart';
+import 'skeleton_loader.dart';
 
 class UpcomingBillsWidget extends StatefulWidget {
   final String? period;
@@ -107,250 +109,252 @@ class _UpcomingBillsWidgetState extends State<UpcomingBillsWidget> {
   Widget build(BuildContext context) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header with title and statistics
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              context.tr.translate('upcoming_bills'),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : null,
+    return LoadingOverlay.skeleton(
+      isLoading: _isLoading,
+      skeletonItemCount: 6,
+      fadeDuration: const Duration(milliseconds: 400),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title and statistics
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                context.tr.translate('upcoming_bills'),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : null,
+                ),
+              ),
+            ],
+          ),
+
+          // Statistics row
+          if (_billsResponse != null && !_isLoading)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 16),
+              child: Row(
+                children: [
+                  _StatisticChip(
+                    label: context.tr.translate('total'),
+                    value: _billsResponse!.total.toString(),
+                    color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
+                  ),
+                  const SizedBox(width: 8),
+                  if (_billsResponse!.overdue > 0)
+                    _StatisticChip(
+                      label: context.tr.translate('overdue'),
+                      value: _billsResponse!.overdue.toString(),
+                      color: Colors.red,
+                    ),
+                  const SizedBox(width: 8),
+                  if (_billsResponse!.thisWeek > 0)
+                    _StatisticChip(
+                      label: context.tr.translate('this_week'),
+                      value: _billsResponse!.thisWeek.toString(),
+                      color:
+                          isDarkMode ? Colors.orange.shade300 : Colors.orange,
+                    ),
+                ],
               ),
             ),
-          ],
-        ),
 
-        // Statistics row
-        if (_billsResponse != null && !_isLoading)
-          Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 16),
-            child: Row(
-              children: [
-                _StatisticChip(
-                  label: context.tr.translate('total'),
-                  value: _billsResponse!.total.toString(),
-                  color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
-                ),
-                const SizedBox(width: 8),
-                if (_billsResponse!.overdue > 0)
-                  _StatisticChip(
-                    label: context.tr.translate('overdue'),
-                    value: _billsResponse!.overdue.toString(),
-                    color: Colors.red,
-                  ),
-                const SizedBox(width: 8),
-                if (_billsResponse!.thisWeek > 0)
-                  _StatisticChip(
-                    label: context.tr.translate('this_week'),
-                    value: _billsResponse!.thisWeek.toString(),
-                    color: isDarkMode ? Colors.orange.shade300 : Colors.orange,
-                  ),
-              ],
-            ),
-          ),
-
-        // Error message
-        if (_errorMessage != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade100,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.shade300),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.warning, color: Colors.orange.shade700, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    context.tr.translate('connection_error'),
-                    style: TextStyle(
-                      color: Colors.orange.shade700,
-                      fontSize: 12,
+          // Error message
+          if (_errorMessage != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade300),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.orange.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      context.tr.translate('connection_error'),
+                      style: TextStyle(
+                        color: Colors.orange.shade700,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-        // Content area - with scroll
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Loading state
-                if (_isLoading)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                // Empty state
-                else if (_billsResponse == null ||
-                    _billsResponse!.bills.isEmpty)
-                  _EmptyBillsList(
-                    onAddBill: widget.onAddBill,
-                    isDarkMode: isDarkMode,
-                  )
-                // Bills list
-                else
-                  Column(
-                    children: [
-                      // Overdue bills section
-                      if (_billsResponse!.overdueBills.isNotEmpty) ...[
-                        _SectionHeader(
-                          title: context.tr.translate('overdue_bills'),
-                          count: _billsResponse!.overdueBills.length,
-                          color: Colors.red,
-                          isDarkMode: isDarkMode,
-                        ),
-                        const SizedBox(height: 8),
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _billsResponse!.overdueBills.length,
-                          separatorBuilder:
-                              (context, index) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            return TransactionBillItem(
-                              transaction: _billsResponse!.overdueBills[index],
-                              isDarkMode: isDarkMode,
-                              onPayBill:
-                                  () => _handlePayBill(
+          // Content area - with scroll
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Empty state
+                  if (_billsResponse == null || _billsResponse!.bills.isEmpty)
+                    _EmptyBillsList(
+                      onAddBill: widget.onAddBill,
+                      isDarkMode: isDarkMode,
+                    )
+                  // Bills list
+                  else
+                    Column(
+                      children: [
+                        // Overdue bills section
+                        if (_billsResponse!.overdueBills.isNotEmpty) ...[
+                          _SectionHeader(
+                            title: context.tr.translate('overdue_bills'),
+                            count: _billsResponse!.overdueBills.length,
+                            color: Colors.red,
+                            isDarkMode: isDarkMode,
+                          ),
+                          const SizedBox(height: 8),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _billsResponse!.overdueBills.length,
+                            separatorBuilder:
+                                (context, index) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              return TransactionBillItem(
+                                transaction:
                                     _billsResponse!.overdueBills[index],
-                                  ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                                isDarkMode: isDarkMode,
+                                onPayBill:
+                                    () => _handlePayBill(
+                                      _billsResponse!.overdueBills[index],
+                                    ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
-                      // Upcoming bills section
-                      if (_billsResponse!.upcomingBills.isNotEmpty) ...[
-                        _SectionHeader(
-                          title: context.tr.translate('upcoming_bills'),
-                          count: _billsResponse!.upcomingBills.length,
-                          color:
-                              isDarkMode ? Colors.blue.shade300 : Colors.blue,
-                          isDarkMode: isDarkMode,
-                        ),
-                        const SizedBox(height: 8),
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _billsResponse!.upcomingBills.length,
-                          separatorBuilder:
-                              (context, index) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            return TransactionBillItem(
-                              transaction: _billsResponse!.upcomingBills[index],
-                              isDarkMode: isDarkMode,
-                              onPayBill:
-                                  () => _handlePayBill(
+                        // Upcoming bills section
+                        if (_billsResponse!.upcomingBills.isNotEmpty) ...[
+                          _SectionHeader(
+                            title: context.tr.translate('upcoming_bills'),
+                            count: _billsResponse!.upcomingBills.length,
+                            color:
+                                isDarkMode ? Colors.blue.shade300 : Colors.blue,
+                            isDarkMode: isDarkMode,
+                          ),
+                          const SizedBox(height: 8),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _billsResponse!.upcomingBills.length,
+                            separatorBuilder:
+                                (context, index) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              return TransactionBillItem(
+                                transaction:
                                     _billsResponse!.upcomingBills[index],
-                                  ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                                isDarkMode: isDarkMode,
+                                onPayBill:
+                                    () => _handlePayBill(
+                                      _billsResponse!.upcomingBills[index],
+                                    ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                        ],
 
-                      // Paid bills section (always expanded)
-                      if (_billsResponse!.paidBills.isNotEmpty) ...[
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16, bottom: 8),
-                          child: Text(
-                            '${context.tr.translate('paid_bills')} (${_billsResponse!.paidBills.length})',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: isDarkMode ? Colors.white : null,
+                        // Paid bills section (always expanded)
+                        if (_billsResponse!.paidBills.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16, bottom: 8),
+                            child: Text(
+                              '${context.tr.translate('paid_bills')} (${_billsResponse!.paidBills.length})',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: isDarkMode ? Colors.white : null,
+                              ),
                             ),
                           ),
-                        ),
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _billsResponse!.paidBills.length,
-                          separatorBuilder:
-                              (context, index) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            return TransactionBillItem(
-                              transaction: _billsResponse!.paidBills[index],
-                              isDarkMode: isDarkMode,
-                              showPayButton: false,
-                            );
-                          },
-                        ),
-                      ],
-                    ],
-                  ),
-
-                // Button to add new bill
-                if (_billsResponse != null && _billsResponse!.bills.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: InkWell(
-                      onTap: widget.onAddBill,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color:
-                                isDarkMode
-                                    ? AppTheme.tertiaryColorDark.withOpacity(
-                                      0.5,
-                                    )
-                                    : Theme.of(
-                                      context,
-                                    ).colorScheme.outline.withOpacity(0.3),
+                          ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _billsResponse!.paidBills.length,
+                            separatorBuilder:
+                                (context, index) => const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              return TransactionBillItem(
+                                transaction: _billsResponse!.paidBills[index],
+                                isDarkMode: isDarkMode,
+                                showPayButton: false,
+                              );
+                            },
                           ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add,
+                        ],
+                      ],
+                    ),
+
+                  // Button to add new bill
+                  if (_billsResponse != null &&
+                      _billsResponse!.bills.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: InkWell(
+                        onTap: widget.onAddBill,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(
                               color:
                                   isDarkMode
-                                      ? AppTheme.primaryColorDark
-                                      : Theme.of(context).colorScheme.primary,
+                                      ? AppTheme.tertiaryColorDark.withOpacity(
+                                        0.5,
+                                      )
+                                      : Theme.of(
+                                        context,
+                                      ).colorScheme.outline.withOpacity(0.3),
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              context.tr.translate('add_bill'),
-                              style: TextStyle(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.add,
                                 color:
                                     isDarkMode
                                         ? AppTheme.primaryColorDark
                                         : Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              Text(
+                                context.tr.translate('add_bill'),
+                                style: TextStyle(
+                                  color:
+                                      isDarkMode
+                                          ? AppTheme.primaryColorDark
+                                          : Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
