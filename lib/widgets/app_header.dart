@@ -10,6 +10,7 @@ import '../utils/extensions.dart';
 import '../main.dart';
 import 'language_selector_widget.dart';
 import 'language_selector_button.dart';
+import 'theme_toggle_button.dart';
 import 'dart:convert';
 
 class AppHeader extends StatefulWidget {
@@ -83,16 +84,8 @@ class _AppHeaderState extends State<AppHeader> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Sección izquierda - Toggle de tema
-              ThemeToggleButton(
-                currentThemeMode: currentThemeMode,
-                onThemeModeChanged: (ThemeMode mode) {
-                  setState(() {
-                    currentThemeMode = mode;
-                  });
-                  themeChangeNotifier.notifyThemeChange(mode);
-                },
-              ),
+              // Sección izquierda - Toggle de tema usando el widget unificado
+              const ThemeToggleButton(),
 
               // Sección derecha - Selector de idioma
               const LanguageSelectorButton(),
@@ -209,55 +202,5 @@ class _LanguageSelectorState extends State<LanguageSelector> {
         ),
       ),
     );
-  }
-}
-
-class ThemeToggleButton extends StatelessWidget {
-  final ThemeMode currentThemeMode;
-  final Function(ThemeMode) onThemeModeChanged;
-
-  const ThemeToggleButton({
-    super.key,
-    required this.currentThemeMode,
-    required this.onThemeModeChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDarkMode = currentThemeMode == ThemeMode.dark;
-    final iconColor = Theme.of(context).colorScheme.primary;
-    final backgroundColor =
-        isDarkMode
-            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2)
-            : Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1);
-
-    return GestureDetector(
-      onTap: () {
-        // Alternar entre modos claro y oscuro
-        final newMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
-        onThemeModeChanged(newMode);
-        _saveThemeMode(newMode);
-      },
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Icon(
-          isDarkMode ? Icons.light_mode : Icons.dark_mode,
-          size: 20,
-          color: iconColor,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _saveThemeMode(ThemeMode mode) async {
-    await AppTheme.saveThemeMode(mode);
   }
 }

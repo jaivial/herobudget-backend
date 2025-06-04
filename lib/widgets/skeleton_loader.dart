@@ -184,18 +184,33 @@ class SkeletonCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const SkeletonLoader(
-                  height: 18,
-                  width: double.infinity,
-                  borderRadius: 4,
+                Flexible(
+                  child: const SkeletonLoader(
+                    height: 18,
+                    width: double.infinity,
+                    borderRadius: 4,
+                  ),
                 ),
                 if (hasSubtitle) ...[
-                  const SizedBox(height: 8),
-                  const SkeletonLoader(height: 14, width: 150, borderRadius: 4),
+                  const SizedBox(height: 4),
+                  Flexible(
+                    child: const SkeletonLoader(
+                      height: 14,
+                      width: 150,
+                      borderRadius: 4,
+                    ),
+                  ),
                 ],
-                const SizedBox(height: 8),
-                const SkeletonLoader(height: 12, width: 100, borderRadius: 4),
+                const SizedBox(height: 4),
+                Flexible(
+                  child: const SkeletonLoader(
+                    height: 12,
+                    width: 100,
+                    borderRadius: 4,
+                  ),
+                ),
               ],
             ),
           ),
