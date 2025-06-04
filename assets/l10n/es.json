@@ -467,5 +467,10 @@
     "email_otp_verify_button": "VERIFICAR",
     "email_verified": "Correo Verificado",
     "no_cash_bank_data": "No hay datos de distribución",
-    "add_transactions_to_see_distribution": "Añade transacciones para ver la distribución"
+    "add_transactions_to_see_distribution": "Añade transacciones para ver la distribución",
+    "bill_payment": "Pago factura",
+    "select_payment_day": "Seleccionar Día de Pago",
+    "select_duration": "Seleccionar Duración",
+    "payment_day": "Día de pago",
+    "duration_months": "Duración meses"
 }

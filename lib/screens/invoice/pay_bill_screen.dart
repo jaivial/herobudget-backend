@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../models/invoice_model.dart';
+import '../../models/recurring_invoice_model.dart';
 import '../../services/invoice_service.dart';
 import '../../utils/extensions.dart';
 import '../../theme/app_theme.dart';
@@ -16,16 +17,16 @@ class PayBillScreen extends StatefulWidget {
 
 class _PayBillScreenState extends State<PayBillScreen> {
   final InvoiceService _invoiceService = InvoiceService();
-  List<Invoice> _unpaidInvoices = [];
-  List<Invoice> _filteredInvoices = [];
+  List<RecurringInvoice> _unpaidInvoices = [];
+  List<RecurringInvoice> _filteredInvoices = [];
   bool _isLoading = true;
   bool _processingPayment = false;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  Map<DateTime, List<Invoice>> _invoicesByDay = {};
+  Map<DateTime, List<RecurringInvoice>> _invoicesByDay = {};
 
   // Variables para el formulario
-  Invoice? _selectedInvoice;
+  RecurringInvoice? _selectedInvoice;
   String _paymentMethod = 'bank'; // Valor por defecto
 
   @override
@@ -40,16 +41,17 @@ class _PayBillScreenState extends State<PayBillScreen> {
     });
 
     try {
-      final invoices = await _invoiceService.fetchInvoices();
-
-      // Filtrar solo las facturas no pagadas
-      final unpaidInvoices =
-          invoices.where((invoice) => !invoice.paid).toList();
+      // Obtener facturas recurrentes para los próximos 6 meses
+      final recurringInvoices = await _invoiceService
+          .fetchUnpaidInvoicesForDateRange(
+            startDate: DateTime.now(),
+            monthsAhead: 6,
+          );
 
       // Agrupar las facturas por día
-      final Map<DateTime, List<Invoice>> invoicesByDay = {};
+      final Map<DateTime, List<RecurringInvoice>> invoicesByDay = {};
 
-      for (final invoice in unpaidInvoices) {
+      for (final invoice in recurringInvoices) {
         final dueDate = DateTime.parse(invoice.dueDate);
         final dateKey = DateTime(dueDate.year, dueDate.month, dueDate.day);
 
@@ -61,18 +63,26 @@ class _PayBillScreenState extends State<PayBillScreen> {
       }
 
       setState(() {
-        _unpaidInvoices = unpaidInvoices;
-        _filteredInvoices = unpaidInvoices;
+        _unpaidInvoices = recurringInvoices;
+        _filteredInvoices = recurringInvoices;
         _invoicesByDay = invoicesByDay;
         _isLoading = false;
 
-        // If there's a preselected invoice, set it as selected
+        // If there's a preselected invoice, find it in the recurring invoices
         if (widget.preselectedInvoice != null) {
-          final preselected = unpaidInvoices.firstWhere(
-            (invoice) => invoice.id == widget.preselectedInvoice!.id,
-            orElse: () => widget.preselectedInvoice!,
-          );
-          _selectedInvoice = preselected;
+          try {
+            final preselected = recurringInvoices.firstWhere(
+              (invoice) => invoice.id == widget.preselectedInvoice!.id,
+            );
+            _selectedInvoice = preselected;
+            _paymentMethod = preselected.paymentMethod;
+          } catch (e) {
+            // No matching recurring invoice found, select first available if any
+            if (recurringInvoices.isNotEmpty) {
+              _selectedInvoice = recurringInvoices.first;
+              _paymentMethod = recurringInvoices.first.paymentMethod;
+            }
+          }
         }
       });
     } catch (e) {
@@ -97,7 +107,9 @@ class _PayBillScreenState extends State<PayBillScreen> {
       // Deseleccionar factura si no está en el día seleccionado
       if (_selectedInvoice != null) {
         final isInFilteredList = _filteredInvoices.any(
-          (invoice) => invoice.id == _selectedInvoice!.id,
+          (invoice) =>
+              invoice.id == _selectedInvoice!.id &&
+              invoice.yearMonth == _selectedInvoice!.yearMonth,
         );
         if (!isInFilteredList) {
           _selectedInvoice = null;
@@ -352,12 +364,15 @@ class _PayBillScreenState extends State<PayBillScreen> {
             ),
         itemBuilder: (context, index) {
           final invoice = _filteredInvoices[index];
-          final isSelected = _selectedInvoice?.id == invoice.id;
+          // Comparar tanto ID como yearMonth para identificación única
+          final isSelected = _isSameRecurringInvoice(_selectedInvoice, invoice);
 
           return InkWell(
             onTap: () {
               setState(() {
                 _selectedInvoice = invoice;
+                // Usar automáticamente el método de pago de la factura
+                _paymentMethod = invoice.paymentMethod;
               });
             },
             child: Container(
@@ -462,6 +477,16 @@ class _PayBillScreenState extends State<PayBillScreen> {
         },
       ),
     );
+  }
+
+  /// Método auxiliar para comparar facturas recurrentes de manera única
+  bool _isSameRecurringInvoice(
+    RecurringInvoice? invoice1,
+    RecurringInvoice? invoice2,
+  ) {
+    if (invoice1 == null || invoice2 == null) return false;
+    return invoice1.id == invoice2.id &&
+        invoice1.yearMonth == invoice2.yearMonth;
   }
 
   Widget _buildInvoiceDetails() {
@@ -770,30 +795,83 @@ class _PayBillScreenState extends State<PayBillScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Opciones de pago
-          Row(
-            children: [
-              // Opción Efectivo
-              Expanded(
-                child: _buildPaymentMethodOption(
-                  'cash',
-                  Icons.payments_outlined,
-                  context.tr.translate('cash'),
-                  Colors.green,
-                ),
+          // Método de pago automático (sin opción a cambiar)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: (_paymentMethod == 'cash' ? Colors.green : Colors.blue)
+                  .withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _paymentMethod == 'cash' ? Colors.green : Colors.blue,
+                width: 2,
               ),
-              const SizedBox(width: 12),
+            ),
+            child: Row(
+              children: [
+                // Icono
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: (_paymentMethod == 'cash'
+                            ? Colors.green
+                            : Colors.blue)
+                        .withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _paymentMethod == 'cash'
+                        ? Icons.payments_outlined
+                        : Icons.account_balance_outlined,
+                    color:
+                        _paymentMethod == 'cash' ? Colors.green : Colors.blue,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
 
-              // Opción Banco
-              Expanded(
-                child: _buildPaymentMethodOption(
-                  'bank',
-                  Icons.account_balance_outlined,
-                  context.tr.translate('bank'),
-                  Colors.blue,
+                // Texto y descripción
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _paymentMethod == 'cash'
+                            ? context.tr.translate('cash')
+                            : context.tr.translate('bank'),
+                        style: TextStyle(
+                          color:
+                              _paymentMethod == 'cash'
+                                  ? Colors.green
+                                  : Colors.blue,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Método guardado en la factura',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+
+                // Indicador de selección automática
+                Icon(
+                  Icons.lock_outline,
+                  color: (_paymentMethod == 'cash' ? Colors.green : Colors.blue)
+                      .withOpacity(0.7),
+                  size: 20,
+                ),
+              ],
+            ),
           ),
 
           // Nota informativa
@@ -814,7 +892,7 @@ class _PayBillScreenState extends State<PayBillScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    context.tr.translate('payment_method_info'),
+                    'Se usará automáticamente el método de pago guardado en la factura',
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.primary,
@@ -825,93 +903,6 @@ class _PayBillScreenState extends State<PayBillScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentMethodOption(
-    String methodValue,
-    IconData icon,
-    String label,
-    Color accentColor,
-  ) {
-    final bool isSelected = _paymentMethod == methodValue;
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _paymentMethod = methodValue;
-        });
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? accentColor.withOpacity(0.1)
-                  : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color:
-                isSelected
-                    ? accentColor
-                    : Theme.of(context).colorScheme.outline.withOpacity(0.2),
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            // Icono
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color:
-                    isSelected
-                        ? accentColor.withOpacity(0.2)
-                        : Theme.of(context).colorScheme.surface,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color:
-                      isSelected
-                          ? accentColor
-                          : Theme.of(
-                            context,
-                          ).colorScheme.outline.withOpacity(0.2),
-                ),
-              ),
-              child: Icon(
-                icon,
-                color:
-                    isSelected
-                        ? accentColor
-                        : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withOpacity(0.6),
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Texto
-            Text(
-              label,
-              style: TextStyle(
-                color:
-                    isSelected
-                        ? accentColor
-                        : Theme.of(context).colorScheme.onSurface,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-
-            // Indicador seleccionado
-            if (isSelected) ...[
-              const SizedBox(height: 8),
-              Icon(Icons.check_circle, color: accentColor, size: 16),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -1131,10 +1122,38 @@ class _PayBillScreenState extends State<PayBillScreen> {
                     ),
                     const SizedBox(height: 12),
                     _buildModernSummaryRow(
-                      context.tr.translate('date'),
-                      DateTime.now().toString().split(' ')[0],
-                      Icons.calendar_today_rounded,
+                      context.tr.translate('due_date'),
+                      context.tr.formatDateWithTranslatedMonths(
+                        DateTime.parse(_selectedInvoice!.dueDate),
+                        pattern: 'MMM d, yyyy',
+                      ),
+                      Icons.event_rounded,
                       Colors.orange,
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      height: 1,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Theme.of(
+                              context,
+                            ).colorScheme.outline.withOpacity(0.2),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildModernSummaryRow(
+                      context.tr.translate('payment_date'),
+                      context.tr.formatDateWithTranslatedMonths(
+                        DateTime.now(),
+                        pattern: 'MMM d, yyyy',
+                      ),
+                      Icons.calendar_today_rounded,
+                      Colors.purple,
                     ),
                   ],
                 ),
@@ -1243,21 +1262,23 @@ class _PayBillScreenState extends State<PayBillScreen> {
             child: Icon(icon, color: accentColor, size: 18),
           ),
           const SizedBox(width: 16),
-          // Contenido
+          // Contenido en dos líneas
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$label:',
+                  label,
                   style: TextStyle(
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withOpacity(0.7),
                     fontWeight: FontWeight.w500,
-                    fontSize: 14,
+                    fontSize: 12,
+                    letterSpacing: 0.5,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Text(
                   value,
                   style: TextStyle(
@@ -1287,17 +1308,15 @@ class _PayBillScreenState extends State<PayBillScreen> {
     });
 
     try {
-      // Obtener el year_month de la fecha de vencimiento de la factura
-      final dueDate = DateTime.parse(_selectedInvoice!.dueDate);
-      final yearMonth =
-          '${dueDate.year.toString().padLeft(4, '0')}-${dueDate.month.toString().padLeft(2, '0')}';
+      // Crear descripción localizada
+      final localizedDescription =
+          '${context.tr.translate('bill_payment')}: ${_selectedInvoice!.name}';
 
-      // Llamar al servicio para pagar la factura
-      final success = await _invoiceService.payInvoice(
-        _selectedInvoice!.id,
+      // Usar el método específico para facturas recurrentes
+      final success = await _invoiceService.payRecurringInvoice(
+        _selectedInvoice!,
         _paymentMethod,
-        yearMonth:
-            yearMonth, // Pasar el mes específico basado en la fecha de vencimiento
+        description: localizedDescription,
       );
 
       if (success) {

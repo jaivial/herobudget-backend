@@ -149,6 +149,19 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       Localizations.localeOf(context),
     );
 
+    // Check if current locale uses Euro currency
+    final bool isEuroLocale =
+        [
+          'es',
+          'de',
+          'fr',
+          'it',
+          'pt',
+          'nl',
+          'el',
+        ].contains(Localizations.localeOf(context).languageCode) &&
+        currencySymbol == '€';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(context.tr.translate('add_expense')),
@@ -198,7 +211,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             controller: _amountController,
                             decoration: InputDecoration(
                               labelText: context.tr.translate('amount'),
-                              prefixText: currencySymbol,
+                              // For Euro: show as suffix (value€), for others: show as prefix (€value)
+                              prefixText: isEuroLocale ? null : currencySymbol,
+                              suffixText: isEuroLocale ? currencySymbol : null,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
@@ -475,9 +490,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                             vertical: 32,
                                           ),
                                       hintStyle: TextStyle(
-                                        color: Theme.of(context).brightness == Brightness.dark
-                                          ? Colors.white.withOpacity(0.7)
-                                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white.withOpacity(0.7)
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.6),
                                       ),
                                       labelStyle: TextStyle(
                                         color:
@@ -598,16 +618,50 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                                 Container(
                                                   width: 60,
                                                   height: 60,
-                                                  margin: const EdgeInsets.only(right: 12),
+                                                  margin: const EdgeInsets.only(
+                                                    right: 12,
+                                                  ),
                                                   decoration: BoxDecoration(
-                                                    color: Theme.of(context).brightness == Brightness.dark
-                                                        ? Theme.of(context).colorScheme.error.withOpacity(0.2)
-                                                        : Theme.of(context).colorScheme.error.withOpacity(0.15),
-                                                    borderRadius: BorderRadius.circular(12),
+                                                    color:
+                                                        Theme.of(
+                                                                  context,
+                                                                ).brightness ==
+                                                                Brightness.dark
+                                                            ? Theme.of(context)
+                                                                .colorScheme
+                                                                .error
+                                                                .withOpacity(
+                                                                  0.2,
+                                                                )
+                                                            : Theme.of(context)
+                                                                .colorScheme
+                                                                .error
+                                                                .withOpacity(
+                                                                  0.15,
+                                                                ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
                                                     border: Border.all(
-                                                      color: Theme.of(context).brightness == Brightness.dark
-                                                          ? Colors.white.withOpacity(0.3)
-                                                          : Theme.of(context).colorScheme.error.withOpacity(0.2),
+                                                      color:
+                                                          Theme.of(
+                                                                    context,
+                                                                  ).brightness ==
+                                                                  Brightness
+                                                                      .dark
+                                                              ? Colors.white
+                                                                  .withOpacity(
+                                                                    0.3,
+                                                                  )
+                                                              : Theme.of(
+                                                                    context,
+                                                                  )
+                                                                  .colorScheme
+                                                                  .error
+                                                                  .withOpacity(
+                                                                    0.2,
+                                                                  ),
                                                       width: 1,
                                                     ),
                                                   ),
@@ -615,13 +669,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                                     child: FittedBox(
                                                       fit: BoxFit.contain,
                                                       child: Padding(
-                                                        padding: const EdgeInsets.all(4.0),
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              4.0,
+                                                            ),
                                                         child: Text(
                                                           category.emoji,
-                                                          style: const TextStyle(
-                                                            fontSize: 30,
-                                                          ),
-                                                          textAlign: TextAlign.center,
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 30,
+                                                              ),
+                                                          textAlign:
+                                                              TextAlign.center,
                                                         ),
                                                       ),
                                                     ),
@@ -671,9 +730,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                       }
                                       return null;
                                     },
-                                    dropdownColor: Theme.of(context).brightness == Brightness.dark
-                                        ? Theme.of(context).colorScheme.surface
-                                        : Theme.of(context).cardColor,
+                                    dropdownColor:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Theme.of(
+                                              context,
+                                            ).colorScheme.surface
+                                            : Theme.of(context).cardColor,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),

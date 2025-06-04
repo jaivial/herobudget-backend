@@ -266,32 +266,32 @@ class _UpcomingBillsWidgetState extends State<UpcomingBillsWidget> {
                         const SizedBox(height: 16),
                       ],
 
-                      // Paid bills section (collapsed by default)
+                      // Paid bills section (always expanded)
                       if (_billsResponse!.paidBills.isNotEmpty) ...[
-                        ExpansionTile(
-                          title: Text(
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16, bottom: 8),
+                          child: Text(
                             '${context.tr.translate('paid_bills')} (${_billsResponse!.paidBills.length})',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
+                              fontSize: 16,
                               color: isDarkMode ? Colors.white : null,
                             ),
                           ),
-                          children: [
-                            ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _billsResponse!.paidBills.length,
-                              separatorBuilder:
-                                  (context, index) => const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                return TransactionBillItem(
-                                  transaction: _billsResponse!.paidBills[index],
-                                  isDarkMode: isDarkMode,
-                                  showPayButton: false,
-                                );
-                              },
-                            ),
-                          ],
+                        ),
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: _billsResponse!.paidBills.length,
+                          separatorBuilder:
+                              (context, index) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            return TransactionBillItem(
+                              transaction: _billsResponse!.paidBills[index],
+                              isDarkMode: isDarkMode,
+                              showPayButton: false,
+                            );
+                          },
                         ),
                       ],
                     ],

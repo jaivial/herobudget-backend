@@ -334,3 +334,41 @@ local timestamp=$(date +%s)
 - **Integridad de Datos**: Consistencia entre servicios de bills y expenses
 - **Experiencia de Usuario**: UI refleja correctamente el estado de las facturas
 - **Trazabilidad**: Logs detallados para debugging y monitoreo
+
+## [Unreleased] - 2024-01-XX
+
+### Added
+- **Bottom sheet selectors**: Replaced dropdown selectors with modern bottom sheet interfaces for payment day and duration months in bill creation screen
+- **Localized texts**: Added proper localization for "payment day" and "duration months" labels throughout the application
+- **Translation keys**: Added new translation keys: `select_payment_day`, `select_duration`, `payment_day`, `duration_months`, `bill_payment`
+
+### Changed
+- **Bills display**: Removed collapsible ExpansionTile for paid bills, now shows expanded list directly for better user experience
+- **Payment frequency**: Removed all payment frequency options, bills are now always set to monthly by default
+- **Payment method automation**: Bills now automatically use the saved payment method during payment without option to change
+- **Euro currency positioning**: Fixed Euro symbol positioning - value now appears immediately to the left of € symbol (value€) in both input fields and display formatting
+- **Payment descriptions**: Added localized "Bill payment:" prefix when processing bill payments
+- **UI improvements**: Enhanced payment day and duration selectors with modern bottom sheet interfaces
+
+### Fixed
+- **Upcoming bills widget**: Improved paid bills section display by removing unnecessary collapsible behavior
+- **Currency formatting**: Corrected Euro currency format to place value directly before symbol without space (e.g., "25.50€" instead of "25.50 €")
+- **Input field positioning**: Euro symbol now appears as suffix in amount input fields for proper value€ format
+
+### Technical Changes
+- Modified `lib/widgets/upcoming_bills.dart` to remove ExpansionTile and show paid bills in expanded format
+- Updated `lib/screens/invoice/pay_bill_screen.dart` to auto-select payment method and add localized payment descriptions
+- Modified `lib/screens/invoice/add_invoice_screen.dart` to remove frequency selector and implement bottom sheet selectors
+- Updated `lib/utils/app_localizations.dart` to fix Euro currency formatting logic
+- Enhanced input fields in expense, income, and invoice screens to properly position Euro symbol as suffix
+- Added comprehensive translations for Spanish and English locales
+
+### Files Modified
+- `lib/widgets/upcoming_bills.dart`: Removed collapsible paid bills section
+- `lib/screens/invoice/pay_bill_screen.dart`: Enhanced payment automation and localization
+- `lib/screens/invoice/add_invoice_screen.dart`: Improved UI with bottom sheets and removed frequency options
+- `lib/screens/expense/add_expense_screen.dart`: Fixed Euro positioning in amount input
+- `lib/screens/income/add_income_screen.dart`: Fixed Euro positioning in amount input
+- `lib/utils/app_localizations.dart`: Corrected Euro formatting logic
+- `assets/l10n/en.json`: Added new translation keys
+- `assets/l10n/es.json`: Added Spanish translations for new features

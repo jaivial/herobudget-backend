@@ -300,7 +300,7 @@ class AppLocalizations {
           symbol ??
           CurrencyUtils.getCurrencySymbolForLanguage(locale.languageCode);
 
-      // Special handling for Euro countries to place the symbol after the amount
+      // Special handling for Euro countries to place the value directly before the € symbol
       final bool isEuroCountry = [
         'de',
         'fr',
@@ -325,12 +325,13 @@ class AppLocalizations {
       ].contains(locale.languageCode);
 
       if (isEuroCountry && (currencySymbol == '€' || currencySymbol == 'EUR')) {
-        // For Euro countries, format with symbol at the end
+        // For Euro countries, format with value directly before € symbol (no space)
         final NumberFormat formatter = NumberFormat.currency(
           locale: localeCode,
           symbol: '',
         );
-        return '${formatter.format(amount)} €';
+        final formattedAmount = formatter.format(amount).trim();
+        return '${formattedAmount}€';
       } else {
         // Default formatting with symbol at the beginning
         final NumberFormat formatter = NumberFormat.currency(

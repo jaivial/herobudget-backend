@@ -7,6 +7,7 @@ import '../models/invoice_model.dart';
 import '../models/category_model.dart';
 import '../services/category_service.dart';
 import '../utils/icon_utils.dart';
+import '../models/recurring_invoice_model.dart';
 
 /// Servicio para gestionar las facturas (invoices) utilizando la API de bills_management
 class InvoiceService {
@@ -374,5 +375,101 @@ class InvoiceService {
         iconName: 'receipt_long',
       );
     }
+  }
+
+  /// Obtiene facturas no pagadas para un período específico usando bill_payments
+  Future<List<RecurringInvoice>> fetchUnpaidInvoicesForPeriod(
+    String yearMonth,
+  ) async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('user_id');
+
+      if (userId == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final fullUrl =
+          '${ApiConfig.billsFetchEndpoint}?user_id=$userId&period=monthly&date=$yearMonth-01';
+
+      final response = await http.get(
+        Uri.parse(fullUrl),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        if (responseData['success'] == true) {
+          final data = responseData['data'];
+
+          if (data == null || (data is List && data.isEmpty)) {
+            return <RecurringInvoice>[];
+          }
+
+          if (data is List) {
+            // Filtrar solo las no pagadas para este período
+            return data
+                .where((invoiceData) => invoiceData['paid'] == false)
+                .map(
+                  (invoiceData) =>
+                      RecurringInvoice.fromJson(invoiceData, yearMonth),
+                )
+                .toList();
+          } else {
+            throw Exception('Invoice data is not an array');
+          }
+        } else {
+          throw Exception(
+            'Failed to fetch invoices: ${responseData['message']}',
+          );
+        }
+      } else {
+        throw Exception('Error fetching invoices: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in fetchUnpaidInvoicesForPeriod: $e');
+      throw Exception('Error fetching invoices for period: $e');
+    }
+  }
+
+  /// Obtiene facturas no pagadas para un rango de fechas (varios meses)
+  Future<List<RecurringInvoice>> fetchUnpaidInvoicesForDateRange({
+    DateTime? startDate,
+    int monthsAhead = 6,
+  }) async {
+    final start = startDate ?? DateTime.now();
+    final List<RecurringInvoice> allInvoices = [];
+
+    // Generar lista de meses a consultar
+    for (int i = 0; i < monthsAhead; i++) {
+      final monthDate = DateTime(start.year, start.month + i, 1);
+      final yearMonth =
+          '${monthDate.year.toString().padLeft(4, '0')}-${monthDate.month.toString().padLeft(2, '0')}';
+
+      try {
+        final monthlyInvoices = await fetchUnpaidInvoicesForPeriod(yearMonth);
+        allInvoices.addAll(monthlyInvoices);
+      } catch (e) {
+        print('Error fetching invoices for month $yearMonth: $e');
+        // Continuar con el siguiente mes si hay error
+      }
+    }
+
+    return allInvoices;
+  }
+
+  /// Paga una factura recurrente para un período específico
+  Future<bool> payRecurringInvoice(
+    RecurringInvoice recurringInvoice,
+    String paymentMethod, {
+    String? description,
+  }) async {
+    return await payInvoice(
+      recurringInvoice.id,
+      paymentMethod,
+      yearMonth: recurringInvoice.yearMonth,
+      description: description,
+    );
   }
 }

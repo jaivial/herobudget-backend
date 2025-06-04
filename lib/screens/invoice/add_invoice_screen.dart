@@ -203,6 +203,19 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
       Localizations.localeOf(context),
     );
 
+    // Check if current locale uses Euro currency
+    final bool isEuroLocale =
+        [
+          'es',
+          'de',
+          'fr',
+          'it',
+          'pt',
+          'nl',
+          'el',
+        ].contains(Localizations.localeOf(context).languageCode) &&
+        currencySymbol == '€';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(context.tr.translate('add_invoice')),
@@ -252,7 +265,9 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                             controller: _amountController,
                             decoration: InputDecoration(
                               labelText: context.tr.translate('amount'),
-                              prefixText: currencySymbol,
+                              // For Euro: show as suffix (value€), for others: show as prefix (€value)
+                              prefixText: isEuroLocale ? null : currencySymbol,
+                              suffixText: isEuroLocale ? currencySymbol : null,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
@@ -296,6 +311,12 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                               prefixStyle: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.9),
+                                fontWeight: FontWeight.bold,
+                              ),
+                              suffixStyle: TextStyle(
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSurface.withOpacity(0.9),
@@ -398,9 +419,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
 
                         // Día de pago del mes
                         Text(
-                          context.tr.translate('payment_day') != ''
-                              ? context.tr.translate('payment_day')
-                              : 'Día de pago del mes',
+                          context.tr.translate('payment_day'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -408,71 +427,81 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                        InkWell(
+                          onTap: () => _showPaymentDayBottomSheet(),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Theme.of(
+                                          context,
+                                        ).colorScheme.outline.withOpacity(0.3)
+                                        : Colors.grey.shade300,
+                              ),
                               color:
                                   Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? Theme.of(
-                                        context,
-                                      ).colorScheme.outline.withOpacity(0.3)
-                                      : Colors.grey.shade300,
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .surfaceVariant
+                                          .withOpacity(0.5)
+                                      : Theme.of(context).cardColor,
                             ),
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .surfaceVariant
-                                        .withOpacity(0.5)
-                                    : Theme.of(context).cardColor,
-                          ),
-                          child: DropdownButtonFormField<int>(
-                            value: _paymentDay,
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.event,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            items: List.generate(31, (index) {
-                              final day = index + 1;
-                              return DropdownMenuItem(
-                                value: day,
-                                child: Text('Día $day'),
-                              );
-                            }),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _paymentDay = value;
-                                });
-                              }
-                            },
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                            dropdownColor:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Theme.of(context).colorScheme.surface
-                                    : Theme.of(context).cardColor,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : Theme.of(context).colorScheme.onSurface,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.event,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        context.tr.translate('payment_day'),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.7),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Día $_paymentDay del mes',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white
+                                                  : Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.5),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -481,9 +510,7 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
 
                         // Duración de la factura
                         Text(
-                          context.tr.translate('duration_months') != ''
-                              ? context.tr.translate('duration_months')
-                              : 'Duración (meses)',
+                          context.tr.translate('duration_months'),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -491,217 +518,81 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                        InkWell(
+                          onTap: () => _showDurationBottomSheet(),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color:
+                                    Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Theme.of(
+                                          context,
+                                        ).colorScheme.outline.withOpacity(0.3)
+                                        : Colors.grey.shade300,
+                              ),
                               color:
                                   Theme.of(context).brightness ==
                                           Brightness.dark
-                                      ? Theme.of(
-                                        context,
-                                      ).colorScheme.outline.withOpacity(0.3)
-                                      : Colors.grey.shade300,
+                                      ? Theme.of(context)
+                                          .colorScheme
+                                          .surfaceVariant
+                                          .withOpacity(0.5)
+                                      : Theme.of(context).cardColor,
                             ),
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .surfaceVariant
-                                        .withOpacity(0.5)
-                                    : Theme.of(context).cardColor,
-                          ),
-                          child: DropdownButtonFormField<int>(
-                            value: _durationMonths > 12 ? 0 : _durationMonths,
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.schedule,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            items: [
-                              ...List.generate(12, (index) {
-                                final months = index + 1;
-                                return DropdownMenuItem(
-                                  value: months,
-                                  child: Text(
-                                    '$months ${months == 1 ? 'mes' : 'meses'}',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.schedule,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        context.tr.translate('select_duration'),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withOpacity(0.7),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '$_durationMonths ${_durationMonths == 1 ? 'mes' : 'meses'}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white
+                                                  : Theme.of(
+                                                    context,
+                                                  ).colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                );
-                              }),
-                              DropdownMenuItem(
-                                value: 0, // Valor especial para personalizado
-                                child: Text(
-                                  _durationMonths > 12
-                                      ? '$_durationMonths meses (Personalizado)'
-                                      : 'Personalizado',
                                 ),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                if (value == 0) {
-                                  // Mostrar diálogo para entrada personalizada
-                                  _showCustomDurationDialog();
-                                } else {
-                                  setState(() {
-                                    _durationMonths = value;
-                                  });
-                                }
-                              }
-                            },
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                            dropdownColor:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Theme.of(context).colorScheme.surface
-                                    : Theme.of(context).cardColor,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Regularidad de pago
-                        Text(
-                          context.tr.translate('payment_regularity') != ''
-                              ? context.tr.translate('payment_regularity')
-                              : 'Regularidad de pago',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color:
-                                  Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Theme.of(
-                                        context,
-                                      ).colorScheme.outline.withOpacity(0.3)
-                                      : Colors.grey.shade300,
-                            ),
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .surfaceVariant
-                                        .withOpacity(0.5)
-                                    : Theme.of(context).cardColor,
-                          ),
-                          child: DropdownButtonFormField<String>(
-                            value: _selectedRegularity,
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.repeat,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            items: [
-                              DropdownMenuItem(
-                                value: 'daily',
-                                child: Text(
-                                  context.tr.translate('daily_period') != ''
-                                      ? context.tr.translate('daily_period')
-                                      : 'Diaria',
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.5),
                                 ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'weekly',
-                                child: Text(
-                                  context.tr.translate('weekly_period') != ''
-                                      ? context.tr.translate('weekly_period')
-                                      : 'Semanal',
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'monthly',
-                                child: Text(
-                                  context.tr.translate('monthly_period') != ''
-                                      ? context.tr.translate('monthly_period')
-                                      : 'Mensual',
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'quarterly',
-                                child: Text(
-                                  context.tr.translate('quarterly_period') != ''
-                                      ? context.tr.translate('quarterly_period')
-                                      : 'Trimestral',
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'semiannual',
-                                child: Text(
-                                  context.tr.translate('semiannual_period') !=
-                                          ''
-                                      ? context.tr.translate(
-                                        'semiannual_period',
-                                      )
-                                      : 'Semestral',
-                                ),
-                              ),
-                              DropdownMenuItem(
-                                value: 'annual',
-                                child: Text(
-                                  context.tr.translate('annual_period') != ''
-                                      ? context.tr.translate('annual_period')
-                                      : 'Anual',
-                                ),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _selectedRegularity = value;
-                                });
-                              }
-                            },
-                            icon: Icon(
-                              Icons.arrow_drop_down,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.5),
-                            ),
-                            dropdownColor:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Theme.of(context).colorScheme.surface
-                                    : Theme.of(context).cardColor,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : Theme.of(context).colorScheme.onSurface,
+                              ],
                             ),
                           ),
                         ),
@@ -1202,80 +1093,135 @@ class _AddInvoiceScreenState extends State<AddInvoiceScreen> {
     );
   }
 
-  void _showCustomDurationDialog() {
-    final TextEditingController controller = TextEditingController(
-      text: _durationMonths > 12 ? _durationMonths.toString() : '',
-    );
-
-    showDialog(
+  void _showPaymentDayBottomSheet() {
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
-        return AlertDialog(
-          title: Text(
-            context.tr.translate('custom_duration') != ''
-                ? context.tr.translate('custom_duration')
-                : 'Duración personalizada',
+        return Container(
+          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
           ),
-          content: Column(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText:
-                      context.tr.translate('duration_months') != ''
-                          ? context.tr.translate('duration_months')
-                          : 'Duración en meses',
-                  hintText: 'Ej: 24',
-                  border: const OutlineInputBorder(),
+              Text(
+                context.tr.translate('payment_day'),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: 31,
+                  itemBuilder: (context, index) {
+                    final day = index + 1;
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
+                      ),
+                      leading: Icon(
+                        Icons.calendar_today,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                      title: Text(
+                        'Día $day',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _paymentDay = day;
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text(
-                context.tr.translate('cancel') != ''
-                    ? context.tr.translate('cancel')
-                    : 'Cancelar',
+        );
+      },
+    );
+  }
+
+  void _showDurationBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.tr.translate('duration_months'),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                final value = controller.text.trim();
-                if (value.isNotEmpty) {
-                  final parsedValue = int.tryParse(value);
-                  if (parsedValue != null && parsedValue > 0) {
-                    setState(() {
-                      _durationMonths = parsedValue;
-                    });
-                    Navigator.pop(context);
-                  } else {
-                    // Mostrar error si el valor no es válido
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Por favor ingresa un número válido mayor a 0',
-                        ),
-                        backgroundColor: Colors.red,
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: 12,
+                  itemBuilder: (context, index) {
+                    final months = index + 1;
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 16,
                       ),
+                      leading: Icon(
+                        Icons.schedule,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                      title: Text(
+                        '$months ${months == 1 ? 'mes' : 'meses'}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      onTap: () {
+                        setState(() {
+                          _durationMonths = months;
+                        });
+                        Navigator.pop(context);
+                      },
                     );
-                  }
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-              child: Text(
-                context.tr.translate('save') != ''
-                    ? context.tr.translate('save')
-                    : 'Guardar',
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

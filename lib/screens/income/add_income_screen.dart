@@ -147,6 +147,19 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
       Localizations.localeOf(context),
     );
 
+    // Check if current locale uses Euro currency
+    final bool isEuroLocale =
+        [
+          'es',
+          'de',
+          'fr',
+          'it',
+          'pt',
+          'nl',
+          'el',
+        ].contains(Localizations.localeOf(context).languageCode) &&
+        currencySymbol == '€';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(context.tr.translate('add_income')),
@@ -196,7 +209,9 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                             controller: _amountController,
                             decoration: InputDecoration(
                               labelText: context.tr.translate('amount'),
-                              prefixText: currencySymbol,
+                              // For Euro: show as suffix (value€), for others: show as prefix (€value)
+                              prefixText: isEuroLocale ? null : currencySymbol,
+                              suffixText: isEuroLocale ? currencySymbol : null,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide(
@@ -467,9 +482,14 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                                             vertical: 32,
                                           ),
                                       hintStyle: TextStyle(
-                                        color: Theme.of(context).brightness == Brightness.dark
-                                          ? Colors.white.withOpacity(0.7)
-                                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white.withOpacity(0.7)
+                                                : Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.6),
                                       ),
                                       labelStyle: TextStyle(
                                         color:
@@ -695,9 +715,13 @@ class _AddIncomeScreenState extends State<AddIncomeScreen> {
                                       }
                                       return null;
                                     },
-                                    dropdownColor: Theme.of(context).brightness == Brightness.dark
-                                        ? Theme.of(context).colorScheme.surface
-                                        : Theme.of(context).cardColor,
+                                    dropdownColor:
+                                        Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Theme.of(
+                                              context,
+                                            ).colorScheme.surface
+                                            : Theme.of(context).cardColor,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),

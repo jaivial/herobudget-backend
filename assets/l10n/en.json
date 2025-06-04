@@ -551,5 +551,9 @@
     "email_otp_resend_sent": "Verification code sent to your email",
     "email_otp_sending": "Sending...",
     "email_otp_seconds": "seconds",
-    "email_otp_verify_button": "VERIFY"
+    "email_otp_verify_button": "VERIFY",
+    "bill_payment": "Bill payment",
+    "select_payment_day": "Select Payment Day",
+    "select_duration": "Select Duration",
+    "duration_months": "Duration months"
 }
