@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/dashboard/dashboard_screen.dart';
 import 'screens/verification/email_verification_screen.dart';
+import 'screens/verification/email_otp_verification_screen.dart';
 import 'screens/verification/email_verification_success_screen.dart';
 import 'screens/reset_password/reset_password_screen.dart';
 import 'screens/auth/signin_screen.dart';
@@ -30,6 +31,7 @@ import 'config/environment.dart';
 import 'config/api_config.dart';
 import 'config/app_config.dart';
 import 'services/api_helper.dart';
+import 'services/verification_service.dart';
 
 // Language change notifier singleton
 class LanguageChangeNotifier {
@@ -254,6 +256,11 @@ class _MyAppState extends State<MyApp> {
   // Flag to show sign-in screen on next build
   bool _showSignIn = false;
 
+  // Email verification parameters
+  bool _needsEmailVerification = false;
+  String? _pendingVerificationUserId;
+  Map<String, dynamic>? _pendingVerificationUserInfo;
+
   // Add a public method that can be called to force showing the verification success screen
   void showVerificationSuccessScreen(String code) {
     setState(() {
@@ -356,7 +363,7 @@ class _MyAppState extends State<MyApp> {
     _initializeDeepLinking().then((_) {
       // After deep link handling, migrate data and check user
       _migrateOldUserData().then((_) {
-        _checkUserAndLanguage();
+        _checkUserStatus();
         _loadThemeMode();
       });
     });
@@ -391,7 +398,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future<void> _checkUserAndLanguage() async {
+  Future<void> _checkUserStatus() async {
     try {
       // Get saved locale from local storage
       final savedLocale = await LanguageService.getLanguagePreference();
@@ -441,6 +448,46 @@ class _MyAppState extends State<MyApp> {
           try {
             // Get the latest user info from the server using this ID
             final userInfo = await DashboardService.fetchUserInfo(userId);
+
+            // Check if email is verified
+            final bool isEmailVerified = userInfo['verified_email'] ?? false;
+
+            if (!isEmailVerified) {
+              // Email not verified, redirect to OTP verification screen
+              print(
+                'Email not verified for user $userId, redirecting to OTP verification',
+              );
+
+              // Send a new verification code automatically
+              try {
+                final resendResult =
+                    await VerificationService.resendVerificationEmail(
+                      userId,
+                      userInfo['email'],
+                    );
+
+                if (resendResult['success']) {
+                  print('New verification code sent successfully');
+                } else {
+                  print(
+                    'Failed to send new verification code: ${resendResult['error']}',
+                  );
+                }
+              } catch (e) {
+                print('Error sending new verification code: $e');
+              }
+
+              // Navigate to OTP verification screen
+              setState(() {
+                _isLoggedIn = false;
+                _userData = null;
+                _isLoading = false;
+                _needsEmailVerification = true;
+                _pendingVerificationUserId = userId;
+                _pendingVerificationUserInfo = userInfo;
+              });
+              return;
+            }
 
             // If locale exists in user info, save it and use it
             if (userInfo['locale'] != null && userInfo['locale'].isNotEmpty) {
@@ -695,6 +742,14 @@ class _MyAppState extends State<MyApp> {
       homeScreen = ResetPasswordScreen(
         token: _resetPasswordToken!,
         userIdString: _resetPasswordUserId!,
+      );
+    } else if (_needsEmailVerification &&
+        _pendingVerificationUserId != null &&
+        _pendingVerificationUserInfo != null) {
+      // Show email OTP verification screen if user needs email verification
+      homeScreen = EmailOTPVerificationScreen(
+        userId: _pendingVerificationUserId!,
+        userInfo: _pendingVerificationUserInfo!,
       );
     } else if (_showSignIn) {
       // Show sign-in screen if explicitly requested

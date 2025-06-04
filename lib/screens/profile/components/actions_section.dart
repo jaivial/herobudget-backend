@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/profile_service.dart';
+import '../../../services/dashboard_service.dart';
 import '../../../utils/extensions.dart';
 import '../../onboarding/onboarding_screen.dart';
 
@@ -59,15 +61,7 @@ class ActionsSection extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      context.tr.translate('delete_account_coming_soon'),
-                    ),
-                  ),
-                );
-              },
+              onTap: () => _handleDeleteAccount(context),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -116,6 +110,145 @@ class ActionsSection extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${context.tr.translate('logout_error')}: $e'),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _handleDeleteAccount(BuildContext context) async {
+    final bool? confirmDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            context.tr.translate('delete_account'),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.tr.translate('delete_account_warning') ??
+                    'Esta acción eliminará permanentemente tu cuenta y todos tus datos.',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                context.tr.translate('delete_account_data_list') ??
+                    'Se eliminarán:\n• Todas las transacciones\n• Facturas y gastos\n• Ahorros y metas\n• Configuraciones personales\n• Historial completo',
+              ),
+              const SizedBox(height: 16),
+              Text(
+                context.tr.translate('delete_account_irreversible') ??
+                    'Esta acción no se puede deshacer. ¿Estás completamente seguro?',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(context.tr.translate('cancel')),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: Text(
+                context.tr.translate('delete_permanently') ??
+                    'Eliminar permanentemente',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmDelete == true && context.mounted) {
+      // Mostrar dialog de progreso
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Row(
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Text(
+                    context.tr.translate('deleting_account') ??
+                        'Eliminando cuenta...',
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+      try {
+        // Obtener ID del usuario actual
+        final userId = await DashboardService.getCurrentUserId();
+
+        if (userId == null || userId.isEmpty) {
+          throw Exception('No se pudo obtener el ID del usuario');
+        }
+
+        // Convertir userId string a int
+        final userIdInt = int.tryParse(userId);
+        if (userIdInt == null) {
+          throw Exception('ID de usuario inválido');
+        }
+
+        // Llamar al servicio de eliminación
+        final success = await ProfileService.deleteAccount(userId: userIdInt);
+
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Cerrar dialog de progreso
+        }
+
+        if (success) {
+          if (context.mounted) {
+            // Mostrar mensaje de confirmación
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  context.tr.translate('account_deleted_successfully') ??
+                      'Cuenta eliminada exitosamente',
+                ),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+
+            // Limpiar sesión y redirigir al onboarding
+            await AuthService.signOut(context);
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+              (route) => false,
+            );
+          }
+        } else {
+          throw Exception('Error al eliminar la cuenta');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Cerrar dialog de progreso
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${context.tr.translate('delete_account_error') ?? 'Error al eliminar cuenta'}: $e',
+              ),
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         }

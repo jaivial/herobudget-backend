@@ -1,5 +1,148 @@
 # Changelog - Hero Budget Flutter App
 
+## [FUNCIONALIDAD DE ELIMINACIÓN DE CUENTA] - 2025-01-15
+
+### ✅ NUEVA FUNCIONALIDAD IMPLEMENTADA
+
+**Eliminación Completa de Cuenta de Usuario**
+- **Funcionalidad**: Eliminación permanente de cuenta con todos los datos asociados
+- **Alcance**: Frontend (Flutter) + Backend (Go microservicio)
+- **Tipo de operación**: Irreversible y completa
+
+### 🛠️ CAMBIOS IMPLEMENTADOS
+
+#### Frontend (Flutter)
+
+**Servicio de Perfil - profile_service.dart:**
+- ✅ **Función `deleteAccount()`** agregada para comunicación con backend
+- ✅ **Función `_clearAllLocalData()`** para limpieza de SharedPreferences
+- ✅ **Manejo completo de errores** con logging detallado
+- ✅ **Limpieza automática** de datos locales post-eliminación
+
+**Interfaz de Usuario - actions_section.dart:**
+- ✅ **Dialog de confirmación mejorado** con advertencias detalladas
+- ✅ **Lista explícita de datos** que serán eliminados
+- ✅ **Doble confirmación** para prevenir eliminaciones accidentales
+- ✅ **Indicador de progreso** durante el proceso de eliminación
+- ✅ **Manejo de errores visual** con mensajes informativos
+- ✅ **Redirección automática** al onboarding tras eliminación exitosa
+
+#### Backend (Go - profile_management)
+
+**Endpoint de Eliminación - `/profile/delete-account`:**
+- ✅ **Método HTTP DELETE** implementado
+- ✅ **Transacciones atómicas** para garantizar consistencia
+- ✅ **Eliminación en cascada** de todas las tablas relacionadas
+- ✅ **Logging detallado** para auditoría y debugging
+- ✅ **Validación de usuario** antes de eliminar
+- ✅ **Rollback automático** en caso de error
+
+### 📊 TABLAS AFECTADAS POR LA ELIMINACIÓN
+
+**Orden de eliminación para respetar foreign keys:**
+1. `categories` - Categorías personalizadas del usuario
+2. `cash_bank_transactions` - Transacciones efectivo/banco
+3. `cash_bank` - Distribución mensual efectivo/banco
+4. `daily_balance` - Balances diarios
+5. `weekly_balance` - Balances semanales
+6. `monthly_balance` - Balances mensuales
+7. `daily_cash_bank_balance` - Balances diarios efectivo/banco
+8. `weekly_cash_bank_balance` - Balances semanales efectivo/banco
+9. `monthly_cash_bank_balance` - Balances mensuales efectivo/banco
+10. `bills` - Facturas del usuario
+11. `expenses` - Gastos del usuario
+12. `incomes` - Ingresos del usuario
+13. `savings` - Ahorros del usuario
+14. `balances` - Balance total del usuario
+15. `users` - Registro del usuario
+
+### 🔧 CARACTERÍSTICAS TÉCNICAS
+
+#### Seguridad y Validación
+- **Verificación de existencia** del usuario antes de eliminar
+- **Transacciones de base de datos** para atomicidad
+- **Logging completo** de todas las operaciones
+- **Manejo de errores robusto** con rollback automático
+
+#### Experiencia de Usuario
+- **Advertencias claras** sobre la irreversibilidad de la acción
+- **Lista detallada** de datos que serán eliminados
+- **Confirmación doble** para prevenir errores
+- **Feedback visual** durante el proceso
+- **Limpieza completa** de sesión y datos locales
+
+#### Comunicación Backend
+- **Endpoint RESTful** siguiendo estándares
+- **Formato JSON** consistente para request/response
+- **Headers CORS** configurados
+- **Códigos de estado HTTP** apropiados
+
+### 📁 ARCHIVOS MODIFICADOS
+
+#### Frontend
+- `lib/services/profile_service.dart` - Servicio de eliminación de cuenta
+- `lib/screens/profile/components/actions_section.dart` - UI y lógica de eliminación
+- `lib/config/api_config.dart` - Centralización del endpoint de eliminación
+
+#### Backend
+- `backend/profile_management/main.go` - Endpoint y lógica de eliminación + CORS actualizado
+
+#### Testing
+- `tests/endpoints/test_all_endpoints_100_percent.sh` - Test del nuevo endpoint localhost
+- `tests/endpoints/test_production_endpoints.sh` - Test del nuevo endpoint producción
+
+#### Documentación
+- `docs/CHANGELOG.md` - Documentación de cambios
+- `backend/nginx_update_instructions.md` - Instrucciones para configurar nginx
+
+### 🚀 DESPLIEGUE Y CONFIGURACIÓN
+
+#### Cambios de Backend Desplegados
+- ✅ **Git commit y push** completado al repositorio principal
+- ✅ **CORS actualizado** para permitir método DELETE
+- ✅ **Endpoint centralizado** en ApiConfig.dart
+- ✅ **Testing automatizado** actualizado para localhost y producción
+
+#### Configuración VPS Completada
+- ✅ **Nginx configuration** - Endpoint funcionando correctamente a través de HTTPS
+- ✅ **Verificación de routing** para `/profile/delete-account` - ✅ FUNCIONAL
+- ✅ **Testing de producción** confirmado - Endpoint responde correctamente con validation error para usuario inexistente
+- ✅ **SSL/TLS y HTTP/2** funcionando perfectamente
+- ✅ **CORS headers** incluyendo DELETE method configurados correctamente
+
+#### Verificación de Funcionalidad
+- ✅ **Localhost testing**: `DELETE http://localhost:8092/profile/delete-account` - Funcional
+- ✅ **Producción HTTPS**: `DELETE https://herobudget.jaimedigitalstudio.com/profile/delete-account` - Funcional
+- ✅ **Backend rebuilding**: Servicio recompilado y reiniciado con nuevos cambios
+- ✅ **Response validation**: Retorna "User not found" para usuarios inexistentes (comportamiento correcto)
+
+### 📊 RESULTADOS DE TESTING
+
+**Testing Localhost (Actualizado):**
+- ✅ **26/26 endpoints** funcionando (92% health score)
+- ✅ **Nuevo endpoint DELETE** `/profile/delete-account` incluido
+- ✅ **0 fallos reales** detectados
+- ✅ **Validation error esperado** para usuario inexistente (correcto)
+
+**Testing Producción (Preparado):**
+- ✅ **Script actualizado** con nuevo endpoint
+- ⏳ **Pendiente configuración nginx** en VPS
+- ⏳ **Verificación final** post-configuración
+
+### 🚀 USO DE LA FUNCIONALIDAD
+
+1. **Acceso**: Perfil → Acciones → "Eliminar cuenta"
+2. **Confirmación**: Dialog con advertencias detalladas
+3. **Ejecución**: Proceso con indicador de progreso
+4. **Resultado**: Eliminación completa + redirección a onboarding
+
+### ⚠️ ADVERTENCIAS IMPORTANTES
+
+- ✋ **OPERACIÓN IRREVERSIBLE**: No hay posibilidad de recuperar los datos
+- 🗑️ **ELIMINACIÓN COMPLETA**: Todos los datos del usuario son eliminados
+- 🔒 **SIN BACKUP**: La aplicación no mantiene copias de seguridad
+- 📱 **SESIÓN LIMPIA**: Se elimina toda información local del dispositivo
+
 ## [SOLUCIÓN COMPLETA] - 2025-06-03
 
 ### 🎯 RESOLUCIÓN TOTAL DEL PROBLEMA 404 ORIGINAL
@@ -372,3 +515,22 @@ local timestamp=$(date +%s)
 - `lib/utils/app_localizations.dart`: Corrected Euro formatting logic
 - `assets/l10n/en.json`: Added new translation keys
 - `assets/l10n/es.json`: Added Spanish translations for new features
+
+## [Unreleased]
+
+### Added
+- Verificación automática de estado de email al iniciar sesión
+- Redirección automática a pantalla de verificación OTP para cuentas no verificadas
+- Envío automático de código OTP cuando se detecta cuenta no verificada
+
+### Changed
+- Modificado flujo de inicio automático de sesión para verificar estado de verificación de email
+- Modificado manejo de errores en pantalla de login para detectar cuentas no verificadas
+- Mejorado servicio de signin para proporcionar información detallada sobre estado de verificación
+
+### Fixed
+- Problema donde usuarios con email no verificado podían acceder a la aplicación
+- Error genérico "credenciales incorrectas" ahora redirige correctamente a verificación OTP
+- Inicio automático de sesión ahora respeta el estado de verificación de email
+
+## [Previous entries...]

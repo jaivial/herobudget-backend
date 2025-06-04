@@ -100,6 +100,7 @@ func main() {
 	http.HandleFunc("/profile/ping", corsMiddleware(handlePing))
 	http.HandleFunc("/profile/test-image-update", corsMiddleware(handleTestImageUpdate))
 	http.HandleFunc("/update/locale", corsMiddleware(handleLocaleUpdate))
+	http.HandleFunc("/profile/delete-account", corsMiddleware(handleDeleteAccount))
 
 	port := 8092 // Asignamos el puerto 8092 para el servicio de profile_management
 	log.Printf("Profile Management service started on :%d", port)
@@ -110,7 +111,7 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Set headers
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 		// If it's OPTIONS, return with just the headers (preflight request)
@@ -538,10 +539,114 @@ func handleLocaleUpdate(w http.ResponseWriter, r *http.Request) {
 
 	// Return success
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(ApiResponse{
+	response := ApiResponse{
 		Success: true,
 		Message: "Locale updated successfully",
-	})
+		Data:    req,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// DeleteAccountRequest structure for handling account deletion requests
+type DeleteAccountRequest struct {
+	UserID int `json:"user_id"`
+}
+
+// handleDeleteAccount handles the complete deletion of user account and all associated data
+func handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req DeleteAccountRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("Delete Account: Invalid request body: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("DELETE ACCOUNT: Iniciando eliminación completa para usuario ID: %d", req.UserID)
+
+	// Verificar que el usuario existe antes de eliminarlo
+	var user User
+	if err := getUserById(req.UserID, &user); err != nil {
+		log.Printf("DELETE ACCOUNT: Usuario no encontrado: %v", err)
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	log.Printf("DELETE ACCOUNT: Usuario encontrado: %s (%d)", user.Email, user.ID)
+
+	// Iniciar transacción para garantizar atomicidad
+	tx, err := db.Begin()
+	if err != nil {
+		log.Printf("DELETE ACCOUNT: Error iniciando transacción: %v", err)
+		http.Error(w, "Database transaction failed", http.StatusInternalServerError)
+		return
+	}
+	defer tx.Rollback()
+
+	// Lista de tablas a limpiar (orden importante por las foreign keys)
+	tables := []string{
+		"categories",
+		"cash_bank_transactions",
+		"cash_bank",
+		"daily_balance",
+		"weekly_balance",
+		"monthly_balance",
+		"daily_cash_bank_balance",
+		"weekly_cash_bank_balance",
+		"monthly_cash_bank_balance",
+		"bills",
+		"expenses",
+		"incomes",
+		"savings",
+		"balances",
+		"users",
+	}
+
+	userIDStr := fmt.Sprintf("%d", req.UserID)
+
+	// Eliminar registros de todas las tablas
+	for _, table := range tables {
+		var query string
+
+		// Para la tabla users, usar 'id' como campo
+		if table == "users" {
+			query = fmt.Sprintf("DELETE FROM %s WHERE id = ?", table)
+		} else {
+			// Para el resto de tablas, usar 'user_id' como campo
+			query = fmt.Sprintf("DELETE FROM %s WHERE user_id = ?", table)
+		}
+
+		result, err := tx.Exec(query, userIDStr)
+		if err != nil {
+			log.Printf("DELETE ACCOUNT: Error eliminando de tabla %s: %v", table, err)
+			http.Error(w, fmt.Sprintf("Failed to delete from %s", table), http.StatusInternalServerError)
+			return
+		}
+
+		rowsAffected, _ := result.RowsAffected()
+		log.Printf("DELETE ACCOUNT: Eliminados %d registros de tabla %s", rowsAffected, table)
+	}
+
+	// Confirmar la transacción
+	if err := tx.Commit(); err != nil {
+		log.Printf("DELETE ACCOUNT: Error confirmando transacción: %v", err)
+		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("DELETE ACCOUNT: Eliminación completa exitosa para usuario %s (%d)", user.Email, user.ID)
+
+	// Responder con éxito
+	w.Header().Set("Content-Type", "application/json")
+	response := ApiResponse{
+		Success: true,
+		Message: fmt.Sprintf("Cuenta y todos los datos del usuario %s eliminados exitosamente", user.Email),
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func getUserById(userID int, user *User) error {

@@ -309,4 +309,101 @@ class ProfileService {
       rethrow;
     }
   }
+
+  /// Elimina completamente la cuenta del usuario y todos sus datos
+  ///
+  /// Esta operación es irreversible y eliminará todos los datos del usuario
+  /// incluyendo transacciones, facturas, balances y configuraciones
+  static Future<bool> deleteAccount({required int userId}) async {
+    try {
+      if (kDebugMode) {
+        print(
+          'ProfileService.deleteAccount: Iniciando eliminación para usuario $userId',
+        );
+      }
+
+      // Preparar la URL del endpoint de eliminación
+      final Uri uri = Uri.parse(ApiConfig.profileDeleteAccountEndpoint);
+
+      // Construir el cuerpo de la solicitud
+      final Map<String, dynamic> requestBody = {'user_id': userId};
+
+      // Convertir a JSON
+      final String jsonBody = jsonEncode(requestBody);
+
+      if (kDebugMode) {
+        print('ProfileService.deleteAccount: Enviando solicitud a $uri');
+      }
+
+      // Enviar la solicitud de eliminación
+      final http.Response response = await http.delete(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonBody,
+      );
+
+      // Verificar la respuesta
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+
+        if (jsonResponse['success'] == true) {
+          if (kDebugMode) {
+            print('ProfileService.deleteAccount: Eliminación exitosa');
+            print('ProfileService.deleteAccount: ${jsonResponse['message']}');
+          }
+
+          // Limpiar datos locales después de eliminar la cuenta
+          await _clearAllLocalData();
+
+          return true;
+        } else {
+          throw Exception(
+            jsonResponse['message'] ?? 'Error al eliminar la cuenta',
+          );
+        }
+      } else {
+        if (kDebugMode) {
+          print('ProfileService.deleteAccount: Error ${response.statusCode}');
+          print('ProfileService.deleteAccount: ${response.body}');
+        }
+        throw Exception('Error ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ProfileService.deleteAccount: Excepción: $e');
+      }
+      rethrow;
+    }
+  }
+
+  /// Limpia todos los datos locales del usuario
+  ///
+  /// Método privado que se ejecuta después de eliminar la cuenta
+  /// para limpiar SharedPreferences y otros datos locales
+  static Future<void> _clearAllLocalData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Limpiar todas las claves relacionadas con el usuario
+      final keys = prefs.getKeys();
+      for (final key in keys) {
+        if (key.startsWith('user_') ||
+            key.startsWith('auth_') ||
+            key.startsWith('token_') ||
+            key.startsWith('language_') ||
+            key.contains('signin_service') ||
+            key.contains('profile_')) {
+          await prefs.remove(key);
+        }
+      }
+
+      if (kDebugMode) {
+        print('ProfileService._clearAllLocalData: Datos locales limpiados');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('ProfileService._clearAllLocalData: Error: $e');
+      }
+    }
+  }
 }

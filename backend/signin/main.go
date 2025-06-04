@@ -216,6 +216,7 @@ func handleSignIn(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(SignInResponse{
 			Success: false,
 			Message: "Email not verified. Please check your inbox for verification email.",
+			User:    user,
 		})
 		return
 	}

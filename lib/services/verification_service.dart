@@ -83,7 +83,7 @@ class VerificationService {
   // Verify email with code
   static Future<Map<String, dynamic>> verifyEmail(String code) async {
     try {
-      print('Starting verification attempt with OTP code: $code');
+      print('🔐 Starting verification attempt with OTP code: $code');
 
       // First, check if we have a locally stored userId and email
       final prefs = await SharedPreferences.getInstance();
@@ -91,25 +91,51 @@ class VerificationService {
       final userDataStr = prefs.getString('user_data');
       String? email;
 
+      print('📱 Checking local storage for user data...');
+      print('   - User ID: $userId');
+      print(
+        '   - User Data String: ${userDataStr != null ? 'Found' : 'Not found'}',
+      );
+
       if (userDataStr != null) {
         try {
           final userData = jsonDecode(userDataStr);
           email = userData['email'] as String?;
-          print('Found locally stored email: $email for OTP verification');
+          print('✅ Found locally stored email: $email for OTP verification');
         } catch (e) {
-          print('Error parsing user data: $e');
+          print('❌ Error parsing user data: $e');
         }
       }
+
+      if (email == null) {
+        print(
+          '⚠️  Warning: No email found in local storage, proceeding with null email',
+        );
+      }
+
+      // Try multiple possible parameter formats that the server might expect
+      final requestBody = {
+        'email': email,
+        'code': code, // Primary parameter name
+        'verification_code': code, // Fallback parameter name
+        'otp': code, // Alternative parameter name
+      };
+
+      print(
+        '📤 Sending verification request to: ${ApiConfig.signupVerifyEmailEndpoint}',
+      );
+      print('📤 Request body: ${jsonEncode(requestBody)}');
 
       final response = await http.post(
         Uri.parse(ApiConfig.signupVerifyEmailEndpoint),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'verification_code': code}),
+        body: jsonEncode(requestBody),
       );
 
-      print(
-        'Verify email with OTP response: ${response.statusCode} - ${response.body}',
-      );
+      print('📥 Verify email response:');
+      print('   - Status Code: ${response.statusCode}');
+      print('   - Response Body: ${response.body}');
+      print('   - Headers: ${response.headers}');
 
       if (response.statusCode == 200) {
         // Successful verification

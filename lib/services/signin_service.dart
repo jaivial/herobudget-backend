@@ -32,6 +32,23 @@ class SignInService {
 
         return {'success': true, 'user_data': userData};
       } else {
+        // Check if the error is due to unverified email
+        // Look for user data in the response even if login failed
+        if (data.containsKey('user') && data['user'] != null) {
+          final userData = data['user'];
+          final bool isEmailVerified = userData['verified_email'] ?? false;
+
+          if (!isEmailVerified) {
+            // User exists but email is not verified
+            return {
+              'success': false,
+              'error_type': 'email_not_verified',
+              'user_data': userData,
+              'message': data['message'] ?? 'Email not verified',
+            };
+          }
+        }
+
         return {
           'success': false,
           'error_type': 'invalid_credentials',

@@ -206,6 +206,8 @@ Contiene los servicios que implementan la lógica de negocio y la comunicación 
 - `income_service.dart`: Gestiona los ingresos del usuario.
 - `bills_service.dart`: Gestiona las facturas recurrentes.
 - `savings_service.dart`: Gestiona las metas de ahorro.
+- `signin_service.dart`: Manejo de inicio de sesión manual
+- `verification_service.dart`: Manejo de verificación de email y códigos OTP
 
 #### 4. Utils (`lib/utils/`)
 Contiene utilidades y extensiones para facilitar el desarrollo.
@@ -335,6 +337,62 @@ La aplicación implementa un sistema completo de localización que soporta 14 id
 - `docs/UI_UX_GUIDE.md`: Guía de estilo y diseño visual.
 - `docs/DATABASE_SCHEMA.md`: Documentación de la estructura de la base de datos.
 - `docs/CHANGELOG.md`: Historial de cambios en el proyecto.
+
+## Servicios de Autenticación
+
+### SignInService (`lib/services/signin_service.dart`)
+- **Función principal**: Manejo de inicio de sesión manual
+- **Cambios recientes**: 
+  - Detección mejorada de cuentas no verificadas
+  - Retorno de información detallada sobre estado de verificación
+  - Manejo de errores específicos para email no verificado
+
+### VerificationService (`lib/services/verification_service.dart`)
+- **Función principal**: Manejo de verificación de email y códigos OTP
+- **Funcionalidades**:
+  - Envío de códigos de verificación
+  - Verificación de códigos OTP
+  - Reenvío automático de códigos
+
+### AuthService (`lib/services/auth_service.dart`)
+- **Función principal**: Autenticación con Google y registro de usuarios
+- **Relación**: Trabaja en conjunto con SignInService para autenticación completa
+
+## Pantallas de Verificación
+
+### EmailOTPVerificationScreen (`lib/screens/verification/email_otp_verification_screen.dart`)
+- **Propósito**: Verificación obligatoria de email mediante código OTP
+- **Características**:
+  - Envío automático de código al inicializar
+  - Interfaz de 6 dígitos para código OTP
+  - Reenvío con cooldown de 60 segundos
+  - Verificación automática al completar código
+
+### Flujo de Navegación Actualizado
+```
+Inicio de App
+├── Usuario con sesión guardada
+│   ├── Email verificado → Dashboard
+│   └── Email NO verificado → EmailOTPVerificationScreen
+└── Usuario sin sesión → OnboardingScreen
+    └── Login manual
+        ├── Credenciales válidas + Email verificado → Dashboard
+        └── Credenciales válidas + Email NO verificado → EmailOTPVerificationScreen
+```
+
+## Archivos Principales Modificados
+
+### `lib/main.dart`
+- **Cambios**: 
+  - Verificación automática de estado de email en `_checkUserStatus()`
+  - Navegación condicional basada en verificación
+  - Envío automático de códigos OTP para cuentas no verificadas
+
+### `lib/screens/auth/signin_screen.dart`
+- **Cambios**:
+  - Manejo mejorado de errores de verificación
+  - Navegación automática a verificación OTP
+  - Eliminación de errores genéricos para cuentas no verificadas
 
 ---
 Última actualización: [Fecha actual] 

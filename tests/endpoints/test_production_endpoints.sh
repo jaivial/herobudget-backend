@@ -276,6 +276,10 @@ test_endpoint "POST" "/update/locale" \
 '{"user_id":"'$TEST_USER_ID'","locale":"es"}' \
 "👤 Locale Update" "success"
 
+test_endpoint "DELETE" "/profile/delete-account" \
+'{"user_id":"999999"}' \
+"👤 Account Delete (Test con usuario inexistente)" "validation_error"
+
 test_endpoint "GET" "/profile/ping?user_id=$TEST_USER_ID" \
 "" \
 "👤 Profile Ping" "success"

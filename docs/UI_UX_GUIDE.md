@@ -165,5 +165,45 @@ Este documento debe actualizarse cuando:
 3. Se cambian los estándares de diseño
 4. Se añaden nuevas funcionalidades con elementos visuales únicos
 
+## Flujo de Autenticación
+
+### Verificación de Email Obligatoria
+
+**Principio**: Ningún usuario puede acceder a la aplicación sin verificar su email.
+
+#### Comportamiento en Inicio Automático
+- Al abrir la app, si existe una sesión guardada, se verifica el estado de verificación del email
+- Si el email no está verificado, se redirige automáticamente a `EmailOTPVerificationScreen`
+- Se envía automáticamente un nuevo código OTP al email del usuario
+
+#### Comportamiento en Login Manual
+- Si el usuario intenta hacer login con credenciales válidas pero email no verificado:
+  - No se muestra error de "credenciales incorrectas"
+  - Se redirige automáticamente a `EmailOTPVerificationScreen`
+  - Se envía automáticamente un nuevo código OTP
+
+#### Pantalla de Verificación OTP
+- **Ubicación**: `lib/screens/verification/email_otp_verification_screen.dart`
+- **Funcionalidad**: 
+  - Campos de entrada para código de 6 dígitos
+  - Envío automático de código al cargar la pantalla
+  - Botón de reenvío con cooldown de 60 segundos
+  - Verificación automática al completar los 6 dígitos
+
+#### Estados de Navegación
+1. **Cuenta verificada**: Dashboard principal
+2. **Cuenta no verificada**: Pantalla de verificación OTP
+3. **Verificación exitosa**: Pantalla de éxito → Dashboard
+
+### Consistencia Visual
+- Mantener el mismo estilo de iconos y colores en todas las pantallas de verificación
+- Usar `AppTheme.getPrimaryColor(context)` para elementos principales
+- Mostrar feedback visual claro para estados de carga y error
+
+### Experiencia de Usuario
+- **Transparencia**: El usuario siempre sabe por qué está en la pantalla de verificación
+- **Automatización**: Códigos se envían automáticamente sin intervención del usuario
+- **Feedback**: Mensajes claros sobre el estado de envío y verificación de códigos
+
 ---
 Última actualización: 2023-10-31 

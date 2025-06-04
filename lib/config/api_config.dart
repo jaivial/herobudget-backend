@@ -251,6 +251,8 @@ class ApiConfig {
   );
   static String get profileUpdateLocaleEndpoint =>
       _buildServiceUrl('/update/locale', profileManagementServicePort);
+  static String get profileDeleteAccountEndpoint =>
+      _buildServiceUrl('/profile/delete-account', profileManagementServicePort);
 
   // 📈 Transaction & Dashboard Endpoints
   static String get transactionHistoryEndpoint =>
@@ -416,6 +418,7 @@ class ApiConfig {
     'profilePing': profilePingEndpoint,
     'profileTestImageUpdate': profileTestImageUpdateEndpoint,
     'profileUpdateLocale': profileUpdateLocaleEndpoint,
+    'profileDeleteAccount': profileDeleteAccountEndpoint,
 
     // 📈 Transaction & Dashboard Endpoints
     'transactionHistoryEndpoint': transactionHistoryEndpoint,

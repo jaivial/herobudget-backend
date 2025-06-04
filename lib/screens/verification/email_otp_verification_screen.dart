@@ -43,6 +43,10 @@ class _EmailOTPVerificationScreenState
   @override
   void initState() {
     super.initState();
+
+    // Send a new verification code automatically when accessing from login
+    _sendInitialVerificationCode();
+
     // Set up focus listeners for OTP fields
     for (int i = 0; i < 6; i++) {
       _focusNodes[i].addListener(() {
@@ -205,6 +209,57 @@ class _EmailOTPVerificationScreenState
     });
   }
 
+  // Send initial verification code when screen loads
+  Future<void> _sendInitialVerificationCode() async {
+    try {
+      final result = await VerificationService.resendVerificationEmail(
+        widget.userId,
+        widget.userInfo['email'],
+      );
+
+      if (result['success']) {
+        print('Initial verification code sent successfully');
+      } else {
+        print('Failed to send initial verification code: ${result['error']}');
+        // Don't show error to user as this is background operation
+      }
+    } catch (e) {
+      print('Error sending initial verification code: $e');
+      // Don't show error to user as this is background operation
+    }
+  }
+
+  // Handle paste functionality to distribute code across all fields
+  void _handlePaste(String pastedText, int currentIndex) {
+    // Remove any non-digit characters
+    final cleanedText = pastedText.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // If the pasted text is 6 digits (full OTP), distribute it
+    if (cleanedText.length == 6) {
+      for (int i = 0; i < 6; i++) {
+        _otpControllers[i].text = cleanedText[i];
+      }
+
+      // Auto-verify the complete OTP
+      if (_getCompleteOtp().length == 6) {
+        _verifyEmail();
+      }
+
+      // Move focus to the last field
+      _focusNodes[5].requestFocus();
+    } else if (cleanedText.isNotEmpty) {
+      // For partial text, fill from current position
+      int startIndex = currentIndex;
+      for (int i = 0; i < cleanedText.length && startIndex + i < 6; i++) {
+        _otpControllers[startIndex + i].text = cleanedText[i];
+      }
+
+      // Move focus to the next empty field or last field
+      int nextIndex = (startIndex + cleanedText.length).clamp(0, 5);
+      _focusNodes[nextIndex].requestFocus();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -279,49 +334,91 @@ class _EmailOTPVerificationScreenState
                     (index) => SizedBox(
                       width: 45,
                       height: 55,
-                      child: TextField(
-                        controller: _otpControllers[index],
-                        focusNode: _focusNodes[index],
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        maxLength: 1,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        decoration: InputDecoration(
-                          counterText: '',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: AppTheme.getPrimaryColor(
-                                context,
-                              ).withOpacity(0.3),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(
-                              color: AppTheme.getPrimaryColor(context),
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        onChanged: (value) {
-                          if (value.isNotEmpty && index < 5) {
-                            _focusNodes[index + 1].requestFocus();
-                          }
-                          // Auto-verify when all fields are filled
-                          if (index == 5 && value.isNotEmpty) {
-                            if (_getCompleteOtp().length == 6) {
-                              _verifyEmail();
+                      child: GestureDetector(
+                        onLongPress: () async {
+                          // Handle long press to show paste option
+                          final clipboardData = await Clipboard.getData(
+                            Clipboard.kTextPlain,
+                          );
+                          if (clipboardData?.text != null) {
+                            final clipboardText = clipboardData!.text!;
+                            final digitsOnly = clipboardText.replaceAll(
+                              RegExp(r'[^0-9]'),
+                              '',
+                            );
+                            if (digitsOnly.length == 6) {
+                              _handlePaste(clipboardText, index);
                             }
                           }
                         },
+                        child: TextField(
+                          controller: _otpControllers[index],
+                          focusNode: _focusNodes[index],
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          maxLength: 1,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: InputDecoration(
+                            counterText: '',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.getPrimaryColor(
+                                  context,
+                                ).withOpacity(0.3),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppTheme.getPrimaryColor(context),
+                                width: 2,
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          onChanged: (value) {
+                            // Handle manual typing
+                            if (value.isNotEmpty && index < 5) {
+                              _focusNodes[index + 1].requestFocus();
+                            }
+                            // Handle backspace navigation
+                            if (value.isEmpty && index > 0) {
+                              _focusNodes[index - 1].requestFocus();
+                            }
+                            // Auto-verify when all fields are filled
+                            if (index == 5 && value.isNotEmpty) {
+                              if (_getCompleteOtp().length == 6) {
+                                _verifyEmail();
+                              }
+                            }
+                          },
+                          onTap: () {
+                            // Handle clipboard paste when tapping on field
+                            Clipboard.getData(Clipboard.kTextPlain).then((
+                              clipboardData,
+                            ) {
+                              if (clipboardData?.text != null) {
+                                final clipboardText = clipboardData!.text!;
+                                // Check if clipboard contains a potential OTP (6 digits)
+                                final digitsOnly = clipboardText.replaceAll(
+                                  RegExp(r'[^0-9]'),
+                                  '',
+                                );
+                                if (digitsOnly.length == 6) {
+                                  // Show paste option or automatically paste
+                                  _handlePaste(clipboardText, index);
+                                }
+                              }
+                            });
+                          },
+                        ),
                       ),
                     ),
                   ),

@@ -120,6 +120,10 @@ test_endpoint "POST" "http://localhost:8092/update/locale" \
 '{"user_id":"36","locale":"es"}' \
 "⭐ Locale Update (NUEVO)" "success"
 
+test_endpoint "DELETE" "http://localhost:8092/profile/delete-account" \
+'{"user_id":"999999"}' \
+"⭐ Account Delete (NUEVO - Test con usuario inexistente)" "validation_error"
+
 echo -e "${CYAN}📊 DASHBOARD/USER MANAGEMENT - ⭐ NUEVO ENDPOINT:${NC}"
 
 test_endpoint "POST" "http://localhost:8085/user/update" \

@@ -10,6 +10,7 @@ import '../dashboard/dashboard_screen.dart';
 import '../reset_password/reset_password_screen.dart';
 import '../verification/email_verification_screen.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../verification/email_otp_verification_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -132,7 +133,22 @@ class _SignInScreenState extends State<SignInScreen> {
           // Handle errors
           setState(() {
             _isLoading = false;
-            if (result['error_type'] == 'invalid_credentials') {
+            if (result['error_type'] == 'email_not_verified') {
+              // User exists but email is not verified - navigate to OTP verification
+              final userData = result['user_data'];
+
+              // Navigate to OTP verification screen instead of showing error
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => EmailOTPVerificationScreen(
+                        userId: userData['id'].toString(),
+                        userInfo: userData,
+                      ),
+                ),
+              );
+            } else if (result['error_type'] == 'invalid_credentials') {
               _passwordError = context.tr.translate('invalid_credentials');
             } else if (result['error_type'] == 'email_not_found') {
               _emailError = context.tr.translate('email_not_found');
