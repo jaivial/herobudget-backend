@@ -1287,10 +1287,17 @@ class _PayBillScreenState extends State<PayBillScreen> {
     });
 
     try {
+      // Obtener el year_month de la fecha de vencimiento de la factura
+      final dueDate = DateTime.parse(_selectedInvoice!.dueDate);
+      final yearMonth =
+          '${dueDate.year.toString().padLeft(4, '0')}-${dueDate.month.toString().padLeft(2, '0')}';
+
       // Llamar al servicio para pagar la factura
       final success = await _invoiceService.payInvoice(
         _selectedInvoice!.id,
         _paymentMethod,
+        yearMonth:
+            yearMonth, // Pasar el mes específico basado en la fecha de vencimiento
       );
 
       if (success) {

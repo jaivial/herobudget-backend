@@ -576,7 +576,7 @@ class DashboardService {
               fromPrevious:
                   budgetData['money_flow']['from_previous']?.toDouble() ?? 0.0,
             ),
-            remainingAmount: budgetData['remaining_amount']?.toDouble() ?? 0.0,
+            remainingAmount: budgetData['total_balance']?.toDouble() ?? 0.0,
             totalAmount: budgetData['total_amount']?.toDouble() ?? 0.0,
             spentAmount: budgetData['spent_amount']?.toDouble() ?? 0.0,
             upcomingAmount: budgetData['upcoming_amount']?.toDouble() ?? 0.0,

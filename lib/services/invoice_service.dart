@@ -160,17 +160,18 @@ class InvoiceService {
         throw Exception('User not authenticated');
       }
 
+      // Si no se proporciona yearMonth, usar el mes actual como valor por defecto
+      final String effectiveYearMonth =
+          yearMonth ??
+          DateTime.now().toIso8601String().substring(0, 7); // Formato YYYY-MM
+
       // Crear el cuerpo de la solicitud
       final Map<String, dynamic> requestBody = {
         'user_id': userId,
         'bill_id': invoiceId,
         'payment_method': paymentMethod, // 'cash' o 'bank'
+        'year_month': effectiveYearMonth, // Campo requerido por el backend
       };
-
-      // Añadir yearMonth si se proporciona (nuevo sistema)
-      if (yearMonth != null && yearMonth.isNotEmpty) {
-        requestBody['year_month'] = yearMonth;
-      }
 
       // Añadir descripción si se proporciona
       if (description != null && description.isNotEmpty) {

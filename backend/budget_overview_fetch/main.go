@@ -832,11 +832,11 @@ func findLastAvailablePeriod(tableName, userID, originalDate, period string) (*B
 			&expenseBankAmount, &expenseCashAmount, &billBankAmount, &billCashAmount)
 
 		if err == nil {
-			// Found data! Calculate inherited balance including all movements from the last period
-			// Formula: total_previous_balance + income_bank_amount + income_cash_amount - expense_bank_amount - expense_cash_amount - bill_cash_amount - bill_bank_amount
-			inheritedBalance := totalPreviousBalance + incomeBankAmount + incomeCashAmount - expenseBankAmount - expenseCashAmount - billCashAmount - billBankAmount
+			// Found data! Use the total_balance from the last available period
+			// For future periods without data, inherit the exact total_balance from the last available period
+			inheritedTotalBalance := totalBalance
 
-			// Create a clean BalanceData with only the inherited balance as total_previous_balance
+			// Create a clean BalanceData with only the inherited balance as both total_previous_balance and total_balance
 			// All other fields remain 0 for the future period
 			data := &BalanceData{
 				IncomeBankAmount:     0,
@@ -851,12 +851,12 @@ func findLastAvailablePeriod(tableName, userID, originalDate, period string) (*B
 				PreviousCashAmount:   0,
 				BalanceCashAmount:    0,
 				BalanceBankAmount:    0,
-				TotalPreviousBalance: inheritedBalance,
-				TotalBalance:         0, // Will be calculated based on future period activity
+				TotalPreviousBalance: inheritedTotalBalance,
+				TotalBalance:         inheritedTotalBalance, // Use the last available total_balance
 			}
 
-			log.Printf("📊 Balance inheritance: Using balance %.2f (%.2f + %.2f + %.2f - %.2f - %.2f - %.2f - %.2f) from %s as total_previous_balance for requested period %s (user: %s)",
-				inheritedBalance, totalPreviousBalance, incomeBankAmount, incomeCashAmount, expenseBankAmount, expenseCashAmount, billCashAmount, billBankAmount, previousDate, originalDate, userID)
+			log.Printf("📊 Balance inheritance: Using total_balance %.2f from %s as total_balance for requested period %s (user: %s)",
+				inheritedTotalBalance, previousDate, originalDate, userID)
 			return data, nil
 		}
 

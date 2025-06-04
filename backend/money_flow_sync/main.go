@@ -201,6 +201,7 @@ func syncMoneyFlow(userID, period string) (*BudgetData, error) {
 	// Get upcoming bills amount
 	upcomingAmount, err := getUpcomingBillsAmount(userID, startDate, endDate)
 	if err != nil {
+		log.Printf("Error getting upcoming bills amount: %v", err)
 		return nil, fmt.Errorf("error getting upcoming bills amount: %v", err)
 	}
 	log.Printf("Upcoming amount: %.2f", upcomingAmount)
@@ -292,88 +293,101 @@ func getDateRangeForPeriod(period string) (string, string) {
 }
 
 func getPreviousPeriodData(userID, currentPeriod string) (string, float64) {
-	// Define the previous period based on the current period
-	var previousPeriod string
-	var queryDateCondition string
+	// Para el cálculo del flujo de dinero, necesitamos el previous_amount del MES ACTUAL
+	// no del mes anterior. Esto es porque previous_amount ya contiene el balance heredado.
 
 	now := time.Now()
 
 	switch currentPeriod {
-	case "daily":
-		// Previous day
-		previousPeriod = "daily"
-		previousDate := now.AddDate(0, 0, -1).Format("2006-01-02")
-		queryDateCondition = fmt.Sprintf("AND date = '%s'", previousDate)
-	case "weekly":
-		// Previous week
-		previousPeriod = "weekly"
-		// Get the date for the previous week (7 days ago)
-		previousWeekStart := now.AddDate(0, 0, -7).Format("2006-01-02")
-		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousWeekStart)
 	case "monthly":
-		// Previous month
-		previousPeriod = "monthly"
-		// Get the date for the previous month
-		previousMonthStart := time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
-		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousMonthStart)
-	case "quarterly":
-		// Previous quarter
-		previousPeriod = "quarterly"
-		// Calculate the start of the previous quarter
-		currentQuarter := (int(now.Month())-1)/3 + 1
-		previousQuarter := currentQuarter - 1
-		var year int
-		if previousQuarter <= 0 {
-			previousQuarter = 4
-			year = now.Year() - 1
-		} else {
-			year = now.Year()
+		// Obtener el año-mes actual
+		currentYearMonth := now.Format("2006-01")
+
+		log.Printf("🔍 DEBUG: Looking for previous_amounts for user %s, month %s", userID, currentYearMonth)
+
+		// Consultar la tabla monthly_cash_bank_balance para obtener los previous_amounts del mes actual
+		query := `
+			SELECT 
+				COALESCE(previous_cash_amount, 0) + COALESCE(previous_bank_amount, 0) as total_previous
+			FROM monthly_cash_bank_balance
+			WHERE user_id = ? AND year_month = ?
+		`
+
+		var totalPrevious float64
+		err := db.QueryRow(query, userID, currentYearMonth).Scan(&totalPrevious)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				log.Printf("🔍 DEBUG: No record found in monthly_cash_bank_balance for user %s, month %s", userID, currentYearMonth)
+			} else {
+				log.Printf("🔍 DEBUG: Error getting previous amounts from monthly_cash_bank_balance: %v", err)
+			}
+			// Si no hay registro, devolver 0 (no hay balance heredado)
+			return "monthly", 0
 		}
-		previousQuarterStart := time.Date(year, time.Month((previousQuarter-1)*3+1), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
-		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousQuarterStart)
-	case "semiannual":
-		// Previous half-year
-		previousPeriod = "semiannual"
-		// Calculate the start of the previous half year
-		currentHalf := (int(now.Month())-1)/6 + 1
-		previousHalf := currentHalf - 1
-		var year int
-		if previousHalf <= 0 {
-			previousHalf = 2
-			year = now.Year() - 1
-		} else {
-			year = now.Year()
+
+		log.Printf("📊 Found previous amounts for %s: total_previous=%.2f", currentYearMonth, totalPrevious)
+		return "monthly", totalPrevious
+
+	case "daily":
+		// Para períodos diarios, también buscamos en monthly_cash_bank_balance
+		currentYearMonth := now.Format("2006-01")
+
+		log.Printf("🔍 DEBUG: Looking for previous_amounts (daily) for user %s, month %s", userID, currentYearMonth)
+
+		query := `
+			SELECT 
+				COALESCE(previous_cash_amount, 0) + COALESCE(previous_bank_amount, 0) as total_previous
+			FROM monthly_cash_bank_balance
+			WHERE user_id = ? AND year_month = ?
+		`
+
+		var totalPrevious float64
+		err := db.QueryRow(query, userID, currentYearMonth).Scan(&totalPrevious)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				log.Printf("🔍 DEBUG: No record found in monthly_cash_bank_balance for user %s, month %s", userID, currentYearMonth)
+			} else {
+				log.Printf("🔍 DEBUG: Error getting previous amounts from monthly_cash_bank_balance: %v", err)
+			}
+			return "daily", 0
 		}
-		previousHalfStart := time.Date(year, time.Month((previousHalf-1)*6+1), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
-		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousHalfStart)
-	case "annual":
-		// Previous year
-		previousPeriod = "annual"
-		previousYearStart := time.Date(now.Year()-1, 1, 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
-		queryDateCondition = fmt.Sprintf("AND date <= '%s' ORDER BY date DESC", previousYearStart)
+
+		return "daily", totalPrevious
+
+	case "weekly":
+		// Para períodos semanales, también buscamos en monthly_cash_bank_balance del mes actual
+		currentYearMonth := now.Format("2006-01")
+
+		log.Printf("🔍 DEBUG: Looking for previous_amounts (weekly) for user %s, month %s", userID, currentYearMonth)
+
+		query := `
+			SELECT 
+				COALESCE(previous_cash_amount, 0) + COALESCE(previous_bank_amount, 0) as total_previous
+			FROM monthly_cash_bank_balance
+			WHERE user_id = ? AND year_month = ?
+		`
+
+		var totalPrevious float64
+		err := db.QueryRow(query, userID, currentYearMonth).Scan(&totalPrevious)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				log.Printf("🔍 DEBUG: No record found in monthly_cash_bank_balance for user %s, month %s", userID, currentYearMonth)
+			} else {
+				log.Printf("🔍 DEBUG: Error getting previous amounts from monthly_cash_bank_balance: %v", err)
+			}
+			return "weekly", 0
+		}
+
+		return "weekly", totalPrevious
+
 	default:
-		// If the period is not recognized, don't try to get previous data
+		// Para otros períodos, mantener la lógica original como fallback
+		log.Printf("⚠️ Using fallback logic for period: %s", currentPeriod)
 		return "", 0
 	}
-
-	// Query to get the most recent budget entry for the previous period
-	query := fmt.Sprintf(`
-		SELECT remaining_amount FROM budget 
-		WHERE user_id = ? AND period = ? %s
-		LIMIT 1
-	`, queryDateCondition)
-
-	var remainingAmount float64
-	err := db.QueryRow(query, userID, previousPeriod).Scan(&remainingAmount)
-
-	if err != nil {
-		if err != sql.ErrNoRows {
-			log.Printf("Error getting previous period data: %v", err)
-		}
-		return "", 0
-	}
-
-	return previousPeriod, remainingAmount
 }
 
 func getTotalIncomeForPeriod(userID, startDate, endDate string) (float64, error) {
@@ -409,6 +423,42 @@ func getSpentAmountForPeriod(userID, startDate, endDate string) (float64, error)
 }
 
 func getUpcomingBillsAmount(userID, startDate, endDate string) (float64, error) {
+	// Para calcular las facturas pendientes, necesitamos consultar la tabla bill_payments
+	// y obtener las facturas que NO han sido pagadas en el período actual
+
+	// Convertir las fechas del período al formato year_month para consultar bill_payments
+	startTime, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		return 0, fmt.Errorf("error parsing start date: %v", err)
+	}
+
+	// Para períodos mensuales, usar el año-mes del startDate
+	yearMonth := startTime.Format("2006-01")
+
+	// Consultar bill_payments para obtener facturas NO pagadas del mes actual
+	query := `
+		SELECT COALESCE(SUM(b.amount), 0)
+		FROM bills b
+		INNER JOIN bill_payments bp ON b.id = bp.bill_id
+		WHERE bp.user_id = ? 
+		AND bp.year_month = ? 
+		AND bp.paid = 0
+	`
+
+	var upcomingAmount float64
+	err = db.QueryRow(query, userID, yearMonth).Scan(&upcomingAmount)
+	if err != nil {
+		log.Printf("Error getting upcoming bills amount from bill_payments: %v", err)
+		// Fallback a la lógica original si falla la nueva consulta
+		return getUpcomingBillsAmountFallback(userID, startDate, endDate)
+	}
+
+	log.Printf("📋 Found upcoming bills for %s: amount=%.2f", yearMonth, upcomingAmount)
+	return upcomingAmount, nil
+}
+
+// Función de fallback para mantener compatibilidad con la lógica original
+func getUpcomingBillsAmountFallback(userID, startDate, endDate string) (float64, error) {
 	query := `
 		SELECT amount, due_date, paid, recurring
 		FROM bills
@@ -440,6 +490,7 @@ func getUpcomingBillsAmount(userID, startDate, endDate string) (float64, error) 
 		return 0, err
 	}
 
+	log.Printf("📋 Fallback upcoming bills: amount=%.2f", upcomingAmount)
 	return upcomingAmount, nil
 }
 

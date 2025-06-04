@@ -413,20 +413,20 @@ class _UpcomingBillsWidgetState extends State<UpcomingBillsWidget> {
   }
 
   /// Helper method to convert Transaction to Invoice
-  Invoice _convertTransactionToInvoice(Transaction transaction) {
+  Invoice _convertTransactionToInvoice(Transaction bill) {
     return Invoice(
-      id: transaction.id,
-      name: transaction.name ?? transaction.displayName,
-      amount: transaction.amount,
-      dueDate: transaction.date,
-      paid: transaction.paid ?? false,
-      overdue: transaction.overdue ?? false,
-      overdueDays: transaction.overdueDays ?? 0,
-      recurring: transaction.recurring ?? false,
-      category: transaction.category,
-      icon: transaction.icon ?? 'receipt_long',
-      description: transaction.description,
-      paymentMethod: transaction.paymentMethod.value,
+      id: bill.id,
+      name: bill.name ?? 'Factura',
+      amount: bill.amount,
+      dueDate: bill.date,
+      paid: bill.paid ?? false,
+      overdue: bill.overdue ?? false,
+      overdueDays: bill.overdueDays ?? 0,
+      recurring: bill.recurring ?? false,
+      category: bill.category,
+      icon: bill.icon ?? 'receipt_long',
+      paymentMethod: bill.paymentMethod?.value ?? 'bank',
+      description: bill.description,
     );
   }
 }

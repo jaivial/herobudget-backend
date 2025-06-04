@@ -633,13 +633,45 @@ func handleFetchBills(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get bills from database
-	bills, err := fetchBills(userID)
+	// Get optional period and date parameters for period-specific queries
+	period := r.URL.Query().Get("period")
+	date := r.URL.Query().Get("date")
+
+	// If period is provided, we need a date to determine the specific period
+	var yearMonth string
+	if period != "" && date != "" {
+		// Calculate year-month based on period and date
+		parsedDate, err := time.Parse("2006-01-02", date)
+		if err != nil {
+			// Try parsing as YYYY-MM format
+			parsedDate, err = time.Parse("2006-01", date)
+			if err != nil {
+				sendErrorResponse(w, "Invalid date format, use YYYY-MM-DD or YYYY-MM", http.StatusBadRequest)
+				return
+			}
+		}
+
+		switch period {
+		case "monthly":
+			yearMonth = parsedDate.Format("2006-01")
+		case "daily":
+			yearMonth = parsedDate.Format("2006-01")
+		default:
+			yearMonth = parsedDate.Format("2006-01")
+		}
+
+		log.Printf("📅 Fetching bills for period %s, date %s, calculated year_month: %s", period, date, yearMonth)
+	}
+
+	// Get bills from database with period-specific information
+	bills, err := fetchBillsWithPeriod(userID, yearMonth)
 	if err != nil {
 		log.Printf("Error fetching bills: %v", err)
 		sendErrorResponse(w, "Error fetching bills", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("✅ Fetched %d bills for user %s (period: %s)", len(bills), userID, yearMonth)
 
 	// Return bills as JSON
 	sendSuccessResponse(w, "Bills fetched successfully", bills)
@@ -651,7 +683,6 @@ func handleAddBill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the request body
 	var addRequest AddBillRequest
 	err := json.NewDecoder(r.Body).Decode(&addRequest)
 	if err != nil {
@@ -659,124 +690,84 @@ func handleAddBill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate the request
+	// Validate required fields
 	if addRequest.UserID == "" {
 		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
 		return
 	}
-
 	if addRequest.Name == "" {
-		sendErrorResponse(w, "Name is required", http.StatusBadRequest)
+		sendErrorResponse(w, "Bill name is required", http.StatusBadRequest)
 		return
 	}
-
 	if addRequest.Amount <= 0 {
 		sendErrorResponse(w, "Amount must be greater than 0", http.StatusBadRequest)
 		return
 	}
-
-	// Validate duration
-	if addRequest.DurationMonths < 1 {
-		sendErrorResponse(w, "Duration must be at least 1 month", http.StatusBadRequest)
-		return
-	}
-
 	if addRequest.StartDate == "" {
 		sendErrorResponse(w, "Start date is required", http.StatusBadRequest)
 		return
 	}
-
-	if addRequest.Category == "" {
-		sendErrorResponse(w, "Category is required", http.StatusBadRequest)
+	if addRequest.PaymentDay < 1 || addRequest.PaymentDay > 28 {
+		sendErrorResponse(w, "Payment day must be between 1 and 28", http.StatusBadRequest)
+		return
+	}
+	if addRequest.DurationMonths < 1 {
+		sendErrorResponse(w, "Duration must be at least 1 month", http.StatusBadRequest)
+		return
+	}
+	if addRequest.PaymentMethod != "cash" && addRequest.PaymentMethod != "bank" {
+		sendErrorResponse(w, "Payment method must be 'cash' or 'bank'", http.StatusBadRequest)
 		return
 	}
 
-	if addRequest.Icon == "" {
-		// Default icon if not provided
-		addRequest.Icon = "bill"
-	}
-
-	// Set default payment method if not provided
-	if addRequest.PaymentMethod == "" {
-		addRequest.PaymentMethod = "bank"
-	}
-
-	// Set default regularity if not provided
-	if addRequest.Regularity == "" {
-		addRequest.Regularity = "monthly"
-	}
-
-	// Parse the start date
-	startDate, err := time.Parse("2006-01-02", addRequest.StartDate)
+	// Validate date format
+	_, err = time.Parse("2006-01-02", addRequest.StartDate)
 	if err != nil {
 		sendErrorResponse(w, "Invalid start date format, use YYYY-MM-DD", http.StatusBadRequest)
 		return
 	}
 
-	// Calculate overdue status based on first payment
-	overdueDays := 0
-	isOverdue := false
-	firstPaymentDate := getPaymentDateForMonth(startDate, addRequest.PaymentDay)
-	today := time.Now()
-	if today.After(firstPaymentDate) {
-		isOverdue = true
-		overdueDays = int(today.Sub(firstPaymentDate).Hours() / 24)
+	// Set defaults
+	if addRequest.Category == "" {
+		addRequest.Category = "general"
+	}
+	if addRequest.Icon == "" {
+		addRequest.Icon = "💳"
+	}
+	if addRequest.Regularity == "" {
+		addRequest.Regularity = "monthly"
 	}
 
-	// Create a bill object
-	bill := Bill{
-		UserID:         addRequest.UserID,
-		Name:           addRequest.Name,
-		Amount:         addRequest.Amount,
-		DueDate:        firstPaymentDate.Format("2006-01-02"), // Para compatibilidad
-		StartDate:      addRequest.StartDate,
-		PaymentDay:     addRequest.PaymentDay,
-		DurationMonths: addRequest.DurationMonths,
-		Regularity:     addRequest.Regularity,
-		Paid:           addRequest.Paid,
-		Overdue:        isOverdue,
-		OverdueDays:    overdueDays,
-		Recurring:      addRequest.Recurring,
-		Category:       addRequest.Category,
-		Icon:           addRequest.Icon,
-		PaymentMethod:  addRequest.PaymentMethod,
-	}
+	// Use the new algorithm to add the bill
+	billID, err := AddBillToBalance(
+		addRequest.UserID,
+		addRequest.Name,
+		addRequest.Amount,
+		addRequest.StartDate,
+		addRequest.PaymentDay,
+		addRequest.DurationMonths,
+		addRequest.PaymentMethod,
+		addRequest.Category,
+		addRequest.Icon,
+		addRequest.Regularity,
+	)
 
-	// Add the bill to the database
-	billID, err := addBill(bill)
 	if err != nil {
 		log.Printf("Error adding bill: %v", err)
 		sendErrorResponse(w, "Error adding bill", http.StatusInternalServerError)
 		return
 	}
 
-	// Set the ID of the newly added bill
-	bill.ID = billID
-
-	// Determinar los montos de cash y bank según el método de pago
-	var cashAmt, bankAmt float64
-	if addRequest.PaymentMethod == "cash" {
-		cashAmt = bill.Amount
-		bankAmt = 0
-	} else {
-		cashAmt = 0
-		bankAmt = bill.Amount
+	// Fetch the created bill for response
+	bill, err := fetchBillByID(billID, addRequest.UserID)
+	if err != nil {
+		log.Printf("Error fetching created bill: %v", err)
+		sendErrorResponse(w, "Bill created but error fetching details", http.StatusInternalServerError)
+		return
 	}
 
-	// Generar entradas en bill_payments para todos los meses de duración
-	if err := generateBillPayments(billID, addRequest.UserID, startDate, addRequest.PaymentDay, addRequest.DurationMonths, addRequest.Regularity); err != nil {
-		log.Printf("Error generating bill payments: %v", err)
-		// Continuar a pesar del error
-	}
-
-	// Actualizar monthly_cash_bank_balance para todos los meses de duración
-	if err := updateMonthlyBalancesForBillDuration(addRequest.UserID, cashAmt, bankAmt, startDate, addRequest.DurationMonths, addRequest.Regularity); err != nil {
-		log.Printf("Error updating monthly balances for bill duration: %v", err)
-		// Continuar a pesar del error
-	}
-
-	// Return success response
-	sendSuccessResponse(w, "Bill added successfully with recurring schedule", bill)
+	log.Printf("✅ Bill %d added successfully using new algorithm for user %s", billID, addRequest.UserID)
+	sendSuccessResponse(w, "Bill added successfully with correct balance algorithm", bill)
 }
 
 func handlePayBill(w http.ResponseWriter, r *http.Request) {
@@ -785,7 +776,6 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the request body
 	var payRequest PayBillRequest
 	err := json.NewDecoder(r.Body).Decode(&payRequest)
 	if err != nil {
@@ -798,12 +788,10 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
 		return
 	}
-
 	if payRequest.BillID <= 0 {
 		sendErrorResponse(w, "Valid bill ID is required", http.StatusBadRequest)
 		return
 	}
-
 	if payRequest.YearMonth == "" {
 		sendErrorResponse(w, "Year-month is required (format: YYYY-MM)", http.StatusBadRequest)
 		return
@@ -816,911 +804,195 @@ func handlePayBill(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the bill details
-	var bill Bill
-	err = db.QueryRow(`
-		SELECT id, user_id, name, amount, start_date, payment_day, duration_months, regularity, category, icon
-		FROM bills WHERE id = ? AND user_id = ?
-	`, payRequest.BillID, payRequest.UserID).Scan(
-		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.StartDate, &bill.PaymentDay, &bill.DurationMonths, &bill.Regularity, &bill.Category, &bill.Icon,
-	)
+	// Use the new algorithm to mark bill as paid (NO conversion to expense)
+	err = MarkBillAsPaid(payRequest.BillID, payRequest.UserID, payRequest.YearMonth)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			sendErrorResponse(w, "Bill not found", http.StatusNotFound)
-		} else {
-			log.Printf("Error fetching bill: %v", err)
-			sendErrorResponse(w, "Error fetching bill", http.StatusInternalServerError)
-		}
+		log.Printf("Error marking bill as paid: %v", err)
+		sendErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Check if this specific month is already paid
-	var alreadyPaid bool
-	err = db.QueryRow(`
-		SELECT paid FROM bill_payments 
-		WHERE bill_id = ? AND year_month = ?
-	`, payRequest.BillID, payRequest.YearMonth).Scan(&alreadyPaid)
-
+	// Get updated bill information
+	bill, err := fetchBillByID(payRequest.BillID, payRequest.UserID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			sendErrorResponse(w, "Payment record not found for this month", http.StatusNotFound)
-		} else {
-			log.Printf("Error checking payment status: %v", err)
-			sendErrorResponse(w, "Error checking payment status", http.StatusInternalServerError)
-		}
+		log.Printf("Error fetching bill details: %v", err)
+		sendErrorResponse(w, "Payment processed but error fetching bill details", http.StatusInternalServerError)
 		return
 	}
 
-	if alreadyPaid {
-		sendErrorResponse(w, "Bill for this month is already paid", http.StatusBadRequest)
-		return
-	}
-
-	// Default payment method to "bank" if not specified
-	paymentMethod := payRequest.PaymentMethod
-	if paymentMethod == "" {
-		paymentMethod = "bank"
-	}
-
-	// Mark this specific month as paid
-	paymentDate := time.Now().Format("2006-01-02")
-	_, err = db.Exec(`
-		UPDATE bill_payments
-		SET paid = 1, payment_date = ?, payment_method = ?
-		WHERE bill_id = ? AND year_month = ?
-	`, paymentDate, paymentMethod, payRequest.BillID, payRequest.YearMonth)
-
-	if err != nil {
-		log.Printf("Error marking bill payment as paid: %v", err)
-		sendErrorResponse(w, "Error marking bill payment as paid", http.StatusInternalServerError)
-		return
-	}
-
-	log.Printf("Bill %d payment for %s marked as paid with %s: $%.2f", bill.ID, payRequest.YearMonth, paymentMethod, bill.Amount)
-
-	// Reclasificar en monthly_cash_bank_balance de bill_xxx_amount a expense_xxx_amount
-	if err := reclassifyBillToExpenseInMonthlyBalance(payRequest.UserID, bill.Amount, paymentMethod, payRequest.YearMonth); err != nil {
-		log.Printf("⚠️ Error reclassifying bill to expense in monthly_cash_bank_balance: %v", err)
-		// Continuamos con el proceso, pero registramos el error
-	}
-
-	// Convertir el pago de la factura en un gasto
-	description := payRequest.Description
-	if description == "" {
-		description = fmt.Sprintf("Pago de factura: %s (%s)", bill.Name, payRequest.YearMonth)
-	}
-
-	expenseReq := BillToExpenseRequest{
-		UserID:        bill.UserID,
-		Amount:        bill.Amount,
-		Date:          paymentDate,
-		Category:      bill.Category,
-		PaymentMethod: paymentMethod,
-		Description:   description,
-	}
-
-	// Registrar el gasto en el servicio de expense_management
-	if err := createExpenseFromBill(expenseReq); err != nil {
-		log.Printf("Error converting bill payment to expense: %v", err)
-		// No fallamos la solicitud completa, solo registramos el error
-	} else {
-		log.Printf("Bill %d payment for %s successfully converted to expense", bill.ID, payRequest.YearMonth)
-	}
-
-	// Check if all payments for this bill are completed
+	// Get payment information for response
 	var totalPayments, paidPayments int
 	err = db.QueryRow(`
 		SELECT COUNT(*) as total, SUM(CASE WHEN paid = 1 THEN 1 ELSE 0 END) as paid_count
 		FROM bill_payments WHERE bill_id = ?
 	`, payRequest.BillID).Scan(&totalPayments, &paidPayments)
-
 	if err != nil {
-		log.Printf("Error checking bill completion status: %v", err)
+		log.Printf("Error getting payment stats: %v", err)
 	}
 
-	// Prepare response data
 	responseData := map[string]interface{}{
 		"bill_id":            bill.ID,
 		"paid_month":         payRequest.YearMonth,
 		"amount":             bill.Amount,
-		"payment_method":     paymentMethod,
+		"payment_method":     bill.PaymentMethod,
 		"total_payments":     totalPayments,
 		"completed_payments": paidPayments,
-		"bill_completed":     totalPayments > 0 && paidPayments >= totalPayments,
+		"bill_completed":     bill.Paid,
+		"bill_details":       bill,
+		"algorithm_note":     "Bill remains as bill (NOT converted to expense) with cascade balance recalculation",
 	}
 
-	// Return success response
-	sendSuccessResponse(w, fmt.Sprintf("Bill payment for %s completed successfully", payRequest.YearMonth), responseData)
+	log.Printf("✅ Bill %d payment for %s marked as paid using correct algorithm (NO expense conversion)", payRequest.BillID, payRequest.YearMonth)
+	sendSuccessResponse(w, "Bill payment marked as paid successfully with correct algorithm", responseData)
 }
 
-// Función para actualizar años posteriores en cascada
-func updateSubsequentAnnualBalances(userID string, startDate time.Time) error {
-	// Limitar el proceso a 5 años para evitar bucles infinitos
-	endDate := startDate.AddDate(5, 0, 0)
-	currentDate := startDate
+func handleDeleteBill(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-	for currentDate.Before(endDate) {
-		currentYear := currentDate.Format("2006")
+	var deleteRequest DeleteBillRequest
+	err := json.NewDecoder(r.Body).Decode(&deleteRequest)
+	if err != nil {
+		sendErrorResponse(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
 
-		// Verificar si existe un registro para este año
-		var exists bool
-		var incomeAmount, expenseAmount, billsAmount, yearCashAmount, yearBankAmount float64
-		err := db.QueryRow(`
-			SELECT 1, income_amount, expense_amount, bills_amount, cash_amount, bank_amount FROM annual_balance
-			WHERE user_id = ? AND year = ?
-		`, userID, currentYear).Scan(&exists, &incomeAmount, &expenseAmount, &billsAmount, &yearCashAmount, &yearBankAmount)
+	// Validate required fields
+	if deleteRequest.UserID == "" {
+		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
+	if deleteRequest.BillID <= 0 {
+		sendErrorResponse(w, "Valid bill ID is required", http.StatusBadRequest)
+		return
+	}
 
-		if err != nil && err != sql.ErrNoRows {
-			return err
-		}
+	// Delete the bill
+	err = deleteBill(deleteRequest.BillID, deleteRequest.UserID)
+	if err != nil {
+		log.Printf("Error deleting bill: %v", err)
+		sendErrorResponse(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-		if err == sql.ErrNoRows {
-			// No hay más registros para actualizar
-			break
-		}
+	log.Printf("✅ Bill %d deleted successfully for user %s", deleteRequest.BillID, deleteRequest.UserID)
+	sendSuccessResponse(w, "Bill deleted successfully", map[string]interface{}{
+		"bill_id": deleteRequest.BillID,
+		"deleted": true,
+	})
+}
 
-		// Obtener el balance del año anterior
-		prevYear := currentDate.AddDate(-1, 0, 0)
-		prevYearStr := prevYear.Format("2006")
+func handleGetUpcomingBills(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		sendErrorResponse(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-		var previousBalance float64
-		var prevCashAmount, prevBankAmount float64
-		err = db.QueryRow(`
-			SELECT balance, cash_amount, bank_amount FROM annual_balance 
-			WHERE user_id = ? AND year = ?
-		`, userID, prevYearStr).Scan(&previousBalance, &prevCashAmount, &prevBankAmount)
+	// Get user ID from query parameter
+	userID := r.URL.Query().Get("user_id")
+	if userID == "" {
+		sendErrorResponse(w, "User ID is required", http.StatusBadRequest)
+		return
+	}
 
-		if err != nil && err != sql.ErrNoRows {
-			return err
-		}
-
-		if err == sql.ErrNoRows {
-			previousBalance = 0
-			prevCashAmount = 0
-			prevBankAmount = 0
-		}
-
-		// Actualizar el balance con el nuevo balance previo
-		balance := previousBalance + incomeAmount - expenseAmount - billsAmount
-
-		// CAMBIO EN LA LÓGICA: Siempre acumulamos los valores del año anterior
-		hasTransactions := incomeAmount != 0 || expenseAmount != 0 || billsAmount != 0
-
-		// Inicializar con los valores del año anterior
-		newCashAmount := prevCashAmount
-		newBankAmount := prevBankAmount
-
-		// Si hay transacciones propias en este año, las sumamos a lo heredado
-		if hasTransactions {
-			// Agregamos las transacciones propias de este año
-			newCashAmount += yearCashAmount
-			newBankAmount += yearBankAmount
-		}
-
-		// Calcular los valores de balance para cash y bank
-		balanceCashAmount := prevCashAmount + yearCashAmount
-		balanceBankAmount := prevBankAmount + yearBankAmount
-
-		_, err = db.Exec(`
-			UPDATE annual_balance
-			SET previous_balance = ?,
-				balance = ?,
-				cash_amount = ?,
-				bank_amount = ?,
-				previous_cash_amount = ?,
-				previous_bank_amount = ?,
-				balance_cash_amount = ?,
-				balance_bank_amount = ?,
-			total_balance = (balance_cash_amount + balance_bank_amount),
-			total_previous_balance = (previous_cash_amount + previous_bank_amount),
-				updated_at = CURRENT_TIMESTAMP
-			WHERE user_id = ? AND year = ?
-		`, previousBalance, balance, newCashAmount, newBankAmount,
-			prevCashAmount, prevBankAmount, balanceCashAmount, balanceBankAmount,
-			userID, currentYear)
-
+	// Get optional date parameter (defaults to current month)
+	dateParam := r.URL.Query().Get("date")
+	var targetMonth string
+	if dateParam != "" {
+		parsedDate, err := time.Parse("2006-01-02", dateParam)
 		if err != nil {
-			return err
+			// Try parsing as YYYY-MM format
+			parsedDate, err = time.Parse("2006-01", dateParam)
+			if err != nil {
+				sendErrorResponse(w, "Invalid date format, use YYYY-MM-DD or YYYY-MM", http.StatusBadRequest)
+				return
+			}
 		}
-
-		// Pasar al siguiente año
-		currentDate = currentDate.AddDate(1, 0, 0)
-	}
-
-	return nil
-}
-
-// Función específica para actualizar monthly_cash_bank_balance cuando se paga una factura
-func updateMonthlyBalanceForPaidBill(userID string, amount float64, paymentMethod string, billDate time.Time) error {
-	log.Printf("💳 Starting bill payment balance update: user=%s, amount=%.2f, method=%s", userID, amount, paymentMethod)
-
-	// Crear una transacción para mantener consistencia
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("error starting transaction for paid bill balance update: %v", err)
-	}
-
-	// Función para hacer rollback en caso de error
-	rollbackOnError := func(err error) error {
-		rollbackErr := tx.Rollback()
-		if rollbackErr != nil {
-			log.Printf("Error rolling back transaction: %v", rollbackErr)
-			return fmt.Errorf("error: %v, rollback error: %v", err, rollbackErr)
-		}
-		return err
-	}
-
-	// PASO 1: Buscar y remover la factura de TODOS los balances donde se registró originalmente
-	if err := removeBillFromAllBalances(tx, userID, amount, paymentMethod); err != nil {
-		return rollbackOnError(fmt.Errorf("error removing bill from original balances: %v", err))
-	}
-
-	// PASO 2: Agregar el expense en la fecha de pago (mes actual)
-	if err := addExpenseToPaymentBalances(tx, userID, amount, paymentMethod, billDate); err != nil {
-		return rollbackOnError(fmt.Errorf("error adding expense to payment balances: %v", err))
-	}
-
-	// Confirmar la transacción
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("error committing paid bill balance transaction: %v", err)
-	}
-
-	log.Printf("✅ Successfully updated all balances for paid bill: user=%s, amount=%.2f, method=%s", userID, amount, paymentMethod)
-	return nil
-}
-
-// Función auxiliar para remover una factura de TODOS los balances donde esté registrada
-func removeBillFromAllBalances(tx *sql.Tx, userID string, amount float64, paymentMethod string) error {
-	log.Printf("🔍 Searching for bill registrations to remove: user=%s, amount=%.2f, method=%s", userID, amount, paymentMethod)
-
-	// PASO 1: Buscar en daily_cash_bank_balance
-	if err := removeBillFromDailyBalances(tx, userID, amount, paymentMethod); err != nil {
-		return fmt.Errorf("error removing from daily balances: %v", err)
-	}
-
-	// PASO 2: Buscar en weekly_cash_bank_balance
-	if err := removeBillFromWeeklyBalances(tx, userID, amount, paymentMethod); err != nil {
-		return fmt.Errorf("error removing from weekly balances: %v", err)
-	}
-
-	// PASO 3: Buscar en monthly_cash_bank_balance
-	if err := removeBillFromMonthlyBalances(tx, userID, amount, paymentMethod); err != nil {
-		return fmt.Errorf("error removing from monthly balances: %v", err)
-	}
-
-	return nil
-}
-
-// Función auxiliar para remover factura de daily_cash_bank_balance
-func removeBillFromDailyBalances(tx *sql.Tx, userID string, amount float64, paymentMethod string) error {
-	var query string
-	var columnName string
-
-	if paymentMethod == "cash" {
-		columnName = "bill_cash_amount"
-		query = `
-			SELECT date, bill_cash_amount 
-			FROM daily_cash_bank_balance 
-			WHERE user_id = ? AND bill_cash_amount >= ?
-			ORDER BY bill_cash_amount DESC
-		`
+		targetMonth = parsedDate.Format("2006-01")
 	} else {
-		columnName = "bill_bank_amount"
-		query = `
-			SELECT date, bill_bank_amount 
-			FROM daily_cash_bank_balance 
-			WHERE user_id = ? AND bill_bank_amount >= ?
-			ORDER BY bill_bank_amount DESC
-		`
+		// Default to current month
+		targetMonth = time.Now().Format("2006-01")
 	}
 
-	rows, err := tx.Query(query, userID, amount)
+	// Get upcoming bills for the specified month
+	query := `
+		SELECT 
+			b.id, b.user_id, b.name, b.amount, b.due_date, b.start_date, b.payment_day, 
+			b.duration_months, b.regularity, bp.paid, b.overdue, b.overdue_days, 
+			b.recurring, b.category, b.icon, b.payment_method, b.created_at, b.updated_at,
+			bp.payment_date
+		FROM bills b 
+		INNER JOIN bill_payments bp ON b.id = bp.bill_id
+		WHERE b.user_id = ? AND bp.year_month = ? AND bp.paid = 0
+		ORDER BY b.payment_day ASC, b.id ASC
+	`
+
+	rows, err := db.Query(query, userID, targetMonth)
 	if err != nil {
-		return fmt.Errorf("error querying daily balances: %v", err)
+		log.Printf("Error fetching upcoming bills: %v", err)
+		sendErrorResponse(w, "Error fetching upcoming bills", http.StatusInternalServerError)
+		return
 	}
 	defer rows.Close()
 
+	var upcomingBills []Bill
 	for rows.Next() {
-		var date string
-		var currentAmount float64
+		var bill Bill
+		var createdAt, updatedAt, paymentDate sql.NullString
+		var paymentMethod sql.NullString
 
-		if err := rows.Scan(&date, &currentAmount); err != nil {
-			return fmt.Errorf("error scanning daily balance row: %v", err)
-		}
-
-		// Si encontramos una coincidencia exacta o suficiente, restar el monto
-		if currentAmount >= amount {
-			newAmount := currentAmount - amount
-
-			// ✅ CORRECCIÓN: Solo actualizar el campo bill_xxx_amount, sin tocar los balances disponibles
-			// El dinero NO debe regresar a cash_amount/bank_amount porque nunca debió ser restado en primer lugar
-			updateQuery := fmt.Sprintf(`
-				UPDATE daily_cash_bank_balance 
-				SET %s = ?
-				WHERE user_id = ? AND date = ?
-			`, columnName)
-
-			_, err = tx.Exec(updateQuery, newAmount, userID, date)
-			if err != nil {
-				return fmt.Errorf("error updating daily balance: %v", err)
-			}
-
-			log.Printf("📅 Removed bill from daily balance (CORRECTED): user=%s, date=%s, amount=%.2f→%.2f, method=%s",
-				userID, date, currentAmount, newAmount, paymentMethod)
-
-			return nil // Solo removemos de un registro
-		}
-	}
-
-	log.Printf("📅 No matching daily balance found for removal: user=%s, amount=%.2f, method=%s", userID, amount, paymentMethod)
-	return nil
-}
-
-// Función auxiliar para remover factura de weekly_cash_bank_balance
-func removeBillFromWeeklyBalances(tx *sql.Tx, userID string, amount float64, paymentMethod string) error {
-	var query string
-	var columnName string
-
-	if paymentMethod == "cash" {
-		columnName = "bill_cash_amount"
-		query = `
-			SELECT year_week, bill_cash_amount 
-			FROM weekly_cash_bank_balance 
-			WHERE user_id = ? AND bill_cash_amount >= ?
-			ORDER BY bill_cash_amount DESC
-		`
-	} else {
-		columnName = "bill_bank_amount"
-		query = `
-			SELECT year_week, bill_bank_amount 
-			FROM weekly_cash_bank_balance 
-			WHERE user_id = ? AND bill_bank_amount >= ?
-			ORDER BY bill_bank_amount DESC
-		`
-	}
-
-	rows, err := tx.Query(query, userID, amount)
-	if err != nil {
-		return fmt.Errorf("error querying weekly balances: %v", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var yearWeek string
-		var currentAmount float64
-
-		if err := rows.Scan(&yearWeek, &currentAmount); err != nil {
-			return fmt.Errorf("error scanning weekly balance row: %v", err)
-		}
-
-		// Si encontramos una coincidencia exacta o suficiente, restar el monto
-		if currentAmount >= amount {
-			newAmount := currentAmount - amount
-
-			// ✅ CORRECCIÓN: Solo actualizar el campo bill_xxx_amount, sin tocar los balances disponibles
-			// El dinero NO debe regresar a cash_amount/bank_amount porque nunca debió ser restado en primer lugar
-			updateQuery := fmt.Sprintf(`
-				UPDATE weekly_cash_bank_balance 
-				SET %s = ?
-				WHERE user_id = ? AND year_week = ?
-			`, columnName)
-
-			_, err = tx.Exec(updateQuery, newAmount, userID, yearWeek)
-			if err != nil {
-				return fmt.Errorf("error updating weekly balance: %v", err)
-			}
-
-			log.Printf("📊 Removed bill from weekly balance (CORRECTED): user=%s, week=%s, amount=%.2f→%.2f, method=%s",
-				userID, yearWeek, currentAmount, newAmount, paymentMethod)
-
-			return nil // Solo removemos de un registro
-		}
-	}
-
-	log.Printf("📊 No matching weekly balance found for removal: user=%s, amount=%.2f, method=%s", userID, amount, paymentMethod)
-	return nil
-}
-
-// Función auxiliar para remover factura de monthly_cash_bank_balance
-func removeBillFromMonthlyBalances(tx *sql.Tx, userID string, amount float64, paymentMethod string) error {
-	var query string
-	var columnName string
-
-	if paymentMethod == "cash" {
-		columnName = "bill_cash_amount"
-		query = `
-			SELECT year_month, bill_cash_amount 
-			FROM monthly_cash_bank_balance 
-			WHERE user_id = ? AND bill_cash_amount >= ?
-			ORDER BY bill_cash_amount DESC
-		`
-	} else {
-		columnName = "bill_bank_amount"
-		query = `
-			SELECT year_month, bill_bank_amount 
-			FROM monthly_cash_bank_balance 
-			WHERE user_id = ? AND bill_bank_amount >= ?
-			ORDER BY bill_bank_amount DESC
-		`
-	}
-
-	rows, err := tx.Query(query, userID, amount)
-	if err != nil {
-		return fmt.Errorf("error querying monthly balances: %v", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var yearMonth string
-		var currentAmount float64
-
-		if err := rows.Scan(&yearMonth, &currentAmount); err != nil {
-			return fmt.Errorf("error scanning monthly balance row: %v", err)
-		}
-
-		// Si encontramos una coincidencia exacta o suficiente, restar el monto
-		if currentAmount >= amount {
-			newAmount := currentAmount - amount
-
-			// ✅ CORRECCIÓN: Solo actualizar el campo bill_xxx_amount, sin tocar los balances disponibles
-			// El dinero NO debe regresar a cash_amount/bank_amount porque nunca debió ser restado en primer lugar
-			updateQuery := fmt.Sprintf(`
-				UPDATE monthly_cash_bank_balance 
-				SET %s = ?
-				WHERE user_id = ? AND year_month = ?
-			`, columnName)
-
-			_, err = tx.Exec(updateQuery, newAmount, userID, yearMonth)
-			if err != nil {
-				return fmt.Errorf("error updating monthly balance: %v", err)
-			}
-
-			log.Printf("💰 Removed bill from monthly balance (CORRECTED): user=%s, month=%s, amount=%.2f→%.2f, method=%s",
-				userID, yearMonth, currentAmount, newAmount, paymentMethod)
-
-			return nil // Solo removemos de un registro
-		}
-	}
-
-	log.Printf("💰 No matching monthly balance found for removal: user=%s, amount=%.2f, method=%s", userID, amount, paymentMethod)
-	return nil
-}
-
-// Función auxiliar para agregar expense en todos los balances de la fecha de pago
-func addExpenseToPaymentBalances(tx *sql.Tx, userID string, amount float64, paymentMethod string, paymentDate time.Time) error {
-	// Formatear las fechas para los diferentes períodos
-	yearMonth := paymentDate.Format("2006-01")
-	dateStr := paymentDate.Format("2006-01-02")
-
-	// Calcular week (año-semana)
-	year, week := paymentDate.ISOWeek()
-	yearWeek := fmt.Sprintf("%d-%02d", year, week)
-
-	log.Printf("🔄 Adding expense to payment balances for date=%s, month=%s, week=%s", dateStr, yearMonth, yearWeek)
-
-	// 1. Actualizar monthly_cash_bank_balance
-	if err := updateMonthlyBalanceForExpense(tx, userID, amount, paymentMethod, yearMonth); err != nil {
-		return fmt.Errorf("error updating monthly balance: %v", err)
-	}
-
-	// 2. Actualizar daily_cash_bank_balance
-	if err := updateDailyBalanceForExpense(tx, userID, amount, paymentMethod, dateStr); err != nil {
-		return fmt.Errorf("error updating daily balance: %v", err)
-	}
-
-	// 3. Actualizar weekly_cash_bank_balance
-	if err := updateWeeklyBalanceForExpense(tx, userID, amount, paymentMethod, yearWeek); err != nil {
-		return fmt.Errorf("error updating weekly balance: %v", err)
-	}
-
-	return nil
-}
-
-// Función auxiliar para actualizar monthly_cash_bank_balance con expense
-func updateMonthlyBalanceForExpense(tx *sql.Tx, userID string, amount float64, paymentMethod string, yearMonth string) error {
-	// Verificar si existe el registro del mes
-	var exists bool
-	var currentExpenseCash, currentExpenseBank float64
-
-	err := tx.QueryRow(`
-		SELECT 1, expense_cash_amount, expense_bank_amount
-		FROM monthly_cash_bank_balance
-		WHERE user_id = ? AND year_month = ?
-	`, userID, yearMonth).Scan(&exists, &currentExpenseCash, &currentExpenseBank)
-
-	if err != nil && err != sql.ErrNoRows {
-		return fmt.Errorf("error checking monthly balance record: %v", err)
-	}
-
-	if err == sql.ErrNoRows {
-		// No existe registro, crear uno nuevo solo con el expense
-		if paymentMethod == "cash" {
-			_, err = tx.Exec(`
-				INSERT INTO monthly_cash_bank_balance (
-					user_id, year_month,
-					income_cash_amount, income_bank_amount,
-					expense_cash_amount, expense_bank_amount,
-					bill_cash_amount, bill_bank_amount,
-					cash_amount, bank_amount,
-					previous_cash_amount, previous_bank_amount,
-					balance_cash_amount, balance_bank_amount,
-					total_balance, total_previous_balance
-				) VALUES (?, ?, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-			`, userID, yearMonth, amount)
-		} else {
-			_, err = tx.Exec(`
-				INSERT INTO monthly_cash_bank_balance (
-					user_id, year_month,
-					income_cash_amount, income_bank_amount,
-					expense_cash_amount, expense_bank_amount,
-					bill_cash_amount, bill_bank_amount,
-					cash_amount, bank_amount,
-					previous_cash_amount, previous_bank_amount,
-					balance_cash_amount, balance_bank_amount,
-					total_balance, total_previous_balance
-				) VALUES (?, ?, 0, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-			`, userID, yearMonth, amount)
-		}
-
+		err := rows.Scan(
+			&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate,
+			&bill.StartDate, &bill.PaymentDay, &bill.DurationMonths, &bill.Regularity,
+			&bill.Paid, &bill.Overdue, &bill.OverdueDays, &bill.Recurring,
+			&bill.Category, &bill.Icon, &paymentMethod, &createdAt, &updatedAt,
+			&paymentDate,
+		)
 		if err != nil {
-			return fmt.Errorf("error creating monthly balance record: %v", err)
-		}
-
-		log.Printf("💰 Created monthly balance record for expense: user=%s, month=%s, amount=%.2f, method=%s",
-			userID, yearMonth, amount, paymentMethod)
-	} else {
-		// Actualizar registro existente - solo agregar expense
-		if paymentMethod == "cash" {
-			newExpenseCash := currentExpenseCash + amount
-			_, err = tx.Exec(`
-				UPDATE monthly_cash_bank_balance
-				SET expense_cash_amount = ?
-				WHERE user_id = ? AND year_month = ?
-			`, newExpenseCash, userID, yearMonth)
-		} else {
-			newExpenseBank := currentExpenseBank + amount
-			_, err = tx.Exec(`
-				UPDATE monthly_cash_bank_balance
-				SET expense_bank_amount = ?
-				WHERE user_id = ? AND year_month = ?
-			`, newExpenseBank, userID, yearMonth)
-		}
-
-		if err != nil {
-			return fmt.Errorf("error updating monthly balance: %v", err)
-		}
-
-		log.Printf("💳 Updated monthly balance for expense: user=%s, month=%s, amount=%.2f, method=%s",
-			userID, yearMonth, amount, paymentMethod)
-	}
-
-	return nil
-}
-
-// Función auxiliar para actualizar daily_cash_bank_balance con expense
-func updateDailyBalanceForExpense(tx *sql.Tx, userID string, amount float64, paymentMethod string, dateStr string) error {
-	// Verificar si existe el registro del día
-	var exists bool
-	var currentExpenseCash, currentExpenseBank float64
-
-	err := tx.QueryRow(`
-		SELECT 1, expense_cash_amount, expense_bank_amount
-		FROM daily_cash_bank_balance
-		WHERE user_id = ? AND date = ?
-	`, userID, dateStr).Scan(&exists, &currentExpenseCash, &currentExpenseBank)
-
-	if err != nil && err != sql.ErrNoRows {
-		return fmt.Errorf("error checking daily balance record: %v", err)
-	}
-
-	if err == sql.ErrNoRows {
-		// No existe registro, crear uno nuevo solo con el expense
-		if paymentMethod == "cash" {
-			_, err = tx.Exec(`
-				INSERT INTO daily_cash_bank_balance (
-					user_id, date,
-					income_cash_amount, income_bank_amount,
-					expense_cash_amount, expense_bank_amount,
-					bill_cash_amount, bill_bank_amount,
-					cash_amount, bank_amount,
-					previous_cash_amount, previous_bank_amount,
-					balance_cash_amount, balance_bank_amount,
-					total_balance, total_previous_balance
-				) VALUES (?, ?, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-			`, userID, dateStr, amount)
-		} else {
-			_, err = tx.Exec(`
-				INSERT INTO daily_cash_bank_balance (
-					user_id, date,
-					income_cash_amount, income_bank_amount,
-					expense_cash_amount, expense_bank_amount,
-					bill_cash_amount, bill_bank_amount,
-					cash_amount, bank_amount,
-					previous_cash_amount, previous_bank_amount,
-					balance_cash_amount, balance_bank_amount,
-					total_balance, total_previous_balance
-				) VALUES (?, ?, 0, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-			`, userID, dateStr, amount)
-		}
-
-		if err != nil {
-			return fmt.Errorf("error creating daily balance record: %v", err)
-		}
-
-		log.Printf("📅 Created daily balance record for expense: user=%s, date=%s, amount=%.2f, method=%s",
-			userID, dateStr, amount, paymentMethod)
-	} else {
-		// Actualizar registro existente - solo agregar expense
-		if paymentMethod == "cash" {
-			newExpenseCash := currentExpenseCash + amount
-			_, err = tx.Exec(`
-				UPDATE daily_cash_bank_balance
-				SET expense_cash_amount = ?
-				WHERE user_id = ? AND date = ?
-			`, newExpenseCash, userID, dateStr)
-		} else {
-			newExpenseBank := currentExpenseBank + amount
-			_, err = tx.Exec(`
-				UPDATE daily_cash_bank_balance
-				SET expense_bank_amount = ?
-				WHERE user_id = ? AND date = ?
-			`, newExpenseBank, userID, dateStr)
-		}
-
-		if err != nil {
-			return fmt.Errorf("error updating daily balance: %v", err)
-		}
-
-		log.Printf("📅 Updated daily balance for expense: user=%s, date=%s, amount=%.2f, method=%s",
-			userID, dateStr, amount, paymentMethod)
-	}
-
-	return nil
-}
-
-// Función auxiliar para actualizar weekly_cash_bank_balance con expense
-func updateWeeklyBalanceForExpense(tx *sql.Tx, userID string, amount float64, paymentMethod string, yearWeek string) error {
-	// Verificar si existe el registro de la semana
-	var exists bool
-	var currentExpenseCash, currentExpenseBank float64
-
-	err := tx.QueryRow(`
-		SELECT 1, expense_cash_amount, expense_bank_amount
-		FROM weekly_cash_bank_balance
-		WHERE user_id = ? AND year_week = ?
-	`, userID, yearWeek).Scan(&exists, &currentExpenseCash, &currentExpenseBank)
-
-	if err != nil && err != sql.ErrNoRows {
-		return fmt.Errorf("error checking weekly balance record: %v", err)
-	}
-
-	if err == sql.ErrNoRows {
-		// No existe registro, crear uno nuevo solo con el expense
-		if paymentMethod == "cash" {
-			_, err = tx.Exec(`
-				INSERT INTO weekly_cash_bank_balance (
-					user_id, year_week,
-					income_cash_amount, income_bank_amount,
-					expense_cash_amount, expense_bank_amount,
-					bill_cash_amount, bill_bank_amount,
-					cash_amount, bank_amount,
-					previous_cash_amount, previous_bank_amount,
-					balance_cash_amount, balance_bank_amount,
-					total_balance, total_previous_balance
-				) VALUES (?, ?, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-			`, userID, yearWeek, amount)
-		} else {
-			_, err = tx.Exec(`
-				INSERT INTO weekly_cash_bank_balance (
-					user_id, year_week,
-					income_cash_amount, income_bank_amount,
-					expense_cash_amount, expense_bank_amount,
-					bill_cash_amount, bill_bank_amount,
-					cash_amount, bank_amount,
-					previous_cash_amount, previous_bank_amount,
-					balance_cash_amount, balance_bank_amount,
-					total_balance, total_previous_balance
-				) VALUES (?, ?, 0, 0, 0, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-			`, userID, yearWeek, amount)
-		}
-
-		if err != nil {
-			return fmt.Errorf("error creating weekly balance record: %v", err)
-		}
-
-		log.Printf("📊 Created weekly balance record for expense: user=%s, week=%s, amount=%.2f, method=%s",
-			userID, yearWeek, amount, paymentMethod)
-	} else {
-		// Actualizar registro existente - solo agregar expense
-		if paymentMethod == "cash" {
-			newExpenseCash := currentExpenseCash + amount
-			_, err = tx.Exec(`
-				UPDATE weekly_cash_bank_balance
-				SET expense_cash_amount = ?
-				WHERE user_id = ? AND year_week = ?
-			`, newExpenseCash, userID, yearWeek)
-		} else {
-			newExpenseBank := currentExpenseBank + amount
-			_, err = tx.Exec(`
-				UPDATE weekly_cash_bank_balance
-				SET expense_bank_amount = ?
-				WHERE user_id = ? AND year_week = ?
-			`, newExpenseBank, userID, yearWeek)
-		}
-
-		if err != nil {
-			return fmt.Errorf("error updating weekly balance: %v", err)
-		}
-
-		log.Printf("📊 Updated weekly balance for expense: user=%s, week=%s, amount=%.2f, method=%s",
-			userID, yearWeek, amount, paymentMethod)
-	}
-
-	return nil
-}
-
-// Nueva función para calcular la fecha de pago en un mes específico
-func getPaymentDateForMonth(monthStart time.Time, paymentDay int) time.Time {
-	year := monthStart.Year()
-	month := monthStart.Month()
-
-	// Asegurar que el día no sea mayor al último día del mes
-	lastDayOfMonth := time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
-	if paymentDay > lastDayOfMonth {
-		paymentDay = lastDayOfMonth
-	}
-
-	return time.Date(year, month, paymentDay, 0, 0, 0, 0, time.UTC)
-}
-
-// Nueva función para generar entradas en bill_payments
-func generateBillPayments(billID int, userID string, startDate time.Time, paymentDay int, durationMonths int, regularity string) error {
-	for i := 0; i < durationMonths; i++ {
-		// Calcular el mes para este pago
-		paymentMonth := startDate.AddDate(0, i, 0)
-		yearMonth := paymentMonth.Format("2006-01")
-
-		// Verificar si ya existe una entrada para este mes
-		var exists bool
-		err := db.QueryRow(`
-			SELECT 1 FROM bill_payments 
-			WHERE bill_id = ? AND year_month = ?
-		`, billID, yearMonth).Scan(&exists)
-
-		if err != nil && err != sql.ErrNoRows {
-			log.Printf("Error checking bill_payments: %v", err)
+			log.Printf("Error scanning upcoming bill: %v", err)
 			continue
 		}
 
-		if err == sql.ErrNoRows {
-			// No existe, crear nueva entrada
-			_, err = db.Exec(`
-				INSERT INTO bill_payments (bill_id, user_id, year_month, paid, payment_date, payment_method)
-				VALUES (?, ?, ?, 0, NULL, NULL)
-			`, billID, userID, yearMonth)
-
-			if err != nil {
-				log.Printf("Error inserting bill_payment: %v", err)
-				continue
-			}
-
-			log.Printf("✅ Created bill_payment entry for bill %d, month %s", billID, yearMonth)
+		if createdAt.Valid {
+			bill.CreatedAt = createdAt.String
 		}
-	}
-
-	return nil
-}
-
-// Nueva función para actualizar monthly_cash_bank_balance para todos los meses
-func updateMonthlyBalancesForBillDuration(userID string, cashAmt, bankAmt float64, startDate time.Time, durationMonths int, regularity string) error {
-	for i := 0; i < durationMonths; i++ {
-		// Calcular el mes para este pago
-		paymentMonth := startDate.AddDate(0, i, 0)
-		yearMonth := paymentMonth.Format("2006-01")
-
-		// Verificar si ya existe registro para este mes
-		var exists bool
-		err := db.QueryRow(`
-			SELECT 1 FROM monthly_cash_bank_balance
-			WHERE user_id = ? AND year_month = ?
-		`, userID, yearMonth).Scan(&exists)
-
-		if err != nil && err != sql.ErrNoRows {
-			log.Printf("Error checking monthly_cash_bank_balance: %v", err)
-			continue
+		if updatedAt.Valid {
+			bill.UpdatedAt = updatedAt.String
+		}
+		if paymentMethod.Valid {
+			bill.PaymentMethod = paymentMethod.String
 		}
 
-		if err == sql.ErrNoRows {
-			// No existe registro, crear uno nuevo
-			_, err = db.Exec(`
-				INSERT INTO monthly_cash_bank_balance (
-					user_id, year_month, 
-					income_cash_amount, income_bank_amount,
-					expense_cash_amount, expense_bank_amount,
-					bill_cash_amount, bill_bank_amount,
-					cash_amount, bank_amount,
-					previous_cash_amount, previous_bank_amount,
-					balance_cash_amount, balance_bank_amount,
-					total_balance
-				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-			`, userID, yearMonth,
-				0, 0,
-				0, 0,
-				cashAmt, bankAmt,
-				-cashAmt, -bankAmt, // Restar el dinero comprometido con la factura
-				0, 0,
-				-cashAmt, -bankAmt,
-				-cashAmt-bankAmt) // total_balance reducido por la factura
+		// Calculate the correct due date for the specific month
+		bill.DueDate = calculateDueDateForPeriod(bill.StartDate, bill.PaymentDay, targetMonth)
 
-			if err != nil {
-				log.Printf("Error inserting into monthly_cash_bank_balance: %v", err)
-				continue
-			}
-
-			log.Printf("✅ Added bill projection to monthly_cash_bank_balance for month %s: bill_cash=%.2f, bill_bank=%.2f",
-				yearMonth, cashAmt, bankAmt)
-		} else {
-			// Actualizar registro existente
-			_, err = db.Exec(`
-				UPDATE monthly_cash_bank_balance
-				SET bill_cash_amount = bill_cash_amount + ?,
-					bill_bank_amount = bill_bank_amount + ?,
-					cash_amount = cash_amount - ?,
-					bank_amount = bank_amount - ?,
-					balance_cash_amount = balance_cash_amount - ?,
-					balance_bank_amount = balance_bank_amount - ?,
-					total_balance = total_balance - ?
-				WHERE user_id = ? AND year_month = ?
-			`, cashAmt, bankAmt, cashAmt, bankAmt, cashAmt, bankAmt, cashAmt+bankAmt, userID, yearMonth)
-
-			if err != nil {
-				log.Printf("Error updating monthly_cash_bank_balance: %v", err)
-				continue
-			}
-
-			log.Printf("✅ Updated bill projection in monthly_cash_bank_balance for month %s: +bill_cash=%.2f, +bill_bank=%.2f",
-				yearMonth, cashAmt, bankAmt)
-		}
+		upcomingBills = append(upcomingBills, bill)
 	}
 
-	return nil
-}
+	log.Printf("✅ Fetched %d upcoming bills for user %s in month %s", len(upcomingBills), userID, targetMonth)
 
-// Nueva función para reclasificar factura a gasto en monthly_cash_bank_balance
-func reclassifyBillToExpenseInMonthlyBalance(userID string, amount float64, paymentMethod string, yearMonth string) error {
-	// Determinar qué campos actualizar según el método de pago
-	var billColumn, expenseColumn string
-	if paymentMethod == "cash" {
-		billColumn = "bill_cash_amount"
-		expenseColumn = "expense_cash_amount"
-	} else {
-		billColumn = "bill_bank_amount"
-		expenseColumn = "expense_bank_amount"
+	responseData := map[string]interface{}{
+		"month":          targetMonth,
+		"upcoming_bills": upcomingBills,
+		"total_amount":   calculateTotalUpcomingAmount(upcomingBills),
+		"bill_count":     len(upcomingBills),
 	}
 
-	// Actualizar el registro mensual: restar de bill_xxx_amount y sumar a expense_xxx_amount
-	_, err := db.Exec(fmt.Sprintf(`
-		UPDATE monthly_cash_bank_balance
-		SET %s = %s - ?,
-			%s = %s + ?
-		WHERE user_id = ? AND year_month = ?
-	`, billColumn, billColumn, expenseColumn, expenseColumn), amount, amount, userID, yearMonth)
+	sendSuccessResponse(w, "Upcoming bills fetched successfully", responseData)
+}
 
-	if err != nil {
-		return fmt.Errorf("error reclassifying bill to expense in monthly balance: %v", err)
+// Helper function to calculate total amount of upcoming bills
+func calculateTotalUpcomingAmount(bills []Bill) float64 {
+	var total float64
+	for _, bill := range bills {
+		total += bill.Amount
 	}
-
-	log.Printf("✅ Reclassified bill to expense in monthly_cash_bank_balance: user=%s, month=%s, amount=%.2f, method=%s",
-		userID, yearMonth, amount, paymentMethod)
-
-	return nil
+	return total
 }
 
-// addCashBankColumnsToAllTables - Helper function to add cash/bank columns to all balance tables
-func addCashBankColumnsToAllTables() {
-	// This function ensures backward compatibility by adding new columns to existing tables
-	log.Println("Checking and adding cash/bank columns to balance tables...")
-}
+// Helper functions for bills_management
 
 // sendErrorResponse - Helper function to send error responses
 func sendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
@@ -1744,12 +1016,50 @@ func sendSuccessResponse(w http.ResponseWriter, message string, data interface{}
 	json.NewEncoder(w).Encode(response)
 }
 
+// fetchBillByID - Fetch a specific bill by ID and user_id
+func fetchBillByID(billID int, userID string) (*Bill, error) {
+	query := `
+		SELECT id, user_id, name, amount, due_date, start_date, payment_day, 
+		       duration_months, regularity, paid, overdue, overdue_days, 
+		       recurring, category, icon, payment_method, created_at, updated_at
+		FROM bills 
+		WHERE id = ? AND user_id = ?
+	`
+
+	var bill Bill
+	var createdAt, updatedAt sql.NullString
+	var paymentMethod sql.NullString
+
+	err := db.QueryRow(query, billID, userID).Scan(
+		&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate,
+		&bill.StartDate, &bill.PaymentDay, &bill.DurationMonths, &bill.Regularity,
+		&bill.Paid, &bill.Overdue, &bill.OverdueDays, &bill.Recurring,
+		&bill.Category, &bill.Icon, &paymentMethod, &createdAt, &updatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if createdAt.Valid {
+		bill.CreatedAt = createdAt.String
+	}
+	if updatedAt.Valid {
+		bill.UpdatedAt = updatedAt.String
+	}
+	if paymentMethod.Valid {
+		bill.PaymentMethod = paymentMethod.String
+	}
+
+	return &bill, nil
+}
+
 // fetchBills - Helper function to fetch bills from database
 func fetchBills(userID string) ([]Bill, error) {
 	query := `
 		SELECT id, user_id, name, amount, due_date, start_date, payment_day, 
 		       duration_months, regularity, paid, overdue, overdue_days, 
-		       recurring, category, icon, created_at, updated_at
+		       recurring, category, icon, payment_method, created_at, updated_at
 		FROM bills 
 		WHERE user_id = ? 
 		ORDER BY id ASC
@@ -1764,59 +1074,177 @@ func fetchBills(userID string) ([]Bill, error) {
 	var bills []Bill
 	for rows.Next() {
 		var bill Bill
-		var createdAt, updatedAt string
+		var createdAt, updatedAt sql.NullString
+		var paymentMethod sql.NullString
 
 		err := rows.Scan(
 			&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate,
 			&bill.StartDate, &bill.PaymentDay, &bill.DurationMonths, &bill.Regularity,
 			&bill.Paid, &bill.Overdue, &bill.OverdueDays, &bill.Recurring,
-			&bill.Category, &bill.Icon, &createdAt, &updatedAt,
+			&bill.Category, &bill.Icon, &paymentMethod, &createdAt, &updatedAt,
 		)
 		if err != nil {
 			log.Printf("Error scanning bill: %v", err)
 			continue
 		}
 
-		bill.CreatedAt = createdAt
-		bill.UpdatedAt = updatedAt
+		if createdAt.Valid {
+			bill.CreatedAt = createdAt.String
+		}
+		if updatedAt.Valid {
+			bill.UpdatedAt = updatedAt.String
+		}
+		if paymentMethod.Valid {
+			bill.PaymentMethod = paymentMethod.String
+		}
+
 		bills = append(bills, bill)
 	}
 
 	return bills, nil
 }
 
-// addBill - Helper function to add bill to database
-func addBill(bill Bill) (int, error) {
-	query := `
-		INSERT INTO bills (
-			user_id, name, amount, due_date, start_date, payment_day, 
-			duration_months, regularity, paid, overdue, overdue_days, 
-			recurring, category, icon
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`
+// fetchBillsWithPeriod retrieves bills with period-specific payment status
+func fetchBillsWithPeriod(userID string, yearMonth string) ([]Bill, error) {
+	var bills []Bill
+	var query string
+	var args []interface{}
 
-	result, err := db.Exec(query,
-		bill.UserID, bill.Name, bill.Amount, bill.DueDate, bill.StartDate,
-		bill.PaymentDay, bill.DurationMonths, bill.Regularity, bill.Paid,
-		bill.Overdue, bill.OverdueDays, bill.Recurring, bill.Category, bill.Icon,
-	)
-	if err != nil {
-		return 0, err
+	if yearMonth != "" {
+		// Query for bills that have a payment record for the specific period
+		query = `
+			SELECT 
+				b.id, b.user_id, b.name, b.amount, b.due_date, b.start_date, b.payment_day, 
+				b.duration_months, b.regularity, 
+				bp.paid,
+				b.overdue, b.overdue_days, b.recurring, b.category, b.icon, 
+				b.payment_method, b.created_at, b.updated_at,
+				bp.payment_date, bp.payment_method as period_payment_method
+			FROM bills b 
+			INNER JOIN bill_payments bp ON b.id = bp.bill_id
+			WHERE b.user_id = ? AND bp.year_month = ?
+			ORDER BY b.id ASC
+		`
+		args = []interface{}{userID, yearMonth}
+	} else {
+		// Fallback to original query without period-specific information
+		query = `
+			SELECT id, user_id, name, amount, due_date, start_date, payment_day, 
+			       duration_months, regularity, paid, overdue, overdue_days, 
+			       recurring, category, icon, payment_method, created_at, updated_at,
+			       NULL as payment_date, NULL as period_payment_method
+			FROM bills 
+			WHERE user_id = ? 
+			ORDER BY id ASC
+		`
+		args = []interface{}{userID}
 	}
 
-	billID, err := result.LastInsertId()
+	rows, err := db.Query(query, args...)
 	if err != nil {
-		return 0, err
+		return nil, fmt.Errorf("failed to query bills: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var bill Bill
+		var createdAt, updatedAt sql.NullString
+		var paymentMethod sql.NullString
+		var paymentDate, periodPaymentMethod sql.NullString
+
+		err := rows.Scan(
+			&bill.ID, &bill.UserID, &bill.Name, &bill.Amount, &bill.DueDate,
+			&bill.StartDate, &bill.PaymentDay, &bill.DurationMonths, &bill.Regularity,
+			&bill.Paid, &bill.Overdue, &bill.OverdueDays, &bill.Recurring,
+			&bill.Category, &bill.Icon, &paymentMethod, &createdAt, &updatedAt,
+			&paymentDate, &periodPaymentMethod,
+		)
+		if err != nil {
+			log.Printf("Error scanning bill: %v", err)
+			continue
+		}
+
+		if createdAt.Valid {
+			bill.CreatedAt = createdAt.String
+		}
+		if updatedAt.Valid {
+			bill.UpdatedAt = updatedAt.String
+		}
+		if paymentMethod.Valid {
+			bill.PaymentMethod = paymentMethod.String
+		}
+
+		// Set payment method from period-specific data if available
+		if periodPaymentMethod.Valid && periodPaymentMethod.String != "" {
+			bill.PaymentMethod = periodPaymentMethod.String
+		}
+
+		// Calculate the correct due_date for the specific period
+		if yearMonth != "" {
+			bill.DueDate = calculateDueDateForPeriod(bill.StartDate, bill.PaymentDay, yearMonth)
+		}
+
+		bills = append(bills, bill)
 	}
 
-	return int(billID), nil
+	return bills, nil
 }
 
-// createExpenseFromBill - Helper function to create expense from bill payment
-func createExpenseFromBill(req BillToExpenseRequest) error {
-	// This would typically call the expense_management service
-	// For now, we'll just log it
-	log.Printf("Creating expense from bill payment: %+v", req)
+// calculateDueDateForPeriod calculates the correct due date for a specific period
+func calculateDueDateForPeriod(startDate string, paymentDay int, yearMonth string) string {
+	// Parse the yearMonth to get the target month
+	targetDate, err := time.Parse("2006-01", yearMonth)
+	if err != nil {
+		log.Printf("Error parsing yearMonth %s: %v", yearMonth, err)
+		return startDate // Fallback to start date
+	}
+
+	year := targetDate.Year()
+	month := targetDate.Month()
+
+	// Ensure payment day doesn't exceed days in the target month
+	lastDayOfMonth := time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
+	if paymentDay > lastDayOfMonth {
+		paymentDay = lastDayOfMonth
+	}
+
+	// Create the due date for the specific period
+	dueDate := time.Date(year, month, paymentDay, 0, 0, 0, 0, time.UTC)
+	return dueDate.Format("2006-01-02")
+}
+
+// deleteBill - Helper function to delete a bill
+func deleteBill(billID int, userID string) error {
+	// First, verify bill exists
+	_, err := fetchBillByID(billID, userID)
+	if err != nil {
+		return fmt.Errorf("bill not found: %v", err)
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Delete bill payments
+	_, err = tx.Exec("DELETE FROM bill_payments WHERE bill_id = ?", billID)
+	if err != nil {
+		return fmt.Errorf("error deleting bill payments: %v", err)
+	}
+
+	// Delete the bill
+	_, err = tx.Exec("DELETE FROM bills WHERE id = ? AND user_id = ?", billID, userID)
+	if err != nil {
+		return fmt.Errorf("error deleting bill: %v", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	// TODO: Clean up balance records related to this bill
+	log.Printf("✅ Bill %d deleted successfully", billID)
 	return nil
 }
 
@@ -1825,12 +1253,331 @@ func handleUpdateBill(w http.ResponseWriter, r *http.Request) {
 	sendErrorResponse(w, "Update bill functionality not implemented yet", http.StatusNotImplemented)
 }
 
-// handleDeleteBill - Placeholder for delete bill handler
-func handleDeleteBill(w http.ResponseWriter, r *http.Request) {
-	sendErrorResponse(w, "Delete bill functionality not implemented yet", http.StatusNotImplemented)
+// addCashBankColumnsToAllTables - Helper function to add cash/bank columns to all balance tables
+func addCashBankColumnsToAllTables() {
+	// This function ensures backward compatibility by adding new columns to existing tables
+	log.Println("Checking and adding cash/bank columns to balance tables...")
+
+	tables := []string{
+		"daily_cash_bank_balance",
+		"weekly_cash_bank_balance",
+		"monthly_cash_bank_balance",
+		"quarterly_cash_bank_balance",
+		"semiannual_cash_bank_balance",
+		"annual_cash_bank_balance",
+	}
+
+	for _, tableName := range tables {
+		// Check if table exists first
+		var exists int
+		err := db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?", tableName).Scan(&exists)
+		if err != nil || exists == 0 {
+			continue
+		}
+
+		// Add missing columns if needed
+		alterTableSafely(tableName, "cash_amount", "REAL")
+		alterTableSafely(tableName, "bank_amount", "REAL")
+		alterTableSafely(tableName, "previous_cash_amount", "REAL")
+		alterTableSafely(tableName, "previous_bank_amount", "REAL")
+		alterTableSafely(tableName, "balance_cash_amount", "REAL")
+		alterTableSafely(tableName, "balance_bank_amount", "REAL")
+		alterTableSafely(tableName, "total_previous_balance", "REAL")
+		alterTableSafely(tableName, "total_balance", "REAL")
+	}
 }
 
-// handleGetUpcomingBills - Placeholder for upcoming bills handler
-func handleGetUpcomingBills(w http.ResponseWriter, r *http.Request) {
-	sendErrorResponse(w, "Upcoming bills functionality not implemented yet", http.StatusNotImplemented)
+// UpdateCascadeBalances recalcula los saldos en cascada desde startMonth
+func UpdateCascadeBalances(userID string, startMonth string) error {
+	// Obtener todos los meses posteriores o iguales a startMonth
+	rows, err := db.Query(`
+		SELECT year_month FROM monthly_cash_bank_balance
+		WHERE user_id = ? AND year_month >= ?
+		ORDER BY year_month
+	`, userID, startMonth)
+	if err != nil {
+		return fmt.Errorf("error fetching months: %v", err)
+	}
+	defer rows.Close()
+
+	var months []string
+	for rows.Next() {
+		var month string
+		if err := rows.Scan(&month); err != nil {
+			return fmt.Errorf("error scanning month: %v", err)
+		}
+		months = append(months, month)
+	}
+
+	for i, month := range months {
+		// Obtener el mes anterior (si existe)
+		var previousMonth string
+		if i > 0 {
+			previousMonth = months[i-1]
+		} else if month != startMonth {
+			row := db.QueryRow(`
+				SELECT year_month FROM monthly_cash_bank_balance
+				WHERE user_id = ? AND year_month < ? ORDER BY year_month DESC LIMIT 1
+			`, userID, month)
+			if err := row.Scan(&previousMonth); err != nil && err != sql.ErrNoRows {
+				return fmt.Errorf("error fetching previous month: %v", err)
+			}
+		}
+
+		// Obtener saldos previos
+		var previousCashAmount, previousBankAmount, totalPreviousBalance float64
+		if previousMonth != "" {
+			err := db.QueryRow(`
+				SELECT cash_amount, bank_amount, total_balance
+				FROM monthly_cash_bank_balance
+				WHERE user_id = ? AND year_month = ?
+			`, userID, previousMonth).Scan(&previousCashAmount, &previousBankAmount, &totalPreviousBalance)
+			if err != nil && err != sql.ErrNoRows {
+				return fmt.Errorf("error fetching previous balances: %v", err)
+			}
+		}
+
+		// Obtener movimientos del mes actual
+		var incomeCash, incomeBank, expenseCash, expenseBank, billCash, billBank float64
+		err := db.QueryRow(`
+			SELECT income_cash_amount, income_bank_amount,
+			       expense_cash_amount, expense_bank_amount,
+			       bill_cash_amount, bill_bank_amount
+			FROM monthly_cash_bank_balance
+			WHERE user_id = ? AND year_month = ?
+		`, userID, month).Scan(&incomeCash, &incomeBank, &expenseCash, &expenseBank, &billCash, &billBank)
+		if err != nil {
+			return fmt.Errorf("error fetching current month data: %v", err)
+		}
+
+		// Calcular saldos del mes actual
+		cashAmount := previousCashAmount + incomeCash - expenseCash - billCash
+		bankAmount := previousBankAmount + incomeBank - expenseBank - billBank
+		balanceCashAmount := cashAmount
+		balanceBankAmount := bankAmount
+		totalBalance := balanceCashAmount + balanceBankAmount
+
+		// Actualizar registro
+		_, err = db.Exec(`
+			UPDATE monthly_cash_bank_balance
+			SET cash_amount = ?,
+			    bank_amount = ?,
+			    balance_cash_amount = ?,
+			    balance_bank_amount = ?,
+			    total_balance = ?,
+			    previous_cash_amount = ?,
+			    previous_bank_amount = ?,
+			    total_previous_balance = ?
+			WHERE user_id = ? AND year_month = ?
+		`, cashAmount, bankAmount, balanceCashAmount, balanceBankAmount,
+			totalBalance, previousCashAmount, previousBankAmount, totalPreviousBalance,
+			userID, month)
+		if err != nil {
+			return fmt.Errorf("error updating balance for month %s: %v", month, err)
+		}
+	}
+
+	return nil
+}
+
+// AddBillToBalance registra una factura y sus pagos mensuales usando el algoritmo correcto
+func AddBillToBalance(userID, name string, amount float64, dueDate string, paymentDay, durationMonths int, paymentMethod, category, icon, regularity string) (int, error) {
+	if amount <= 0 || durationMonths < 1 || paymentDay < 1 || paymentDay > 28 || (paymentMethod != "cash" && paymentMethod != "bank") {
+		return 0, fmt.Errorf("invalid bill data")
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	startDate := dueDate // Asumimos que due_date es la fecha de inicio
+
+	// Registrar factura
+	result, err := tx.Exec(`
+		INSERT INTO bills (user_id, name, amount, due_date, paid, overdue, overdue_days, recurring, category, icon, start_date, payment_day, duration_months, regularity, payment_method)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, userID, name, amount, dueDate, false, false, 0, true, category, icon, startDate, paymentDay, durationMonths, regularity, paymentMethod)
+	if err != nil {
+		return 0, fmt.Errorf("error inserting bill: %v", err)
+	}
+
+	billID, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("error getting bill ID: %v", err)
+	}
+
+	// Calcular meses afectados
+	currentDate, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		return 0, fmt.Errorf("invalid start date format: %v", err)
+	}
+
+	for i := 0; i < durationMonths; i++ {
+		monthDate := currentDate.AddDate(0, i, 0)
+		month := monthDate.Format("2006-01")
+
+		// Crear registro en bill_payments
+		_, err = tx.Exec(`
+			INSERT INTO bill_payments (bill_id, user_id, year_month, paid, payment_date, payment_method)
+			VALUES (?, ?, ?, ?, ?, ?)
+		`, billID, userID, month, false, nil, paymentMethod)
+		if err != nil {
+			return 0, fmt.Errorf("error creating bill payment record: %v", err)
+		}
+
+		// Crear o actualizar registro mensual
+		_, err = tx.Exec(`
+			INSERT OR IGNORE INTO monthly_cash_bank_balance (user_id, year_month)
+			VALUES (?, ?)
+		`, userID, month)
+		if err != nil {
+			return 0, fmt.Errorf("error creating monthly record: %v", err)
+		}
+
+		// Registrar el importe de la factura para este mes
+		if paymentMethod == "cash" {
+			_, err = tx.Exec(`
+				UPDATE monthly_cash_bank_balance
+				SET bill_cash_amount = bill_cash_amount + ?
+				WHERE user_id = ? AND year_month = ?
+			`, amount, userID, month)
+		} else {
+			_, err = tx.Exec(`
+				UPDATE monthly_cash_bank_balance
+				SET bill_bank_amount = bill_bank_amount + ?
+				WHERE user_id = ? AND year_month = ?
+			`, amount, userID, month)
+		}
+		if err != nil {
+			return 0, fmt.Errorf("error updating bill amount for month %s: %v", month, err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return 0, fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	// Recalcular saldos en cascada desde el primer mes afectado
+	firstMonth := currentDate.Format("2006-01")
+	if err = UpdateCascadeBalances(userID, firstMonth); err != nil {
+		return int(billID), fmt.Errorf("error updating cascade balances: %v", err)
+	}
+
+	return int(billID), nil
+}
+
+// MarkBillAsPaid marca una factura como pagada para un mes específico usando el algoritmo correcto
+func MarkBillAsPaid(billID int, userID, yearMonth string) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %v", err)
+	}
+	defer tx.Rollback()
+
+	// Obtener datos de la factura
+	var amount float64
+	var paymentMethod string
+	err = tx.QueryRow(`
+		SELECT amount, payment_method
+		FROM bills WHERE id = ? AND user_id = ?
+	`, billID, userID).Scan(&amount, &paymentMethod)
+	if err != nil {
+		return fmt.Errorf("bill not found: %v", err)
+	}
+
+	// Verificar que el pago existe y no está pagado
+	var alreadyPaid bool
+	err = tx.QueryRow(`
+		SELECT paid FROM bill_payments 
+		WHERE bill_id = ? AND year_month = ?
+	`, billID, yearMonth).Scan(&alreadyPaid)
+	if err != nil {
+		return fmt.Errorf("payment record not found: %v", err)
+	}
+	if alreadyPaid {
+		return fmt.Errorf("bill for this month is already paid")
+	}
+
+	// Marcar pago como pagado
+	paymentDate := time.Now().Format("2006-01-02")
+	_, err = tx.Exec(`
+		UPDATE bill_payments
+		SET paid = 1, payment_date = ?
+		WHERE bill_id = ? AND year_month = ?
+	`, paymentDate, billID, yearMonth)
+	if err != nil {
+		return fmt.Errorf("error marking payment as paid: %v", err)
+	}
+
+	// CORRECCIÓN: Al pagar una factura, debe restarse del bill_amount Y agregarse al expense_amount
+	// Esto mantiene el gasto en el sistema como corresponde
+	if paymentMethod == "cash" {
+		_, err = tx.Exec(`
+			UPDATE monthly_cash_bank_balance
+			SET bill_cash_amount = bill_cash_amount - ?,
+			    expense_cash_amount = expense_cash_amount + ?
+			WHERE user_id = ? AND year_month = ?
+		`, amount, amount, userID, yearMonth)
+	} else {
+		_, err = tx.Exec(`
+			UPDATE monthly_cash_bank_balance
+			SET bill_bank_amount = bill_bank_amount - ?,
+			    expense_bank_amount = expense_bank_amount + ?
+			WHERE user_id = ? AND year_month = ?
+		`, amount, amount, userID, yearMonth)
+	}
+	if err != nil {
+		return fmt.Errorf("error updating bill amount: %v", err)
+	}
+
+	// Crear registro en la tabla expenses para mantener el histórico del gasto
+	var billName, billCategory string
+	err = tx.QueryRow(`
+		SELECT name, category FROM bills WHERE id = ? AND user_id = ?
+	`, billID, userID).Scan(&billName, &billCategory)
+	if err != nil {
+		return fmt.Errorf("error getting bill details: %v", err)
+	}
+
+	// Crear el expense con fecha del pago
+	expenseDate := yearMonth + "-" + fmt.Sprintf("%02d", time.Now().Day())
+	description := fmt.Sprintf("Pago de factura: %s", billName)
+
+	_, err = tx.Exec(`
+		INSERT INTO expenses (user_id, amount, date, category, payment_method, description)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, userID, amount, expenseDate, billCategory, paymentMethod, description)
+	if err != nil {
+		return fmt.Errorf("error creating expense record: %v", err)
+	}
+
+	// Verificar si todos los pagos están completados
+	var totalPayments, paidPayments int
+	err = tx.QueryRow(`
+		SELECT COUNT(*) as total, SUM(CASE WHEN paid = 1 THEN 1 ELSE 0 END) as paid_count
+		FROM bill_payments WHERE bill_id = ?
+	`, billID).Scan(&totalPayments, &paidPayments)
+	if err != nil {
+		return fmt.Errorf("error checking bill completion: %v", err)
+	}
+
+	// Si todos los pagos están completados, marcar la factura como pagada
+	if totalPayments > 0 && paidPayments >= totalPayments {
+		_, err = tx.Exec(`
+			UPDATE bills SET paid = 1, updated_at = CURRENT_TIMESTAMP 
+			WHERE id = ? AND user_id = ?
+		`, billID, userID)
+		if err != nil {
+			return fmt.Errorf("error updating bill status: %v", err)
+		}
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	// Recalcular saldos en cascada
+	return UpdateCascadeBalances(userID, yearMonth)
 }

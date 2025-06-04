@@ -76,7 +76,7 @@ class BudgetOverview {
   factory BudgetOverview.fromJson(Map<String, dynamic> json) {
     return BudgetOverview(
       moneyFlow: MoneyFlow.fromJson(json['money_flow'] ?? {}),
-      remainingAmount: json['remaining_amount']?.toDouble() ?? 0.0,
+      remainingAmount: json['total_balance']?.toDouble() ?? 0.0,
       totalAmount: json['total_amount']?.toDouble() ?? 0.0,
       spentAmount: json['spent_amount']?.toDouble() ?? 0.0,
       upcomingAmount: json['upcoming_amount']?.toDouble() ?? 0.0,

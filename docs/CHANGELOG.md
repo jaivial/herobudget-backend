@@ -238,3 +238,99 @@ local timestamp=$(date +%s)
 *Endpoints analizados: 53 únicos*
 *Servicios optimizados: 18 microservicios*
 *Estado del sistema: COMPLETAMENTE OPERACIONAL* ✅
+
+## [2024-12-19] - Solución Completa Error Pago de Facturas
+
+### 🐛 Problemas Solucionados
+
+#### 1. Error 400 en Pago de Facturas
+- **Error**: `Error in payInvoice: Exception: Error paying invoice: 400`
+- **Causa**: El backend requiere un campo obligatorio `year_month` en formato "YYYY-MM" que no estaba siendo enviado desde la aplicación Flutter
+- **Impacto**: Los usuarios no podían pagar facturas desde la aplicación
+
+#### 2. Facturas Pagadas Siguen Apareciendo como Próximas
+- **Error**: Después del pago, las facturas seguían apareciendo en la sección de próximas facturas
+- **Causa**: 
+  - El servicio `fetchUpcomingBills` devolvía todas las facturas sin filtrar las pagadas
+  - El backend no actualizaba el campo `paid` en la tabla `bills` después del pago completo
+- **Impacto**: Confusión en la UI y datos incorrectos en la vista de facturas próximas
+
+#### 3. No se Creaban Expenses al Pagar Facturas
+- **Error**: Los pagos de facturas no se registraban como gastos en la tabla `expenses`
+- **Causa**: 
+  - La función `createExpenseFromBill` estaba vacía (solo hacía log)
+  - URL incorrecta para el servicio de expense_management (`/expenses` en lugar de `/expenses/add`)
+- **Impacto**: Los gastos por pago de facturas no se reflejaban en el balance del usuario
+
+### 🔧 Cambios Realizados
+
+#### 1. Servicio de Facturas (`lib/services/invoice_service.dart`)
+- **Líneas modificadas**: 158-180
+- **Cambios**:
+  - Agregado campo obligatorio `year_month` al request body
+  - Implementado valor por defecto (mes actual) cuando no se proporciona explícitamente
+  - Formato automático a "YYYY-MM" según requerimientos del backend
+- **Propósito**: Solucionar error 400 enviando todos los campos requeridos por el backend
+
+#### 2. Pantalla de Pago (`lib/screens/invoice/pay_bill_screen.dart`)
+- **Líneas modificadas**: 89-105
+- **Cambios**:
+  - Extracción automática del `year_month` desde la fecha de vencimiento de la factura
+  - Paso del parámetro `yearMonth` al método `payInvoice`
+- **Propósito**: Enviar el mes correcto basado en la fecha de vencimiento de la factura
+
+#### 3. Widget de Facturas Próximas (`lib/widgets/upcoming_bills.dart`)
+- **Líneas modificadas**: 180-195
+- **Cambios**:
+  - Corrección del método `_convertTransactionToInvoice` para manejar valores nulos
+  - Manejo correcto de tipos de datos en la conversión
+- **Propósito**: Evitar errores de tipo durante la conversión de datos
+
+#### 4. Servicio de Transacciones (`lib/services/transaction_service.dart`)
+- **Líneas modificadas**: 190-210
+- **Cambios**:
+  - Filtrado correcto de facturas pagadas en `fetchUpcomingBills`
+  - Separación de facturas en categorías: vencidas, próximas y pagadas
+  - Devolución solo de facturas no pagadas en el resultado
+- **Propósito**: Mostrar únicamente facturas pendientes en la sección de próximas
+
+#### 5. Backend Bills Management (`backend/bills_management/main.go`)
+- **Líneas modificadas**: 1818-1870, 915-935
+- **Cambios**:
+  - **Implementación completa de `createExpenseFromBill`**:
+    - Llamada HTTP real al servicio de expense_management
+    - Manejo de errores y respuestas
+    - Logging detallado del proceso
+  - **Corrección de URL**: `/expenses/add` en lugar de `/expenses`
+  - **Actualización del campo `paid`**:
+    - Verificación de pagos completados
+    - Actualización automática del campo `paid` en tabla `bills`
+    - Logging de confirmación
+- **Propósito**: 
+  - Crear expenses automáticamente al pagar facturas
+  - Marcar facturas como pagadas cuando se completan todos los pagos
+  - Mantener consistencia entre las tablas `bills`, `bill_payments` y `expenses`
+
+### ✅ Resultados
+
+1. **Pago de Facturas Funcional**: Los usuarios pueden pagar facturas sin errores 400
+2. **UI Actualizada Correctamente**: Las facturas pagadas desaparecen de la lista de próximas
+3. **Expenses Creados Automáticamente**: Cada pago de factura genera un expense correspondiente
+4. **Consistencia de Datos**: Los campos `paid` se actualizan correctamente en la base de datos
+5. **Logging Mejorado**: Trazabilidad completa del proceso de pago
+
+### 🧪 Pruebas Realizadas
+
+- ✅ Creación de factura nueva
+- ✅ Pago de factura con `year_month` correcto
+- ✅ Verificación de factura marcada como `paid: true`
+- ✅ Verificación de expense creado con descripción correcta
+- ✅ Verificación de facturas pagadas no aparecen en próximas
+- ✅ Verificación de logs del backend para confirmación
+
+### 📊 Impacto en el Sistema
+
+- **Flujo de Pago**: Completamente funcional end-to-end
+- **Integridad de Datos**: Consistencia entre servicios de bills y expenses
+- **Experiencia de Usuario**: UI refleja correctamente el estado de las facturas
+- **Trazabilidad**: Logs detallados para debugging y monitoreo

@@ -96,7 +96,7 @@ class TransactionService {
     }
   }
 
-  /// Fetch upcoming bills - FIXED: Now uses correct bills service
+  /// Fetch upcoming bills - FIXED: Now uses correct bills service with period support
   Future<UpcomingBillsResponse> fetchUpcomingBills({
     String? period,
     String? date,
@@ -112,16 +112,24 @@ class TransactionService {
         throw Exception('User not authenticated');
       }
 
-      // Use GET request to bills service (similar to BillsService.fetchBills)
+      // Use GET request to bills service with period parameters
       final queryParams = <String, String>{'user_id': userId};
 
-      // Add optional parameters
+      // Add period and date parameters for period-specific queries
       if (period != null && period.isNotEmpty) {
         queryParams['period'] = period;
+
+        // If date is provided, use it; otherwise use current date
+        final effectiveDate =
+            date ?? DateTime.now().toIso8601String().substring(0, 10);
+        queryParams['date'] = effectiveDate;
+
+        print(
+          '🔄 TransactionService: Fetching bills with period=$period, date=$effectiveDate',
+        );
       }
-      if (date != null && date.isNotEmpty) {
-        queryParams['date'] = date;
-      }
+
+      // Add optional start/end date parameters (for date range queries)
       if (startDate != null && endDate != null) {
         queryParams['start_date'] = startDate;
         queryParams['end_date'] = endDate;
@@ -167,6 +175,9 @@ class TransactionService {
             if (data is List) {
               final bills = data.map((bill) => Bill.fromJson(bill)).toList();
               print('✅ Upcoming bills received successfully');
+              print(
+                '📊 Bills breakdown: ${bills.map((b) => '${b.name}(paid:${b.paid})').join(', ')}',
+              );
 
               // Convert Bills to Transactions for UpcomingBillsResponse
               final transactions =
@@ -189,27 +200,72 @@ class TransactionService {
                       )
                       .toList();
 
-              // Calculate statistics
-              final totalBills = transactions.length;
+              // Calculate statistics and filter bills based on period context
+              final allBills = transactions;
+
+              // Filter bills to show based on context
+              List<Transaction> billsToShow;
+              if (period != null && period.isNotEmpty) {
+                // For period-specific queries, show ALL bills for that period
+                // This gives complete context - paid bills show as completed, unpaid as upcoming
+                billsToShow = allBills;
+                print(
+                  '📅 Period-specific query ($period): showing all bills for that period (${allBills.length} total)',
+                );
+              } else {
+                // For general queries, only show unpaid bills (original logic)
+                final overdueBills =
+                    allBills
+                        .where((t) => t.overdue == true && t.paid != true)
+                        .toList();
+                final upcomingBills =
+                    allBills
+                        .where((t) => t.overdue != true && t.paid != true)
+                        .toList();
+
+                billsToShow = [...overdueBills, ...upcomingBills];
+                print('📅 General query: showing only unpaid bills');
+              }
+
+              // Separate into categories for statistics
               final overdueBills =
-                  transactions.where((t) => t.overdue == true).length;
+                  allBills
+                      .where((t) => t.overdue == true && t.paid != true)
+                      .toList();
               final upcomingBills =
-                  transactions
+                  allBills
                       .where((t) => t.overdue != true && t.paid != true)
-                      .length;
+                      .toList();
+              final paidBills = allBills.where((t) => t.paid == true).toList();
+
+              // Calculate statistics for this week
+              final now = DateTime.now();
+              final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+              final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
               final thisWeekBills =
-                  transactions.where((t) {
-                    // Simple check for this week - you might want to improve this logic
-                    return t.overdue != true && t.paid != true;
+                  upcomingBills.where((t) {
+                    final billDate = DateTime.parse(t.date);
+                    return billDate.isAfter(
+                          startOfWeek.subtract(const Duration(days: 1)),
+                        ) &&
+                        billDate.isBefore(
+                          endOfWeek.add(const Duration(days: 1)),
+                        );
                   }).length;
 
+              print(
+                '📊 Statistics: total=${allBills.length}, overdue=${overdueBills.length}, upcoming=${upcomingBills.length}, paid=${paidBills.length}',
+              );
+
               return UpcomingBillsResponse(
-                bills: transactions,
-                total: totalBills,
-                overdue: overdueBills,
-                upcoming: upcomingBills,
+                bills: billsToShow,
+                total: allBills.length,
+                overdue: overdueBills.length,
+                upcoming: upcomingBills.length,
                 thisWeek: thisWeekBills,
-                thisMonth: upcomingBills, // Simplified - could be improved
+                thisMonth:
+                    upcomingBills.length, // Simplified - could be improved
               );
             } else {
               throw Exception('Bills data is not an array');

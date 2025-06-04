@@ -58,8 +58,7 @@ class BudgetOverviewService {
 
           // Create BudgetOverview from response data
           return BudgetOverview(
-            remainingAmount:
-                (data['remaining_amount'] as num?)?.toDouble() ?? 0.0,
+            remainingAmount: (data['total_balance'] as num?)?.toDouble() ?? 0.0,
             expensePercent:
                 (data['expense_percent'] as num?)?.toDouble() ?? 0.0,
             spentAmount: (data['spent_amount'] as num?)?.toDouble() ?? 0.0,
