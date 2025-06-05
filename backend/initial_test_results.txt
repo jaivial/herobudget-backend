@@ -1,0 +1,39 @@
+🔍 Testing PRODUCTION environment...
+Base URL: https://herobudget.jaimedigitalstudio.com
+============================================================
+⚠️ google_auth          400  145.97ms Bad request/Validation error
+✅ signup               200  40.49 ms None
+✅ language             200  40.91 ms None
+✅ signin               200  41.5  ms None
+✅ dashboard            200  36.67 ms None
+✅ reset_password       200  39.35 ms None
+✅ dashboard_data       200  41.18 ms None
+✅ budget               200  40.43 ms None
+❌ savings              404  40.15 ms Endpoint not found
+✅ cash_bank            200  39.89 ms None
+⚠️ bills                400  41.19 ms Bad request/Validation error
+✅ profile              200  40.18 ms None
+⚠️ income               400  40.58 ms Bad request/Validation error
+⚠️ expense              400  40.34 ms Bad request/Validation error
+⚠️ transaction_delete   400  40.2  ms Bad request/Validation error
+⚠️ categories           400  41.01 ms Bad request/Validation error
+❌ money_flow           404  39.27 ms Endpoint not found
+❌ budget_overview      405  41.04 ms HTTP 405
+⚠️ cash_to_bank         400  40.48 ms Bad request/Validation error
+⚠️ bank_to_cash         400  38.7  ms Bad request/Validation error
+
+============================================================
+📊 SUMMARY - PRODUCTION
+============================================================
+Total Endpoints: 20
+✅ Successful: 9
+❌ Errors: 1
+🔌 Connection Errors: 0
+❓ Not Found: 2
+📈 Success Rate: 45.0%
+
+💾 Results saved to: endpoint_validation_production_20250604_120715.json
+
+🚨 CRITICAL ISSUES:
+  - savings: Endpoint not found (https://herobudget.jaimedigitalstudio.com/savings/health)
+  - money_flow: Endpoint not found (https://herobudget.jaimedigitalstudio.com/money-flow/data)

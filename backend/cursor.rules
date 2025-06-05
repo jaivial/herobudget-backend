@@ -1,0 +1,141 @@
+# cursor.rules
+# Flujo de trabajo automatizado para manejar consultas con límite de 50,000 tokens por edición
+# Realiza análisis, planificación y ejecución automática sin confirmaciones intermedias
+
+**Instrucción Automatizada para Gestión de Tareas:**
+
+Al recibir una solicitud del usuario, sigue este proceso automatizado:
+
+## 1. **ANÁLISIS AUTOMÁTICO INICIAL**
+- Analiza profundamente la solicitud.
+- Identifica todos los archivos necesarios (modificar/crear).
+- Verifica estructura modular en componentes (<200 líneas).
+- Detecta elementos específicos para cambios (componentes, funciones, clases).
+- Si algún componente >200 líneas: planifica división automática.
+- **Restricción adicional:** Divide el trabajo en bloques de máximo 80 líneas por archivo en cada paso.
+
+## 2. **PLANIFICACIÓN AUTOMATIZADA**
+- Crea un plan detallado con:
+  - Pasos numerados y subpasos si es necesario.
+  - Archivos y componentes afectados en cada paso.
+  - División automática cuando:
+    - Un paso supere 2,000 tokens.
+    - Un componente supere 200 líneas.
+    - El cambio implique más de 80 líneas en un archivo.
+- Formato de salida:
+```markdown
+[PLAN AUTOMÁTICO]
+- [ ] **Paso 1:** [Descripción]
+    - Archivo: `nombre.ext`
+    - Componente: `nombre-componente`
+    - Elemento: `función/clase-específica`
+    - Tokens estimados: 1,850
+    - Líneas afectadas: 75
+```
+
+## 3. **EJECUCIÓN AUTOMÁTICA POR PASOS**
+- Procesa cada paso secuencialmente sin confirmación.
+- Monitorea tokens usados (límite 50,000 por edición).
+- Aplica regla de componentes:
+   - Si componente >200 líneas durante edición:
+       1. Divide en subcomponentes lógicos.
+       2. Crea nuevos archivos si es necesario.
+       3. Actualiza referencias.
+  - Si un archivo requiere más de 80 líneas de edición:
+       1. Divide el cambio en múltiples pasos.
+       2. Ejecuta cada paso de forma independiente.
+  - Actualiza el marcado de progreso:
+```markdown
+- [x] **Paso 1:** [Completado]
+- [ ] **Paso 2:** [Pendiente]
+```
+
+## 4. **INFORME FINAL AUTOMATIZADO**
+- Al completar todos los pasos:
+```markdown
+[TAREA COMPLETADA]
+- Total pasos ejecutados: X
+- Tokens máximos usados por edición: Y
+- Componentes creados/modificados: Z
+- Líneas máximas por componente: 200
+- Líneas máximas editadas por paso: 80
+```
+
+## 5. **DOCUMENTACIÓN OBLIGATORIA DEL PROYECTO**
+- **Guía de UI/UX**:
+  - Archivo: `docs/UI_UX_GUIDE.md` (crear si no existe)
+  - Obligatorio revisar este archivo antes de realizar modificaciones relacionadas con interfaz o experiencia de usuario.
+  - Tras completar tareas que impliquen cambios en UI/UX, actualizar este archivo con las nuevas directrices.
+  - Debe incluir: estilo, layout, colores y otros elementos de diseño.
+  - Propósito: mantener homogeneidad visual y de experiencia en todo el proyecto.
+
+- **Documentación de Base de Datos**:
+  - Archivo: `docs/DATABASE_SCHEMA.md` (crear si no existe)
+  - Obligatorio revisar este archivo antes de realizar cualquier tarea relacionada con la base de datos.
+  - Debe describir: tablas, columnas, relaciones y su implementación en el código.
+  - Debe detallar qué archivos usan cada elemento de la base de datos y con qué propósito.
+  - Tras completar tareas que modifiquen la estructura o uso de la base de datos, actualizar este archivo.
+  - Este paso es obligatorio sin excepciones.
+
+- **Mapa de Estructura del Proyecto**:
+  - Archivo: `docs/PROJECT_STRUCTURE.md` (crear si no existe)
+  - Obligatorio revisar este archivo antes de iniciar cualquier tarea.
+  - Debe describir la estructura de ficheros del proyecto y definir la funcionalidad y relación entre ellos.
+  - Tras completar tareas que modifiquen la estructura del proyecto, actualizar este archivo.
+  - Propósito: mantener una visión clara del contexto global del proyecto.
+
+- **Registro de Cambios**:
+  - Archivo: `docs/CHANGELOG.md` (crear si no existe)
+  - Después de completar cualquier tarea, añadir un registro detallado de los cambios realizados.
+  - Debe relacionar los cambios con el contexto global del proyecto.
+  - Debe especificar los archivos afectados y el propósito de cada modificación.
+
+**NOTA IMPORTANTE**: Si alguno de estos archivos no existe en el proyecto, deberá ser creado antes de iniciar cualquier tarea, con una estructura básica inicial que luego se irá completando. Todos los archivos se ubicarán en la carpeta `docs/` en la raíz del proyecto, que también deberá crearse si no existe.
+
+## 6. **REGLAS ESTRICTAS**
+1. Límite absoluto de 50,000 tokens por operación de código.
+2. División automática de:
+   - Pasos >2,000 tokens.
+   - Componentes >200 líneas.
+   - Ediciones >80 líneas por archivo.
+3. No requiere confirmaciones intermedias.
+4. Referenciar elementos en lugar de líneas específicas.
+5. Estructura modular obligatoria con componentes autocontenidos.
+6. Revisión obligatoria de la documentación de UI/UX, base de datos y estructura del proyecto antes de iniciar tareas.
+7. Actualización obligatoria de la documentación tras completar tareas que modifiquen aspectos relevantes.
+8. Registro obligatorio de todos los cambios realizados.
+
+## EJEMPLO DE SALIDA AUTOMÁTICA:
+```markdown
+[PLAN AUTOMÁTICO]
+- [x] **Paso 1:** Refactorizar función loadData() (parte 1/2)
+    - Archivo: `data.js`
+    - Componente: `DataLoader`
+    - Elemento: `loadData()`
+    - Tokens usados: 1,950
+    - Líneas afectadas: 60
+- [x] **Paso 2:** Refactorizar función loadData() (parte 2/2)
+    - Archivo: `data.js`
+    - Componente: `DataLoader`
+    - Elemento: `loadData()`
+    - Tokens usados: 1,850
+    - Líneas afectadas: 40
+- [x] **Paso 3:** Crear componente Helper (parte 1/2)
+    - Archivo: `Helper.jsx` (nuevo)
+    - Componente: `ValidationHelper`
+    - Elemento: `handleInputValidation`
+    - Tokens usados: 1,800
+    - Líneas afectadas: 70
+- [x] **Paso 4:** Finalizar componente Helper
+    - Archivo: `Helper.jsx`
+    - Componente: `FormattingHelper`
+    - Elemento: `currencyFormatter`
+    - Tokens usados: 1,750
+    - Líneas afectadas: 65
+[TAREA COMPLETADA]
+- Total pasos: 4
+- Tokens máximos: 1,950
+- Componentes afectados: 3
+- Líneas máximas: 198
+- Líneas máximas editadas por paso: 80
+``` 

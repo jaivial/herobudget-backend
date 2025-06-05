@@ -1,0 +1,192 @@
+{
+  "environment": "production",
+  "total_endpoints": 20,
+  "successful": 9,
+  "errors": 1,
+  "not_found": 2,
+  "connection_errors": 0,
+  "success_rate": 45.0,
+  "timestamp": "2025-06-04T12:10:11.184076",
+  "details": [
+    {
+      "name": "google_auth",
+      "status": "client_error",
+      "response_code": 400,
+      "response_time": 168.71,
+      "error": "Bad request/Validation error",
+      "url": "https://herobudget.jaimedigitalstudio.com/auth/google",
+      "timestamp": "2025-06-04T12:10:10.254525"
+    },
+    {
+      "name": "signup",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 40.75,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/signup/check-email",
+      "timestamp": "2025-06-04T12:10:10.423336"
+    },
+    {
+      "name": "language",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 39.34,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/language/get",
+      "timestamp": "2025-06-04T12:10:10.464174"
+    },
+    {
+      "name": "signin",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 39.9,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/signin/check-email",
+      "timestamp": "2025-06-04T12:10:10.503602"
+    },
+    {
+      "name": "dashboard",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 39.09,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/health",
+      "timestamp": "2025-06-04T12:10:10.543584"
+    },
+    {
+      "name": "reset_password",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 39.42,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/reset-password/check-email",
+      "timestamp": "2025-06-04T12:10:10.582755"
+    },
+    {
+      "name": "dashboard_data",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 39.69,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/dashboard/data",
+      "timestamp": "2025-06-04T12:10:10.622269"
+    },
+    {
+      "name": "budget",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 39.86,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/budget/fetch",
+      "timestamp": "2025-06-04T12:10:10.662045"
+    },
+    {
+      "name": "savings",
+      "status": "not_found",
+      "response_code": 404,
+      "response_time": 39.56,
+      "error": "Endpoint not found",
+      "url": "https://herobudget.jaimedigitalstudio.com/savings/health",
+      "timestamp": "2025-06-04T12:10:10.701983"
+    },
+    {
+      "name": "cash_bank",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 39.8,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/cash-bank/distribution",
+      "timestamp": "2025-06-04T12:10:10.741625"
+    },
+    {
+      "name": "bills",
+      "status": "client_error",
+      "response_code": 400,
+      "response_time": 39.84,
+      "error": "Bad request/Validation error",
+      "url": "https://herobudget.jaimedigitalstudio.com/bills",
+      "timestamp": "2025-06-04T12:10:10.781513"
+    },
+    {
+      "name": "profile",
+      "status": "success",
+      "response_code": 200,
+      "response_time": 40.85,
+      "error": null,
+      "url": "https://herobudget.jaimedigitalstudio.com/profile/ping",
+      "timestamp": "2025-06-04T12:10:10.821445"
+    },
+    {
+      "name": "income",
+      "status": "client_error",
+      "response_code": 400,
+      "response_time": 42.35,
+      "error": "Bad request/Validation error",
+      "url": "https://herobudget.jaimedigitalstudio.com/incomes",
+      "timestamp": "2025-06-04T12:10:10.862384"
+    },
+    {
+      "name": "expense",
+      "status": "client_error",
+      "response_code": 400,
+      "response_time": 39.17,
+      "error": "Bad request/Validation error",
+      "url": "https://herobudget.jaimedigitalstudio.com/expenses",
+      "timestamp": "2025-06-04T12:10:10.904860"
+    },
+    {
+      "name": "transaction_delete",
+      "status": "client_error",
+      "response_code": 400,
+      "response_time": 39.78,
+      "error": "Bad request/Validation error",
+      "url": "https://herobudget.jaimedigitalstudio.com/transactions/delete",
+      "timestamp": "2025-06-04T12:10:10.944149"
+    },
+    {
+      "name": "categories",
+      "status": "client_error",
+      "response_code": 400,
+      "response_time": 39.56,
+      "error": "Bad request/Validation error",
+      "url": "https://herobudget.jaimedigitalstudio.com/categories",
+      "timestamp": "2025-06-04T12:10:10.984047"
+    },
+    {
+      "name": "money_flow",
+      "status": "not_found",
+      "response_code": 404,
+      "response_time": 39.18,
+      "error": "Endpoint not found",
+      "url": "https://herobudget.jaimedigitalstudio.com/money-flow/data",
+      "timestamp": "2025-06-04T12:10:11.023719"
+    },
+    {
+      "name": "budget_overview",
+      "status": "error",
+      "response_code": 405,
+      "response_time": 41.54,
+      "error": "HTTP 405",
+      "url": "https://herobudget.jaimedigitalstudio.com/budget-overview",
+      "timestamp": "2025-06-04T12:10:11.062990"
+    },
+    {
+      "name": "cash_to_bank",
+      "status": "client_error",
+      "response_code": 400,
+      "response_time": 39.38,
+      "error": "Bad request/Validation error",
+      "url": "https://herobudget.jaimedigitalstudio.com/transfer/cash-to-bank",
+      "timestamp": "2025-06-04T12:10:11.104646"
+    },
+    {
+      "name": "bank_to_cash",
+      "status": "client_error",
+      "response_code": 400,
+      "response_time": 39.87,
+      "error": "Bad request/Validation error",
+      "url": "https://herobudget.jaimedigitalstudio.com/transfer/bank-to-cash",
+      "timestamp": "2025-06-04T12:10:11.144104"
+    }
+  ]
+}

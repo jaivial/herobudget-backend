@@ -1,0 +1,112 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Reglas para Cursor/Windsurf en Proyectos de Flutter
+1. Límite de Líneas por Archivo
+
+Máximo de líneas: Todo archivo de código (.dart) debe tener un máximo de 200 líneas, incluyendo comentarios, espacios en blanco y código funcional.
+Acción requerida: Si un archivo supera las 200 líneas, debe dividirse en varios componentes más pequeños. Cada componente debe ser un archivo independiente que encapsule una funcionalidad específica o un widget reutilizable.
+Criterios de división:
+Widgets: Extraer widgets anidados o reutilizables en archivos separados (por ejemplo, un CustomButton o UserProfileCard).
+Lógica de negocio: Separar la lógica de negocio en clases o servicios (por ejemplo, AuthService, UserRepository).
+Utilidades: Mover funciones de utilidad o constantes a archivos dedicados (por ejemplo, utils/helpers.dart, constants/colors.dart).
+
+
+Nombrado de archivos:
+Usar nombres descriptivos y específicos (por ejemplo, login_button.dart en lugar de button.dart).
+Seguir la convención snake_case para nombres de archivos, conforme a las guías de estilo de Flutter.
+
+
+Estructura sugerida:
+Widgets: lib/components/[nombre_componente].dart
+Servicios: lib/services/[nombre_servicio].dart
+Modelos: lib/models/[nombre_modelo].dart
+Utilidades: lib/utils/[nombre_utilidad].dart
+
+
+
+2. Organización de Componentes
+
+Unicidad de propósito: Cada archivo debe tener una única responsabilidad (por ejemplo, un widget, un servicio, o un modelo de datos).
+Widgets:
+Los widgets deben ser Stateless o Stateful según corresponda, y evitar mezclar lógica de negocio con la UI.
+Extraer widgets anidados a archivos separados si superan las 50 líneas o son reutilizables.
+
+
+Lógica de negocio:
+Usar clases o servicios para manejar la lógica, manteniendo los widgets lo más puros posible.
+Ejemplo: Un archivo auth_service.dart para manejar autenticación, en lugar de incluirla en un widget.
+
+
+
+3. Guías de Refactorización
+
+Detección de archivos grandes: Configurar Cursor/Windsurf para alertar cuando un archivo supere las 200 líneas (puede usarse una extensión o regla de linter).
+Refactorización automática:
+Usar herramientas de refactorización de Cursor (como "Extract Widget" o "Extract Method") para dividir archivos grandes.
+Crear un nuevo archivo para cada componente extraído, asegurando que no supere las 200 líneas.
+
+
+Revisión periódica: Antes de cada commit, verificar el tamaño de los archivos modificados y refactorizar si es necesario.
+Linter personalizado:
+Configurar un linter (por ejemplo, analysis_options.yaml) para advertir sobre archivos con más de 200 líneas.
+Ejemplo de regla:linter:
+  rules:
+    lines_longer_than_200: true
+
+
+
+
+
+4. Buenas Prácticas de Flutter
+
+Modularidad: Favorecer la creación de widgets pequeños y reutilizables para facilitar pruebas y mantenimiento.
+Estructura de directorios:
+Mantener una estructura clara:lib/
+  components/
+  services/
+  models/
+  utils/
+  screens/
+
+
+
+
+Documentación: Incluir comentarios breves en cada archivo para describir su propósito, especialmente en componentes extraídos.
+Evitar duplicación: Si un componente o función se usa en múltiples lugares, moverlo a un archivo compartido en lib/utils/ o lib/components/.
+
+5. Configuración en Cursor/Windsurf
+
+Advertencias automáticas:
+Configurar el editor para resaltar archivos con más de 200 líneas.
+Usar comandos como Extract Widget o Move to New File para dividir código rápidamente.
+
+
+Sugerencias de IA:
+Habilitar sugerencias de IA para proponer divisiones de archivos cuando se detecte un archivo grande.
+Configurar prompts personalizados en Cursor/Windsurf, por ejemplo:Si un archivo .dart supera las 200 líneas, sugiere cómo dividirlo en componentes más pequeños con nombres específicos y colócalos en la carpeta adecuada (components, services, etc.).
+
+
+
+
+Integración con linters:
+Usar dart analyze y flutter analyze para detectar archivos grandes y sugerir refactorizaciones.
+Integrar paquetes como very_good_analysis para reforzar las reglas de estilo.
+
+
+
+6. Ejemplo Práctico
+Si un archivo home_screen.dart tiene 250 líneas:
+
+Identificar widgets reutilizables (por ejemplo, un AppBar, un UserCard, o un ButtonRow).
+Extraer cada widget a su propio archivo (por ejemplo, components/user_card.dart, components/button_row.dart).
+Mover la lógica de negocio a un servicio (por ejemplo, services/user_service.dart).
+Asegurarse de que cada nuevo archivo tenga menos de 200 líneas.
+
+7. Excepciones
+
+Archivos de configuración: Archivos como main.dart o routes.dart pueden exceder las 200 líneas si su propósito es centralizar configuraciones o rutas, pero deben mantenerse lo más concisos posible.
+Modelos complejos: Si un modelo de datos es grande pero indivisible, documentar claramente y justificar su tamaño.
+
