@@ -73,7 +73,7 @@ test_endpoint() {
             fi
             ;;
         "validation_error")
-            if [ "$status_code" = "400" ] || [ "$status_code" = "401" ] || [ "$status_code" = "422" ] || [ "$status_code" = "409" ]; then
+            if [ "$status_code" = "400" ] || [ "$status_code" = "401" ] || [ "$status_code" = "404" ] || [ "$status_code" = "422" ] || [ "$status_code" = "409" ]; then
                 echo -e "${YELLOW}  ⚠️  EXPECTED VALIDATION ERROR: $status_code${NC}"
                 expected_failures=$((expected_failures + 1))
             else
@@ -236,6 +236,17 @@ test_endpoint "GET" "http://localhost:8094/expenses?user_id=36" \
 test_endpoint "GET" "http://localhost:8091/bills?user_id=36" \
 "" \
 "Bills Fetch" "success"
+
+# NUEVOS ENDPOINTS DE BILLS (UPDATE Y DELETE)
+echo -e "${CYAN}🧾 BILLS MANAGEMENT - ⭐ NUEVOS ENDPOINTS:${NC}"
+
+test_endpoint "POST" "http://localhost:8091/bills/update" \
+'{"user_id":"36","bill_id":1,"name":"Updated Bill Name","amount":75.50}' \
+"⭐ Bills Update (NUEVO)" "success"
+
+test_endpoint "POST" "http://localhost:8091/bills/delete" \
+'{"user_id":"36","bill_id":999}' \
+"⭐ Bills Delete (NUEVO - Test con bill inexistente)" "validation_error"
 
 test_endpoint "GET" "http://localhost:8090/cash-bank/distribution?user_id=36" \
 "" \

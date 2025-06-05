@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # =============================================================================
-# SCRIPT PARA REINICIAR TODOS LOS SERVICIOS GO EN /backend
-# Version actualizada con verificaciones y organización por prioridades
+# SCRIPT PARA REINICIAR TODOS LOS SERVICIOS GO EN VPS
+# Version adaptada para /opt/hero_budget/backend/
 # =============================================================================
 
 # Configuración de colores
@@ -16,12 +16,14 @@ NC='\033[0m'
 
 echo -e "${WHITE}"
 echo "============================================================================="
-echo "   🔄 REINICIANDO TODOS LOS MICROSERVICIOS GO"
+echo "   🔄 REINICIANDO TODOS LOS MICROSERVICIOS GO EN VPS"
+echo "   📁 Ruta base: /opt/hero_budget/backend/"
 echo "============================================================================="
 echo -e "${NC}"
 
-# Get the absolute path to the directory containing this script
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Configuración de rutas para VPS
+BASE_DIR="/opt/hero_budget/backend"
+GO_PATH="/usr/local/go/bin/go"
 
 # Define service ports using simple variables
 LANGUAGE_SERVICE_PORT=8083
@@ -49,6 +51,17 @@ is_port_in_use() {
   return $?
 }
 
+# Function to kill process by port
+kill_process_on_port() {
+    local port=$1
+    local pid=$(lsof -ti:$port 2>/dev/null)
+    if [ ! -z "$pid" ]; then
+        echo -e "${YELLOW}  Deteniendo servicio en puerto $port (PID: $pid)${NC}"
+        kill -9 $pid 2>/dev/null
+        sleep 1
+    fi
+}
+
 # Función para detener procesos existentes
 stop_existing_services() {
     echo -e "${YELLOW}🛑 Deteniendo servicios existentes...${NC}"
@@ -57,55 +70,74 @@ stop_existing_services() {
     ports=($LANGUAGE_SERVICE_PORT $SIGNIN_PORT $FETCH_DASHBOARD_PORT $RESET_PASSWORD_PORT $SIGNUP_PORT $GOOGLE_AUTH_PORT $DASHBOARD_DATA_PORT $BUDGET_MANAGEMENT_PORT $SAVINGS_MANAGEMENT_PORT $CASH_BANK_MANAGEMENT_PORT $BILLS_MANAGEMENT_PORT $PROFILE_MANAGEMENT_PORT $INCOME_MANAGEMENT_PORT $EXPENSE_MANAGEMENT_PORT $TRANSACTION_DELETE_PORT $CATEGORIES_MANAGEMENT_PORT $MONEY_FLOW_SYNC_PORT $BUDGET_OVERVIEW_FETCH_PORT)
     
     for port in "${ports[@]}"; do
-        PID=$(lsof -ti:$port 2>/dev/null)
-        if [ ! -z "$PID" ]; then
-            echo -e "${YELLOW}  Deteniendo servicio en puerto $port (PID: $PID)${NC}"
-            kill -9 $PID 2>/dev/null
-        fi
+        kill_process_on_port $port
     done
     
-    sleep 2
     echo -e "${GREEN}✅ Servicios existentes detenidos${NC}"
 }
 
-# Detener servicios existentes
-stop_existing_services
-
-# Forzar cierre inmediato de cualquier puerto que siga en uso
-echo -e "${RED}💀 Forzando cierre inmediato de todos los puertos...${NC}"
-for port in $LANGUAGE_SERVICE_PORT $SIGNIN_PORT $FETCH_DASHBOARD_PORT $RESET_PASSWORD_PORT $SIGNUP_PORT $GOOGLE_AUTH_PORT $DASHBOARD_DATA_PORT $BUDGET_MANAGEMENT_PORT $SAVINGS_MANAGEMENT_PORT $CASH_BANK_MANAGEMENT_PORT $BILLS_MANAGEMENT_PORT $PROFILE_MANAGEMENT_PORT $INCOME_MANAGEMENT_PORT $EXPENSE_MANAGEMENT_PORT $TRANSACTION_DELETE_PORT $CATEGORIES_MANAGEMENT_PORT $MONEY_FLOW_SYNC_PORT $BUDGET_OVERVIEW_FETCH_PORT; do
-  if is_port_in_use "$port"; then
-    pid=$(lsof -i :$port -t 2>/dev/null)
-    if [ -n "$pid" ]; then
-      echo -e "${RED}💀 Forzando cierre del proceso en puerto $port (PID: $pid)...${NC}"
-      kill -9 $pid 2>/dev/null
+# Función para compilar un servicio
+compile_service() {
+    local service_name=$1
+    local service_dir="$BASE_DIR/$service_name"
+    
+    if [ -d "$service_dir" ]; then
+        echo -e "${BLUE}🔨 Compilando $service_name...${NC}"
+        cd "$service_dir"
+        
+        # Verificar si Go está disponible
+        if [ ! -x "$GO_PATH" ]; then
+            echo -e "${RED}  ❌ Go no encontrado en $GO_PATH${NC}"
+            return 1
+        fi
+        
+        # Compilar el servicio
+        $GO_PATH build -o "${service_name}" main.go 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}  ✅ $service_name compilado exitosamente${NC}"
+            return 0
+        else
+            echo -e "${RED}  ❌ Error compilando $service_name${NC}"
+            return 1
+        fi
+    else
+        echo -e "${RED}  ❌ Directorio $service_dir no encontrado${NC}"
+        return 1
     fi
-  fi
-done
-
-# Breve pausa para asegurar que los procesos se terminen
-sleep 1
-echo -e "${GREEN}✅ Todos los puertos han sido liberados por la fuerza!${NC}"
+}
 
 # Función para iniciar un servicio en background
 start_service_background() {
     local service_name=$1
     local port=$2
+    local service_dir="$BASE_DIR/$service_name"
     
     echo -e "${CYAN}🚀 Iniciando $service_name en puerto $port...${NC}"
     
-    if [ -d "backend/$service_name" ]; then
-        cd "backend/$service_name"
-        go run main.go &
-        local pid=$!
-        echo -e "${GREEN}  ✅ $service_name iniciado (PID: $pid)${NC}"
-        cd - > /dev/null
+    if [ -d "$service_dir" ]; then
+        cd "$service_dir"
+        
+        # Verificar si el ejecutable existe
+        if [ -x "./${service_name}" ]; then
+            nohup "./${service_name}" > "${service_name}.log" 2>&1 &
+            local pid=$!
+            echo -e "${GREEN}  ✅ $service_name iniciado (PID: $pid)${NC}"
+            sleep 1
+            
+            # Verificar que el proceso siga corriendo
+            if kill -0 $pid 2>/dev/null; then
+                echo -e "${GREEN}  🟢 $service_name está corriendo correctamente${NC}"
+            else
+                echo -e "${RED}  ❌ $service_name se detuvo inesperadamente${NC}"
+                echo -e "${YELLOW}  📋 Últimas líneas del log:${NC}"
+                tail -5 "${service_name}.log" 2>/dev/null | sed 's/^/    /'
+            fi
+        else
+            echo -e "${RED}  ❌ Ejecutable ./${service_name} no encontrado${NC}"
+        fi
     else
-        echo -e "${RED}  ❌ Directorio backend/$service_name no encontrado${NC}"
+        echo -e "${RED}  ❌ Directorio $service_dir no encontrado${NC}"
     fi
-    
-    # Esperar un poco para que el servicio se establezca
-    sleep 1
 }
 
 # Función para verificar que un servicio esté respondiendo
@@ -116,6 +148,12 @@ verify_service() {
     
     echo -e "${BLUE}🔍 Verificando $service_name...${NC}"
     
+    # Verificar que el puerto esté escuchando
+    if ! is_port_in_use "$port"; then
+        echo -e "${RED}  ❌ $service_name no está escuchando en puerto $port${NC}"
+        return 1
+    fi
+    
     # Intentar conectar al endpoint
     local response=$(curl -s -w "%{http_code}" -o /dev/null "http://localhost:$port$endpoint" 2>/dev/null)
     
@@ -123,89 +161,144 @@ verify_service() {
         echo -e "${GREEN}  ✅ $service_name está respondiendo (Status: $response)${NC}"
         return 0
     else
-        echo -e "${RED}  ❌ $service_name no está respondiendo (Status: $response)${NC}"
+        echo -e "${RED}  ❌ $service_name no está respondiendo correctamente (Status: $response)${NC}"
         return 1
     fi
 }
 
-echo -e "\n${WHITE}=== INICIANDO SERVICIOS POR PRIORIDADES ===${NC}"
+# Función para verificar endpoints específicos de Bills Management
+verify_bills_endpoints() {
+    echo -e "\n${CYAN}🔍 VERIFICANDO ENDPOINTS ESPECÍFICOS DE BILLS MANAGEMENT:${NC}"
+    
+    # Verificar endpoint principal
+    local response=$(curl -s -w "%{http_code}" -o /dev/null "http://localhost:$BILLS_MANAGEMENT_PORT/bills?user_id=1" 2>/dev/null)
+    if [ "$response" = "200" ]; then
+        echo -e "${GREEN}  ✅ Endpoint GET /bills está funcionando${NC}"
+    else
+        echo -e "${RED}  ❌ Endpoint GET /bills no responde (Status: $response)${NC}"
+    fi
+    
+    # Verificar que el servicio tenga los nuevos endpoints configurados
+    echo -e "${BLUE}  🔍 Verificando configuración de nuevos endpoints...${NC}"
+    local delete_response=$(curl -s "http://localhost:$BILLS_MANAGEMENT_PORT/bills/delete" 2>/dev/null)
+    if echo "$delete_response" | grep -q "Method not allowed\|Invalid request\|user_id.*required"; then
+        echo -e "${GREEN}  ✅ Endpoint POST /bills/delete está configurado${NC}"
+    else
+        echo -e "${YELLOW}  ⚠️  Endpoint POST /bills/delete: $delete_response${NC}"
+    fi
+}
 
-# Iniciar servicios prioritarios (los que han sido mejorados recientemente)
-echo -e "\n${CYAN}📋 SERVICIOS PRIORITARIOS:${NC}"
-start_service_background "cash_bank_management" $CASH_BANK_MANAGEMENT_PORT
-start_service_background "profile_management" $PROFILE_MANAGEMENT_PORT
-start_service_background "fetch_dashboard" $FETCH_DASHBOARD_PORT
-start_service_background "money_flow_sync" $MONEY_FLOW_SYNC_PORT
-start_service_background "savings_management" $SAVINGS_MANAGEMENT_PORT
+# Detener servicios existentes
+stop_existing_services
 
-# Iniciar servicios críticos adicionales
+echo -e "\n${WHITE}=== COMPILANDO SERVICIOS ===${NC}"
+
+# Lista de servicios a compilar y iniciar
+services=(
+    "bills_management:$BILLS_MANAGEMENT_PORT"
+    "categories_management:$CATEGORIES_MANAGEMENT_PORT"
+    "cash_bank_management:$CASH_BANK_MANAGEMENT_PORT"
+    "dashboard_data:$DASHBOARD_DATA_PORT"
+    "expense_management:$EXPENSE_MANAGEMENT_PORT"
+    "fetch_dashboard:$FETCH_DASHBOARD_PORT"
+    "google_auth:$GOOGLE_AUTH_PORT"
+    "income_management:$INCOME_MANAGEMENT_PORT"
+    "language_cookie:$LANGUAGE_SERVICE_PORT"
+    "money_flow_sync:$MONEY_FLOW_SYNC_PORT"
+    "profile_management:$PROFILE_MANAGEMENT_PORT"
+    "reset_password:$RESET_PASSWORD_PORT"
+    "savings_management:$SAVINGS_MANAGEMENT_PORT"
+    "signin:$SIGNIN_PORT"
+    "signup:$SIGNUP_PORT"
+    "budget_management:$BUDGET_MANAGEMENT_PORT"
+    "budget_overview_fetch:$BUDGET_OVERVIEW_FETCH_PORT"
+    "transaction_delete_service:$TRANSACTION_DELETE_PORT"
+)
+
+# Compilar todos los servicios
+compiled_services=()
+for service_info in "${services[@]}"; do
+    service_name=$(echo $service_info | cut -d':' -f1)
+    if compile_service "$service_name"; then
+        compiled_services+=("$service_info")
+    fi
+done
+
+echo -e "\n${WHITE}=== INICIANDO SERVICIOS ===${NC}"
+
+# Iniciar servicios críticos primero
 echo -e "\n${CYAN}📋 SERVICIOS CRÍTICOS:${NC}"
-start_service_background "categories_management" $CATEGORIES_MANAGEMENT_PORT
-start_service_background "income_management" $INCOME_MANAGEMENT_PORT
-start_service_background "expense_management" $EXPENSE_MANAGEMENT_PORT
-start_service_background "budget_overview_fetch" $BUDGET_OVERVIEW_FETCH_PORT
-start_service_background "bills_management" $BILLS_MANAGEMENT_PORT
+critical_services=(
+    "google_auth:$GOOGLE_AUTH_PORT"
+    "bills_management:$BILLS_MANAGEMENT_PORT"
+    "categories_management:$CATEGORIES_MANAGEMENT_PORT"
+    "cash_bank_management:$CASH_BANK_MANAGEMENT_PORT"
+)
 
-# Iniciar servicios de autenticación
-echo -e "\n${CYAN}📋 SERVICIOS DE AUTENTICACIÓN:${NC}"
-start_service_background "signin" $SIGNIN_PORT
-start_service_background "signup" $SIGNUP_PORT
-start_service_background "google_auth" $GOOGLE_AUTH_PORT
-start_service_background "reset_password" $RESET_PASSWORD_PORT
+for service_info in "${critical_services[@]}"; do
+    if [[ " ${compiled_services[@]} " =~ " ${service_info} " ]]; then
+        service_name=$(echo $service_info | cut -d':' -f1)
+        port=$(echo $service_info | cut -d':' -f2)
+        start_service_background "$service_name" "$port"
+    fi
+done
 
-# Iniciar servicios complementarios
-echo -e "\n${CYAN}📋 SERVICIOS COMPLEMENTARIOS:${NC}"
-start_service_background "language_cookie" $LANGUAGE_SERVICE_PORT
-start_service_background "dashboard_data" $DASHBOARD_DATA_PORT
-start_service_background "budget_management" $BUDGET_MANAGEMENT_PORT
-start_service_background "transaction_delete_service" $TRANSACTION_DELETE_PORT
+# Iniciar resto de servicios
+echo -e "\n${CYAN}📋 RESTO DE SERVICIOS:${NC}"
+for service_info in "${compiled_services[@]}"; do
+    service_name=$(echo $service_info | cut -d':' -f1)
+    port=$(echo $service_info | cut -d':' -f2)
+    
+    # Skip if already started in critical services
+    if [[ ! " ${critical_services[@]} " =~ " ${service_info} " ]]; then
+        start_service_background "$service_name" "$port"
+    fi
+done
 
 echo -e "\n${WHITE}=== VERIFICANDO SERVICIOS ===${NC}"
 
 # Esperar a que todos los servicios se inicialicen
-echo -e "${YELLOW}⏳ Esperando 5 segundos para que los servicios se inicialicen...${NC}"
-sleep 5
-
-# Verificar servicios prioritarios
-echo -e "\n${CYAN}🔍 VERIFICANDO SERVICIOS PRIORITARIOS:${NC}"
-verify_service "Cash Bank Management" $CASH_BANK_MANAGEMENT_PORT "/cash-bank/distribution?user_id=1"
-verify_service "Profile Management" $PROFILE_MANAGEMENT_PORT "/health"
-verify_service "Fetch Dashboard" $FETCH_DASHBOARD_PORT "/health"
-verify_service "Money Flow Sync" $MONEY_FLOW_SYNC_PORT "/money-flow/data?user_id=1"
-verify_service "Savings Management" $SAVINGS_MANAGEMENT_PORT "/health"
+echo -e "${YELLOW}⏳ Esperando 8 segundos para que los servicios se inicialicen...${NC}"
+sleep 8
 
 # Verificar servicios críticos
 echo -e "\n${CYAN}🔍 VERIFICANDO SERVICIOS CRÍTICOS:${NC}"
-verify_service "Categories Management" $CATEGORIES_MANAGEMENT_PORT "/categories?user_id=1"
-verify_service "Income Management" $INCOME_MANAGEMENT_PORT "/incomes?user_id=1"
-verify_service "Expense Management" $EXPENSE_MANAGEMENT_PORT "/expenses?user_id=1"
-verify_service "Budget Overview" $BUDGET_OVERVIEW_FETCH_PORT "/health"
+verify_service "Google Auth" $GOOGLE_AUTH_PORT "/health"
 verify_service "Bills Management" $BILLS_MANAGEMENT_PORT "/bills?user_id=1"
+verify_service "Categories Management" $CATEGORIES_MANAGEMENT_PORT "/categories?user_id=1"
+verify_service "Cash Bank Management" $CASH_BANK_MANAGEMENT_PORT "/cash-bank/distribution?user_id=1"
+
+# Verificación específica de bills management con nuevos endpoints
+verify_bills_endpoints
+
+# Contar servicios activos
+active_services=0
+total_services=${#compiled_services[@]}
+
+for service_info in "${compiled_services[@]}"; do
+    service_name=$(echo $service_info | cut -d':' -f1)
+    port=$(echo $service_info | cut -d':' -f2)
+    
+    if is_port_in_use "$port"; then
+        ((active_services++))
+    fi
+done
 
 echo -e "\n${WHITE}"
 echo "============================================================================="
-echo "   ✅ TODOS LOS SERVICIOS HAN SIDO REINICIADOS"
+echo "   ✅ REINICIO COMPLETADO"
+echo "   📊 Servicios activos: $active_services/$total_services"
 echo "============================================================================="
 echo -e "${NC}"
 
-echo -e "${GREEN}🎉 SERVICIOS FUNCIONANDO:${NC}"
-echo -e "${WHITE}  • Google Auth: http://localhost:$GOOGLE_AUTH_PORT${NC}"
-echo -e "${WHITE}  • Signup: http://localhost:$SIGNUP_PORT${NC}"
-echo -e "${WHITE}  • Signin: http://localhost:$SIGNIN_PORT${NC}" 
-echo -e "${WHITE}  • Dashboard Data: http://localhost:$DASHBOARD_DATA_PORT${NC}"
-echo -e "${WHITE}  • Budget Management: http://localhost:$BUDGET_MANAGEMENT_PORT${NC}"
-echo -e "${WHITE}  • Cash/Bank Management: http://localhost:$CASH_BANK_MANAGEMENT_PORT${NC}"
-echo -e "${WHITE}  • Bills Management: http://localhost:$BILLS_MANAGEMENT_PORT${NC}"
-echo -e "${WHITE}  • Income Management: http://localhost:$INCOME_MANAGEMENT_PORT${NC}"
-echo -e "${WHITE}  • Expense Management: http://localhost:$EXPENSE_MANAGEMENT_PORT${NC}"
-echo -e "${WHITE}  • Transaction Delete: http://localhost:$TRANSACTION_DELETE_PORT${NC}"
-echo -e "${WHITE}  • Categories Management: http://localhost:$CATEGORIES_MANAGEMENT_PORT${NC}"
-echo -e "${WHITE}  • Money Flow Sync: http://localhost:$MONEY_FLOW_SYNC_PORT${NC}"
-echo -e "${WHITE}  • Budget Overview Fetch: http://localhost:$BUDGET_OVERVIEW_FETCH_PORT${NC}"
-
-echo -e "\n${CYAN}📋 PARA PROBAR ENDPOINTS ESPECÍFICOS:${NC}"
-echo -e "${WHITE}  ./tests/endpoints/test_endpoints_final_solution.sh${NC}"
-
-echo -e "\n${GREEN}🎯 ESTADO: Sistema completamente operacional${NC}"
-
-echo "" 
+if [ $active_services -eq $total_services ]; then
+    echo -e "${GREEN}🎉 TODOS LOS SERVICIOS ESTÁN FUNCIONANDO CORRECTAMENTE${NC}"
+    exit 0
+elif [ $active_services -gt $((total_services * 2 / 3)) ]; then
+    echo -e "${YELLOW}⚠️  LA MAYORÍA DE SERVICIOS ESTÁN FUNCIONANDO ($active_services/$total_services)${NC}"
+    exit 0
+else
+    echo -e "${RED}❌ MUCHOS SERVICIOS NO ESTÁN FUNCIONANDO ($active_services/$total_services)${NC}"
+    echo -e "${YELLOW}💡 Revisar logs individuales en cada directorio de servicio${NC}"
+    exit 1
+fi 

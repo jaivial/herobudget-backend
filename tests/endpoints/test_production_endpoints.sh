@@ -84,7 +84,7 @@ test_endpoint() {
             fi
             ;;
         "validation_error")
-            if [ "$status_code" = "400" ] || [ "$status_code" = "401" ] || [ "$status_code" = "422" ] || [ "$status_code" = "409" ]; then
+            if [ "$status_code" = "400" ] || [ "$status_code" = "401" ] || [ "$status_code" = "422" ] || [ "$status_code" = "409" ] || [ "$status_code" = "404" ]; then
                 echo -e "${YELLOW}  ⚠️  EXPECTED VALIDATION ERROR: $status_code${NC}"
                 expected_failures=$((expected_failures + 1))
             else
@@ -251,6 +251,14 @@ test_endpoint "POST" "/bills/add" \
 test_endpoint "GET" "/bills/upcoming?user_id=$TEST_USER_ID" \
 "" \
 "🧾 Bills Upcoming" "success"
+
+test_endpoint "POST" "/bills/update" \
+'{"user_id":"'$TEST_USER_ID'","bill_id":1,"name":"Updated Bill Prod","amount":125.75}' \
+"🧾 Bills Update (NUEVO)" "success"
+
+test_endpoint "POST" "/bills/delete" \
+'{"user_id":"'$TEST_USER_ID'","bill_id":999}' \
+"🧾 Bills Delete (NUEVO - Test con bill inexistente)" "validation_error"
 
 echo -e "${WHITE}=== 📊 DASHBOARD & USER MANAGEMENT ===${NC}\n"
 
